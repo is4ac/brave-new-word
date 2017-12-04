@@ -1,7 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.IO;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+/*
+using IronPython;
+using Microsoft.Scripting;
+using Microsoft.Scripting.Hosting;
+using IronPython.Hosting;
+using IronPython.Modules;
+*/
 
 public class BoxScript : MonoBehaviour {
 
@@ -14,17 +24,18 @@ public class BoxScript : MonoBehaviour {
 	public static Text scoreText;
 	private static int score = 0;
 	public static string currentWord = "";
+	public static HashSet<string> dictionary = null;
 
 	float fall = 0f;
 	bool falling = true;
 	bool columnFalling = false;
 	int myX = 0;
 	int myY = 0;
-	bool spawnFlag = false;
 
 	float fallSpeed = 0.05f;
 
 	// Use this for initialization
+	/*
 	void Awake () {
 		// Add the location of the block to the grid
 		Vector2 v = round(transform.position);
@@ -33,7 +44,6 @@ public class BoxScript : MonoBehaviour {
 		grid[myX, myY] = transform;
 		falling = true;
 		columnFalling = false;
-		spawnFlag = false;
 
 		//Debug.Log (falling);
 
@@ -46,6 +56,7 @@ public class BoxScript : MonoBehaviour {
 			Destroy (gameObject);
 		}
 	}
+	*/
 
 	// Use this for initialization
 	void Start () {
@@ -56,7 +67,6 @@ public class BoxScript : MonoBehaviour {
 		grid[myX, myY] = transform;
 		falling = true;
 		columnFalling = false;
-		spawnFlag = false;
 
 		//Debug.Log (falling);
 
@@ -90,27 +100,6 @@ public class BoxScript : MonoBehaviour {
 		} else if (columnFalling && ((myY > 0 && grid [myX, myY - 1] != null) || myY == 0)) {
 			columnFalling = false;
 		}
-		/*
-		else if (!falling && !isColumnFull (myX) && columnFalling) {
-			columnFalling = false;
-
-			if (grid [myX, gridHeight - 1] == null) {
-				Debug.Log (myX + "," + myY + ": else if 2 " + getLetterFromPrefab(gameObject.name));
-				GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
-				SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
-				spawnBox.SpawnNewBox ();
-				spawnFlag = true;
-			}
-		} else if (!falling && !isOtherBoxInColumnFalling () && myY < gridHeight - 1 && !isNoBoxAboveMe() && !spawnFlag) {
-			//Debug.Log (falling);
-			Debug.Log (myX + "," + myY + ": else if 1 " + getLetterFromPrefab(gameObject.name));
-
-			GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
-			SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
-			spawnBox.SpawnNewBox ();
-			spawnFlag = true;
-		}
-		*/
 
 		// If a tile is falling down the screen...
 		if (falling && Time.time - fall >= fallSpeed) {
@@ -120,20 +109,7 @@ public class BoxScript : MonoBehaviour {
 				//Debug.Log ("falling...");
 				GridUpdate();
 			} else {
-				transform.position += new Vector3(0, 1, 0);
-
-				// spawn a new box if the current column is not full
-				/*
-				if (!isColumnFull (myX)) {
-					if (grid [myX, gridHeight - 1] == null) {
-						GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
-						SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
-						spawnBox.SpawnNewBox ();
-						spawnFlag = true;
-					}
-				}
-				*/
-
+				transform.position += new Vector3 (0, 1, 0);
 				falling = false;
 			}
 			fall = Time.time;
@@ -207,44 +183,43 @@ public class BoxScript : MonoBehaviour {
 
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
-			// set the spawn flag so it is possible to spawn new boxes in the column that was deleted
-			/*
-			if ((int)v.y > 0 && grid[(int)v.x, (int)v.y-1] != null) {
-				BoxScript script = grid [(int)v.x, (int)v.y - 1].gameObject.GetComponent<BoxScript> ();
-				script.enabled = false;
-				script.spawnFlag = false;
-				scripts.Add (script);
-			}
-			*/
-
 			Destroy (grid [(int)v.x, (int)v.y].gameObject);
 			grid [(int)v.x, (int)v.y] = null;
 		}
-
-		/*
-		foreach (BoxScript bs in scripts) {
-			bs.enabled = true;
-		}
-		*/
-
-		// respawn a box if a column is empty
-		/*
-		for (int x = 0; x < gridWidth; ++x) {
-			if (isColumnEmpty (x)) {
-				Debug.Log ("Spawning");
-				GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + x);
-				SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
-				spawnBox.SpawnNewBox ();
-			}
-		}
-		*/
-						
+		currentWord = "";
 		currentSelection.Clear ();
 	}
 
 	public static bool isValidWord(string word) {
-		// TODO: use nltk corpora dictionary to check
-		return true;
+		// TODO: use nltk corpora dictionary to check?
+		/*
+		string program = @"
+import os
+cwd = os.getcwd()
+with open('Assets/Dictionaries/wordsEn.txt') as word_file:
+	english_words = set(word.strip().lower() for word in word_file)	
+def is_english_word(word):
+	return word.lower() in english_words
+#result = is_english_word('"+word+@"')
+";
+
+		ScriptEngine engine = Python.CreateEngine ();
+		var paths = engine.GetSearchPaths();
+		paths.Add(@"/Users/isung/IronPython-2.7.7/Lib");
+		engine.SetSearchPaths(paths);
+		ScriptSource source = engine.CreateScriptSourceFromString (program);
+		ScriptScope scope = engine.CreateScope ();
+		source.Execute (scope);
+
+		var result = scope.GetVariable ("result");
+		var cwd = scope.GetVariable ("cwd");
+		Debug.Log (cwd);
+		Debug.Log (result);
+		*/
+
+		Debug.Log (word.ToLower ());
+
+		return dictionary.Contains(word.ToLower());
 	}
 
 	void selectThisTile() {

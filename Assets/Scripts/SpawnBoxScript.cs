@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class SpawnBoxScript : MonoBehaviour {
 
@@ -14,6 +15,21 @@ public class SpawnBoxScript : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		//SpawnNewBox ();
+		// import words list and put it in set
+		if (BoxScript.dictionary == null) {
+			BoxScript.dictionary = new HashSet<string> ();
+
+			string line;  
+
+			// Read the file and display it line by line.  
+			StreamReader file = new StreamReader(@"Assets/Dictionaries/wordsEn.txt");  
+			while((line = file.ReadLine()) != null)  
+			{  
+				BoxScript.dictionary.Add(line);
+			}  
+
+			file.Close();  
+		}
 	}
 
 	void Update() {
