@@ -12,18 +12,40 @@ public class BoxScript : MonoBehaviour {
 	public static Transform[,] grid = new Transform[gridWidth, gridHeight];
 	public static List<Vector2> currentSelection = new List<Vector2> ();
 	public static Text scoreText;
-
+	private static int score = 0;
 	public static string currentWord = "";
+
 	float fall = 0f;
 	bool falling = true;
 	bool columnFalling = false;
-	int myX;
-	int myY;
-	private static int score = 0;
+	int myX = 0;
+	int myY = 0;
 	bool spawnFlag = false;
 
-	[SerializeField]
-	float fallSpeed = 0.2f;
+	float fallSpeed = 0.05f;
+
+	// Use this for initialization
+	void Awake () {
+		// Add the location of the block to the grid
+		Vector2 v = round(transform.position);
+		myX = (int)v.x + gridWidthRadius;
+		myY = (int)v.y + gridHeightRadius;
+		grid[myX, myY] = transform;
+		falling = true;
+		columnFalling = false;
+		spawnFlag = false;
+
+		//Debug.Log (falling);
+
+		if (scoreText == null) {
+			scoreText = GameObject.Find("Score").GetComponent<Text>();
+		}
+
+		if (!isValidPosition ()) {
+			//SceneManager.LoadScene (0);
+			Destroy (gameObject);
+		}
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -32,6 +54,12 @@ public class BoxScript : MonoBehaviour {
 		myX = (int)v.x + gridWidthRadius;
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;
+		falling = true;
+		columnFalling = false;
+		spawnFlag = false;
+
+		//Debug.Log (falling);
+
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
 		}
@@ -54,35 +82,48 @@ public class BoxScript : MonoBehaviour {
 
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
+			Debug.Log ("Update: " + myY + ": " + columnFalling);
 			if (!isOtherBoxInColumnFalling ()) {
 				columnDown ();
 				fall = Time.time;
 			}
-		} else if (!falling && !isColumnFull (myX) && columnFalling) {
+		} else if (columnFalling && ((myY > 0 && grid [myX, myY - 1] != null) || myY == 0)) {
+			columnFalling = false;
+		}
+		/*
+		else if (!falling && !isColumnFull (myX) && columnFalling) {
 			columnFalling = false;
 
 			if (grid [myX, gridHeight - 1] == null) {
+				Debug.Log (myX + "," + myY + ": else if 2 " + getLetterFromPrefab(gameObject.name));
 				GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
 				SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
 				spawnBox.SpawnNewBox ();
+				spawnFlag = true;
 			}
-		} else if (!falling && !isOtherBoxInColumnFalling () && myY < gridHeight - 1 && grid [myX, myY + 1] == null && !spawnFlag) {
+		} else if (!falling && !isOtherBoxInColumnFalling () && myY < gridHeight - 1 && !isNoBoxAboveMe() && !spawnFlag) {
+			//Debug.Log (falling);
+			Debug.Log (myX + "," + myY + ": else if 1 " + getLetterFromPrefab(gameObject.name));
+
 			GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
 			SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
 			spawnBox.SpawnNewBox ();
 			spawnFlag = true;
 		}
+		*/
 
 		// If a tile is falling down the screen...
 		if (falling && Time.time - fall >= fallSpeed) {
 			transform.position += new Vector3(0, -1, 0);
 
 			if (isValidPosition()) {
+				//Debug.Log ("falling...");
 				GridUpdate();
 			} else {
 				transform.position += new Vector3(0, 1, 0);
 
 				// spawn a new box if the current column is not full
+				/*
 				if (!isColumnFull (myX)) {
 					if (grid [myX, gridHeight - 1] == null) {
 						GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + myX);
@@ -91,6 +132,7 @@ public class BoxScript : MonoBehaviour {
 						spawnFlag = true;
 					}
 				}
+				*/
 
 				falling = false;
 			}
@@ -115,9 +157,33 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
+	bool isNoBoxAboveMe() {
+		for (int y = myY+1; y < gridHeight; ++y) {
+			if (grid [myX, y] != null) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	bool isOtherBoxInColumnFalling() {
-		for (int y = myY; y >= 0; --y) {
-			if (grid[myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
+		for (int y = myY-1; y >= 0; --y) {
+			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
+				Debug.Log ("isOtherBoxInColumnFalling: " + y + ": " + true);
+				return true;
+			} else {
+				Debug.Log ("isOtherBoxInColumnFalling: " + y + ": " + false);
+			}
+		}
+
+		return false;
+	}
+
+	public static bool isBoxInColumnFalling(int x) {
+		for (int y = 0; y < gridHeight; ++y) {
+			if (grid [x, y] != null && (grid [x, y].gameObject.GetComponent<BoxScript> ().falling ||
+										grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling)) {
 				return true;
 			}
 		}
@@ -136,18 +202,43 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	public static void deleteAllSelectedTiles() {
+	public void deleteAllSelectedTiles() {
+		//List<BoxScript> scripts = new List<BoxScript> ();
+
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
 			// set the spawn flag so it is possible to spawn new boxes in the column that was deleted
+			/*
 			if ((int)v.y > 0 && grid[(int)v.x, (int)v.y-1] != null) {
-				grid [(int)v.x, (int)v.y - 1].gameObject.GetComponent<BoxScript> ().spawnFlag = false;
+				BoxScript script = grid [(int)v.x, (int)v.y - 1].gameObject.GetComponent<BoxScript> ();
+				script.enabled = false;
+				script.spawnFlag = false;
+				scripts.Add (script);
 			}
+			*/
 
 			Destroy (grid [(int)v.x, (int)v.y].gameObject);
 			grid [(int)v.x, (int)v.y] = null;
 		}
-			
+
+		/*
+		foreach (BoxScript bs in scripts) {
+			bs.enabled = true;
+		}
+		*/
+
+		// respawn a box if a column is empty
+		/*
+		for (int x = 0; x < gridWidth; ++x) {
+			if (isColumnEmpty (x)) {
+				Debug.Log ("Spawning");
+				GameObject spawnBoxObject = GameObject.FindWithTag ("SpawnBox" + x);
+				SpawnBoxScript spawnBox = spawnBoxObject.GetComponent<SpawnBoxScript> ();
+				spawnBox.SpawnNewBox ();
+			}
+		}
+		*/
+						
 		currentSelection.Clear ();
 	}
 
@@ -238,6 +329,16 @@ public class BoxScript : MonoBehaviour {
 
 		return true;
 	}
+
+	public static bool isColumnEmpty(int x) {
+		for (int y = 0; y < gridHeight; ++y) {
+			if (grid[x, y] != null) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 		
 	bool isValidPosition() {        
 		Vector2 v = round(transform.position);
@@ -254,20 +355,16 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	void columnDown() {
-		Debug.Log ("grid updating");
+		//Debug.Log ("grid updating");
 
 		columnFalling = true;
 
 		// move every other block on top of this block down 1 as well
 		for (int y = myY; y < gridHeight; ++y) {
 			if (grid [myX, y] != null) {
-				Debug.Log (grid [myX, y].gameObject.GetComponent<BoxScript> ().myX + "," +
-				grid [myX, y].gameObject.GetComponent<BoxScript> ().myY);
 				grid [myX, y].position += new Vector3 (0, -1, 0);
 				grid [myX, y].gameObject.GetComponent<BoxScript> ().myY -= 1;
 				grid [myX, y - 1] = grid [myX, y];
-				Debug.Log (grid [myX, y].gameObject.GetComponent<BoxScript> ().myX + "," +
-				grid [myX, y].gameObject.GetComponent<BoxScript> ().myY);
 			} else {
 				grid [myX, y - 1] = null;
 			}

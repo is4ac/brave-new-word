@@ -6,10 +6,21 @@ public class SpawnBoxScript : MonoBehaviour {
 
 	[SerializeField]
 	public GameObject[] boxList;
+	[SerializeField]
+	public int myX;
+	//[SerializeField]
+	//BoxScript boxScript;
 
 	// Use this for initialization
 	void Start () {
-		SpawnNewBox ();
+		//SpawnNewBox ();
+	}
+
+	void Update() {
+		if (BoxScript.grid [myX, BoxScript.gridHeight - 1] == null &&
+			!BoxScript.isBoxInColumnFalling(myX)) {
+			SpawnNewBox ();
+		}
 	}
 	
 	// Update is called once per frame
