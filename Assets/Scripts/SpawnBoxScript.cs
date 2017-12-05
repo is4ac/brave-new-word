@@ -168,7 +168,7 @@ public class SpawnBoxScript : MonoBehaviour {
 		GameObject box = Instantiate (boxList [letterFreq[i]], transform.position, Quaternion.identity);
 
 		if (init) {
-			box.GetComponent<BoxScript> ().fallSpeed = 0.075f;
+			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
 		}
 	}
 }
