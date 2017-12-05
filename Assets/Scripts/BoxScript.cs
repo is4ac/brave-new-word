@@ -26,7 +26,7 @@ public class BoxScript : MonoBehaviour {
 	int myY = 0;
 
 	[NonSerialized]
-	public float fallSpeed = 0.4f;
+	public float fallSpeed = 0.3f;
 
 	// Use this for initialization
 	void Start () {
