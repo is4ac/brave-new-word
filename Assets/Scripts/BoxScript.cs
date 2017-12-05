@@ -25,7 +25,8 @@ public class BoxScript : MonoBehaviour {
 	int myX = 0;
 	int myY = 0;
 
-	float fallSpeed = 0.05f;
+	[NonSerialized]
+	public float fallSpeed = 0.4f;
 
 	// Use this for initialization
 	void Start () {
@@ -36,8 +37,7 @@ public class BoxScript : MonoBehaviour {
 		grid[myX, myY] = transform;
 		falling = true;
 		columnFalling = false;
-
-		//Debug.Log (falling);
+		fall = Time.time;
 
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
@@ -53,7 +53,6 @@ public class BoxScript : MonoBehaviour {
 	void Update () {
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
-			Debug.Log ("Update: " + myY + ": " + columnFalling);
 			if (!isOtherBoxInColumnFalling ()) {
 				columnDown ();
 				fall = Time.time;
@@ -64,10 +63,14 @@ public class BoxScript : MonoBehaviour {
 
 		// If a tile is falling down the screen...
 		if (falling && Time.time - fall >= fallSpeed) {
+
+			if (fallSpeed == 0.5f) {
+				Debug.Log ("fallSpeed = 0.5f");
+			}
+
 			transform.position += new Vector3(0, -1, 0);
 
 			if (isValidPosition()) {
-				//Debug.Log ("falling...");
 				GridUpdate();
 			} else {
 				transform.position += new Vector3 (0, 1, 0);
@@ -107,10 +110,7 @@ public class BoxScript : MonoBehaviour {
 	bool isOtherBoxInColumnFalling() {
 		for (int y = myY-1; y >= 0; --y) {
 			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
-				Debug.Log ("isOtherBoxInColumnFalling: " + y + ": " + true);
 				return true;
-			} else {
-				Debug.Log ("isOtherBoxInColumnFalling: " + y + ": " + false);
 			}
 		}
 
@@ -227,7 +227,6 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static bool isInsideGrid(Vector2 pos) {
-		//Debug.Log ((int)pos.x + "," + (int)pos.y);
 		int x = (int)pos.x;
 		int y = (int)pos.y;
 		return (x >= -gridWidthRadius && x <= gridWidthRadius && y >= -gridHeightRadius && y <= gridHeightRadius);
@@ -268,8 +267,6 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	void columnDown() {
-		//Debug.Log ("grid updating");
-
 		columnFalling = true;
 
 		// move every other block on top of this block down 1 as well

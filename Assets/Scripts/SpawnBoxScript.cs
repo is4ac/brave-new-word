@@ -9,8 +9,10 @@ public class SpawnBoxScript : MonoBehaviour {
 	public GameObject[] boxList;
 	[SerializeField]
 	public int myX;
-	//[SerializeField]
-	//BoxScript boxScript;
+
+	bool init = true;
+	int initCount = 0;
+	bool wait = true;
 
 	// Use this for initialization
 	void Start () {
@@ -35,13 +37,33 @@ public class SpawnBoxScript : MonoBehaviour {
 	void Update() {
 		if (BoxScript.grid [myX, BoxScript.gridHeight - 1] == null &&
 			!BoxScript.isBoxInColumnFalling(myX)) {
-			SpawnNewBox ();
+			if (init && initCount < 9) {
+				++initCount;
+				SpawnNewBox ();
+			} else if (wait) {
+				StartCoroutine(WaitForSpawn ());
+				wait = false;
+				init = false;
+			}
+
 		}
 	}
-	
+
+	IEnumerator WaitForSpawn() {
+		yield return new WaitForSeconds(0.15f);
+		SpawnNewBox ();
+		wait = true;
+	}
+
 	// Update is called once per frame
 	public void SpawnNewBox() {
 		int i = Random.Range (0, boxList.Length);
-		Instantiate (boxList [i], transform.position, Quaternion.identity);
+		GameObject box = Instantiate (boxList [i], transform.position, Quaternion.identity);
+
+		if (init) {
+			box.GetComponent<BoxScript> ().fallSpeed = 0.075f;
+		} else {
+			box.GetComponent<BoxScript> ().fallSpeed = 0.4f;
+		}
 	}
 }
