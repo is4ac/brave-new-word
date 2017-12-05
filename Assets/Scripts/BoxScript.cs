@@ -5,13 +5,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-/*
-using IronPython;
-using Microsoft.Scripting;
-using Microsoft.Scripting.Hosting;
-using IronPython.Hosting;
-using IronPython.Modules;
-*/
 
 public class BoxScript : MonoBehaviour {
 
@@ -33,30 +26,6 @@ public class BoxScript : MonoBehaviour {
 	int myY = 0;
 
 	float fallSpeed = 0.05f;
-
-	// Use this for initialization
-	/*
-	void Awake () {
-		// Add the location of the block to the grid
-		Vector2 v = round(transform.position);
-		myX = (int)v.x + gridWidthRadius;
-		myY = (int)v.y + gridHeightRadius;
-		grid[myX, myY] = transform;
-		falling = true;
-		columnFalling = false;
-
-		//Debug.Log (falling);
-
-		if (scoreText == null) {
-			scoreText = GameObject.Find("Score").GetComponent<Text>();
-		}
-
-		if (!isValidPosition ()) {
-			//SceneManager.LoadScene (0);
-			Destroy (gameObject);
-		}
-	}
-	*/
 
 	// Use this for initialization
 	void Start () {
@@ -82,14 +51,6 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		// if the enter key is pressed, then submit the word
-		// check against dictionary and give it points
-		if (Input.GetKeyDown (KeyCode.Return) && currentSelection.Count > 0 &&
-			(int)currentSelection[currentSelection.Count - 1].x == myX &&
-			(int)currentSelection[currentSelection.Count - 1].y == myY) {
-			updateScore ();
-		}
-
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
 			Debug.Log ("Update: " + myY + ": " + columnFalling);
@@ -167,18 +128,23 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
-	void updateScore() {
+	public static bool updateScore() {
 		if (isValidWord (currentWord)) {
+			// TODO: different scoring function based on freq of word + freq of letters?
 			score += currentWord.Length;
 			scoreText.text = "Points: " + score;
 
 			deleteAllSelectedTiles ();
+
+			return true;
 		} else {
 			clearAllSelectedTiles ();
+
+			return false;
 		}
 	}
 
-	public void deleteAllSelectedTiles() {
+	public static void deleteAllSelectedTiles() {
 		//List<BoxScript> scripts = new List<BoxScript> ();
 
 		// delete all tiles in list
@@ -191,34 +157,6 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static bool isValidWord(string word) {
-		// TODO: use nltk corpora dictionary to check?
-		/*
-		string program = @"
-import os
-cwd = os.getcwd()
-with open('Assets/Dictionaries/wordsEn.txt') as word_file:
-	english_words = set(word.strip().lower() for word in word_file)	
-def is_english_word(word):
-	return word.lower() in english_words
-#result = is_english_word('"+word+@"')
-";
-
-		ScriptEngine engine = Python.CreateEngine ();
-		var paths = engine.GetSearchPaths();
-		paths.Add(@"/Users/isung/IronPython-2.7.7/Lib");
-		engine.SetSearchPaths(paths);
-		ScriptSource source = engine.CreateScriptSourceFromString (program);
-		ScriptScope scope = engine.CreateScope ();
-		source.Execute (scope);
-
-		var result = scope.GetVariable ("result");
-		var cwd = scope.GetVariable ("cwd");
-		Debug.Log (cwd);
-		Debug.Log (result);
-		*/
-
-		Debug.Log (word.ToLower ());
-
 		return dictionary.Contains(word.ToLower());
 	}
 
