@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public class BoxScript : MonoBehaviour {
 
+
+
+
 	public static int gridWidthRadius = 5;
 	public static int gridHeightRadius = 4;
 	public static int gridWidth = gridWidthRadius*2 + 1; // -5 to 5 
@@ -18,6 +21,7 @@ public class BoxScript : MonoBehaviour {
 	private static int score = 0;
 	public static string currentWord = "";
 	public static HashSet<string> dictionary = null;
+    public static Dictionary<string,float> freqDictionary = null;
 
 	float fall = 0f;
 	bool falling = true;
@@ -130,8 +134,10 @@ public class BoxScript : MonoBehaviour {
 
 	public static bool updateScore() {
 		if (isValidWord (currentWord)) {
+            float wordFreq = getWordFreq(currentWord);
+            Debug.Log(currentWord + ": " + wordFreq);
 			// TODO: different scoring function based on freq of word + freq of letters?
-			score += currentWord.Length;
+            score += currentWord.Length + (currentWord.Length * (int)(wordFreq * 30));
 			scoreText.text = "Points: " + score;
 
 			deleteAllSelectedTiles ();
@@ -159,6 +165,13 @@ public class BoxScript : MonoBehaviour {
 	public static bool isValidWord(string word) {
 		return dictionary.Contains(word.ToLower());
 	}
+
+    public static float getWordFreq(string word) {
+        if (freqDictionary.ContainsKey(word)) {
+            return freqDictionary[word];
+        }
+        return -1;
+    }
 
 	void selectThisTile() {
 		currentSelection.Add (new Vector2 (myX, myY));
