@@ -15,114 +15,133 @@ public class SpawnBoxScript : MonoBehaviour {
 	bool wait = true;
 	List<int> letterFreq;
 
+    int[] letterDistributions = new int[] {
+        81,20,28,43,90,     // A B C D E
+        22,20,61,70,8,      // F G H I J
+        18,40,24,67,75,     // K L M N O
+        19,8,60,63,90,      // P Q R S T
+        28,10,24,10,20,10}; // U V W X Y Z
+    void addToLetterFreqList() {
+        for (int letter_index = 0; letter_index < 26; letter_index++)
+        {
+            int letterFreqCount = letterDistributions[letter_index];
+            for (int i = 0; i < letterFreqCount; ++i)
+            {
+                letterFreq.Add(letter_index);
+            }
+       }
+    }
 	// Use this for initialization
 	void Start () {
 		// initialize letter frequency array for spawning statistics
 		letterFreq = new List<int>();
-		// A = 8.1, index val = 0
-		for (int i = 0; i < 81; ++i) {
-			letterFreq.Add (0);
-		}
-		// B = 1.5, index val = 1
-		for (int i = 0; i < 20; ++i) {
-			letterFreq.Add (1);
-		}
-		// C = 2.8, index val = 2
-		for (int i = 0; i < 28; ++i) {
-			letterFreq.Add (2);
-		}
-		// D = 4.3, index val = 3
-		for (int i = 0; i < 43; ++i) {
-			letterFreq.Add (3);
-		}
-		// E = 12.7, index val = 4
-		for (int i = 0; i < 90; ++i) {
-			letterFreq.Add (4);
-		}
-		// F = 2.2, index val = 5
-		for (int i = 0; i < 22; ++i) {
-			letterFreq.Add (5);
-		}
-		// G = 2.0, index val = 6
-		for (int i = 0; i < 20; ++i) {
-			letterFreq.Add (6);
-		}
-		// H = 6.1, index val = 7
-		for (int i = 0; i < 61; ++i) {
-			letterFreq.Add (7);
-		}
-		// I = 7.0, index val = 8
-		for (int i = 0; i < 70; ++i) {
-			letterFreq.Add (8);
-		}
-		// J = 0.2, index val = 9
-		for (int i = 0; i < 8; ++i) {
-			letterFreq.Add (9);
-		}
-		// K = 0.8, index val = 10
-		for (int i = 0; i < 18; ++i) {
-			letterFreq.Add (10);
-		}
-		// L = 4.0, index val = 11
-		for (int i = 0; i < 40; ++i) {
-			letterFreq.Add (11);
-		}
-		// M = 2.4, index val = 12
-		for (int i = 0; i < 24; ++i) {
-			letterFreq.Add (12);
-		}
-		// N = 6.7, index val = 13
-		for (int i = 0; i < 67; ++i) {
-			letterFreq.Add (13);
-		}
-		// O = 7.5, index val = 14
-		for (int i = 0; i < 75; ++i) {
-			letterFreq.Add (14);
-		}
-		// P = 1.9, index val = 15
-		for (int i = 0; i < 19; ++i) {
-			letterFreq.Add (15);
-		}
-		// Q = 0.1, index val = 16
-		for (int i = 0; i < 8; ++i) {
-			letterFreq.Add (16);
-		}
-		// R = 6.0, index val = 17
-		for (int i = 0; i < 60; ++i) {
-			letterFreq.Add (17);
-		}
-		// S = 6.3, index val = 18
-		for (int i = 0; i < 63; ++i) {
-			letterFreq.Add (18);
-		}
-		// T = 9.0, index val = 19
-		for (int i = 0; i < 90; ++i) {
-			letterFreq.Add (19);
-		}
-		// U = 2.8, index val = 20
-		for (int i = 0; i < 28; ++i) {
-			letterFreq.Add (20);
-		}
-		// V = 1.0, index val = 21
-		for (int i = 0; i < 10; ++i) {
-			letterFreq.Add (21);
-		}
-		// W = 2.4, index val = 22
-		for (int i = 0; i < 24; ++i) {
-			letterFreq.Add (22);
-		}
-		// X = 0.2, index val = 23
-		for (int i = 0; i < 10; ++i) {
-			letterFreq.Add (23);
-		}
-		// Y = 2.0, index val = 24
-		for (int i = 0; i < 20; ++i) {
-			letterFreq.Add (24);
-		}
-		// Z = 0.1, index val = 25
-		for (int i = 0; i < 10; ++i) {
-			letterFreq.Add (25);
-		}
+
+        addToLetterFreqList();
+
+		//// A = 8.1, index val = 0
+		//for (int i = 0; i < 81; ++i) {
+		//	letterFreq.Add (0);
+		//}
+		//// B = 1.5, index val = 1
+		//for (int i = 0; i < 20; ++i) {
+		//	letterFreq.Add (1);
+		//}
+		//// C = 2.8, index val = 2
+		//for (int i = 0; i < 28; ++i) {
+		//	letterFreq.Add (2);
+		//}
+		//// D = 4.3, index val = 3
+		//for (int i = 0; i < 43; ++i) {
+		//	letterFreq.Add (3);
+		//}
+		//// E = 12.7, index val = 4
+		//for (int i = 0; i < 90; ++i) {
+		//	letterFreq.Add (4);
+		//}
+		//// F = 2.2, index val = 5
+		//for (int i = 0; i < 22; ++i) {
+		//	letterFreq.Add (5);
+		//}
+		//// G = 2.0, index val = 6
+		//for (int i = 0; i < 20; ++i) {
+		//	letterFreq.Add (6);
+		//}
+		//// H = 6.1, index val = 7
+		//for (int i = 0; i < 61; ++i) {
+		//	letterFreq.Add (7);
+		//}
+		//// I = 7.0, index val = 8
+		//for (int i = 0; i < 70; ++i) {
+		//	letterFreq.Add (8);
+		//}
+		//// J = 0.2, index val = 9
+		//for (int i = 0; i < 8; ++i) {
+		//	letterFreq.Add (9);
+		//}
+		//// K = 0.8, index val = 10
+		//for (int i = 0; i < 18; ++i) {
+		//	letterFreq.Add (10);
+		//}
+		//// L = 4.0, index val = 11
+		//for (int i = 0; i < 40; ++i) {
+		//	letterFreq.Add (11);
+		//}
+		//// M = 2.4, index val = 12
+		//for (int i = 0; i < 24; ++i) {
+		//	letterFreq.Add (12);
+		//}
+		//// N = 6.7, index val = 13
+		//for (int i = 0; i < 67; ++i) {
+		//	letterFreq.Add (13);
+		//}
+		//// O = 7.5, index val = 14
+		//for (int i = 0; i < 75; ++i) {
+		//	letterFreq.Add (14);
+		//}
+		//// P = 1.9, index val = 15
+		//for (int i = 0; i < 19; ++i) {
+		//	letterFreq.Add (15);
+		//}
+		//// Q = 0.1, index val = 16
+		//for (int i = 0; i < 8; ++i) {
+		//	letterFreq.Add (16);
+		//}
+		//// R = 6.0, index val = 17
+		//for (int i = 0; i < 60; ++i) {
+		//	letterFreq.Add (17);
+		//}
+		//// S = 6.3, index val = 18
+		//for (int i = 0; i < 63; ++i) {
+		//	letterFreq.Add (18);
+		//}
+		//// T = 9.0, index val = 19
+		//for (int i = 0; i < 90; ++i) {
+		//	letterFreq.Add (19);
+		//}
+		//// U = 2.8, index val = 20
+		//for (int i = 0; i < 28; ++i) {
+		//	letterFreq.Add (20);
+		//}
+		//// V = 1.0, index val = 21
+		//for (int i = 0; i < 10; ++i) {
+		//	letterFreq.Add (21);
+		//}
+		//// W = 2.4, index val = 22
+		//for (int i = 0; i < 24; ++i) {
+		//	letterFreq.Add (22);
+		//}
+		//// X = 0.2, index val = 23
+		//for (int i = 0; i < 10; ++i) {
+		//	letterFreq.Add (23);
+		//}
+		//// Y = 2.0, index val = 24
+		//for (int i = 0; i < 20; ++i) {
+		//	letterFreq.Add (24);
+		//}
+		//// Z = 0.1, index val = 25
+		//for (int i = 0; i < 10; ++i) {
+		//	letterFreq.Add (25);
+		//}
 
 		// import words list and put it in set
 		if (BoxScript.dictionary == null) {
