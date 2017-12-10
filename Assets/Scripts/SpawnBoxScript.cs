@@ -15,12 +15,14 @@ public class SpawnBoxScript : MonoBehaviour {
 	bool wait = true;
 	List<int> letterFreq;
 
-    int[] letterDistributions = new int[] {
+    public static int[] letterDistributions = new int[] {
         81,20,28,43,90,     // A B C D E
         22,20,61,70,8,      // F G H I J
         18,40,24,67,75,     // K L M N O
         19,8,60,63,90,      // P Q R S T
         28,10,24,10,20,10}; // U V W X Y Z
+	public const int MAX_LETTER_FREQ = 90;
+
     void addToLetterFreqList() {
         for (int letter_index = 0; letter_index < 26; letter_index++)
         {
@@ -31,6 +33,7 @@ public class SpawnBoxScript : MonoBehaviour {
             }
        }
     }
+
 	// Use this for initialization
 	void Start () {
 		// initialize letter frequency array for spawning statistics
@@ -45,7 +48,7 @@ public class SpawnBoxScript : MonoBehaviour {
 
 			string line;  
 
-			// Read the file and display it line by line.  
+			// Read the file and store it line by line.  
 			StreamReader file = new StreamReader(@"Assets/Dictionaries/wordsEn.txt");  
 			while((line = file.ReadLine()) != null)  
 			{  
@@ -54,6 +57,7 @@ public class SpawnBoxScript : MonoBehaviour {
 
 			file.Close();  
 		}
+
         // import words list and put it in set
         if (BoxScript.freqDictionary == null)
         {
@@ -61,7 +65,7 @@ public class SpawnBoxScript : MonoBehaviour {
 
             string line;
 
-            // Read the file and display it line by line.  
+            // Read the file and store it line by line.  
             StreamReader file = new StreamReader(@"Assets/Dictionaries/sortedenddict.csv");
             while ((line = file.ReadLine()) != null)
             {

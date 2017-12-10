@@ -8,9 +8,6 @@ using UnityEngine.UI;
 
 public class BoxScript : MonoBehaviour {
 
-
-
-
 	public static int gridWidthRadius = 5;
 	public static int gridHeightRadius = 4;
 	public static int gridWidth = gridWidthRadius*2 + 1; // -5 to 5 
@@ -134,10 +131,7 @@ public class BoxScript : MonoBehaviour {
 
 	public static bool updateScore() {
 		if (isValidWord (currentWord)) {
-            float wordFreq = getWordFreq(currentWord);
-            Debug.Log(currentWord + ": " + wordFreq);
-			// TODO: different scoring function based on freq of word + freq of letters?
-            score += currentWord.Length + (currentWord.Length * (int)(wordFreq * 30));
+			score += getScoringFunction(currentWord);
 			scoreText.text = "Points: " + score;
 
 			deleteAllSelectedTiles ();
@@ -150,9 +144,22 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	public static void deleteAllSelectedTiles() {
-		//List<BoxScript> scripts = new List<BoxScript> ();
+	public static int getScoringFunction(string word) {
+		// scoring function based on freq of word + freq of letters
+		// TODO: do more balance testing of scoring function to make sure it is balanced?
+		float wordFreq = getWordFreq (word);
+		Debug.Log(currentWord + ": " + wordFreq);
 
+		int baseScore = 0;
+		for (int i = 0; i < word.Length; ++i) {
+			baseScore += SpawnBoxScript.MAX_LETTER_FREQ / SpawnBoxScript.letterDistributions[word[i]-'A'];
+		}
+		Debug.Log ("baseScore: " + baseScore);
+
+		return baseScore + (int)(baseScore * (wordFreq * 20));
+	}
+
+	public static void deleteAllSelectedTiles() {
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
 			Destroy (grid [(int)v.x, (int)v.y].gameObject);
@@ -179,6 +186,7 @@ public class BoxScript : MonoBehaviour {
 		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
 	}
 
+	// Checks to see if the other tile is adjacent (or diagonal) to the current location
 	public bool isNextTo(Vector2 otherLoc) {
 		int otherX = (int)otherLoc.x;
 		int otherY = (int)otherLoc.y;
