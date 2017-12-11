@@ -20,13 +20,14 @@ public class BoxScript : MonoBehaviour {
 	public static string currentWord = "";
 	public static HashSet<string> dictionary = null;
     public static Dictionary<string,float> freqDictionary = null;
+	public static CamShakeSimpleScript camShake = null;
 
 	float fall = 0f;
 	bool falling = true;
 	bool columnFalling = false;
 	int myX = 0;
 	int myY = 0;
-
+	bool isSelected = false;
 
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
@@ -54,6 +55,43 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+		// Check touch input updates
+
+		if (Input.touchCount > 0 && isInsideTile (Input.GetTouch (0).position)) {
+			//Debug.Log ("Inside Tile worked!");
+
+			if (Input.GetTouch (0).phase == TouchPhase.Began) {
+				// there is no previously clicked box
+				if (currentSelection.Count == 0) {
+					selectThisTile ();
+				} else {
+					// de-select what has already been selected
+					clearAllSelectedTiles ();
+				}
+			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+				// selected tile and it isn't already selected)
+				if (isNextTo (currentSelection [currentSelection.Count - 1]) &&
+				    !currentSelection.Contains (new Vector2 (myX, myY))) {
+					selectThisTile ();
+				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+					// de-select the most recent tile(s) if you move back to an old one
+					for (int i = currentSelection.Count - 1; i > 0; --i) {
+						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+							removeLastSelection ();
+						} else {
+							break;
+						}
+					}
+				} else {
+					// just do nothing?
+				}
+			}
+		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+			playWord ();
+		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
+			clearAllSelectedTiles ();
+		}
+
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
 			if (!isOtherBoxInColumnFalling ()) {
@@ -79,20 +117,35 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	// Click on blocks to select them
-	void OnMouseDown() {
-		// regular left mouse click
-		if (Input.GetMouseButton (0)) {
-			// there is no previously clicked box OR
-			// this box is selectable (it is adjacent to the previously 
-			// selected tile and it isn't already selected)
-			if (currentSelection.Count == 0 || isNextTo (currentSelection [currentSelection.Count - 1]) &&
-			           !currentSelection.Contains (new Vector2 (myX, myY))) {
-				selectThisTile();
-			} else {
-				// de-select what has already been selected
-				clearAllSelectedTiles();
-			}
+	static void removeLastSelection() {
+		Vector2 v = currentSelection [currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
+		currentSelection.Remove (v);
+		currentWord = currentWord.Substring (0, currentWord.Length - 1);
+
+		// select the most recent one
+		v = currentSelection[currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = true;
+	}
+
+	bool isInsideTile(Vector2 pos) {
+		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
+		int trueX = myX - gridWidthRadius;
+		int trueY = myY - gridHeightRadius;
+
+		// slight border around edge to make it easier to get diagonals
+		return (realPos.x > trueX - 0.40 && realPos.x <= trueX + 0.40 &&
+				realPos.y > trueY - 0.40 && realPos.y <= trueY + 0.40);
+	}
+
+	public static void playWord() {
+		bool valid = updateScore ();
+
+		if (valid) {
+			// do something celebratory! like sparkles?
+		} else {
+			camShake.ShakeRed (1f);
 		}
 	}
 
@@ -182,6 +235,7 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Add (new Vector2 (myX, myY));
 		currentWord += getLetterFromPrefab (this.gameObject.name);
 		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+		isSelected = true;
 	}
 
 	// Checks to see if the other tile is adjacent (or diagonal) to the current location
@@ -231,6 +285,7 @@ public class BoxScript : MonoBehaviour {
 		// remove all coloring
 		foreach (Vector2 v in currentSelection) {
 			grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
+			grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
 		}
 
 		currentSelection.Clear ();
