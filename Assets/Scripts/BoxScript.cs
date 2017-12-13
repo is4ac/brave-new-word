@@ -145,6 +145,7 @@ public class BoxScript : MonoBehaviour {
 			submittedWordText.text = currentWord;
 			submittedScoreText.text = ": " + submittedScore + " points";
 
+			animateSelectedTiles (submittedScore);
 			deleteAllSelectedTiles ();
 
 			return true;
@@ -170,6 +171,30 @@ public class BoxScript : MonoBehaviour {
 		return baseScore + (int)(baseScore * (wordFreq * 20));
 	}
 
+	public static void animateSelectedTiles(int submittedScore) {
+		// animate different congratulatory messages based on score
+		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
+		if (submittedScore >= 50) {
+			// PHENOMENAL!
+			textFader.FadeText (0.5f, "Phenomenal!");
+		} else if (submittedScore >= 40) {
+			// FANTASTIC!
+			textFader.FadeText (0.5f, "Fantastic!");
+		} else if (submittedScore >= 30) {
+			// GREAT!
+			textFader.FadeText (0.5f, "Great!");
+		} else if (submittedScore >= 20) {
+			// NICE!
+			textFader.FadeText (0.5f, "Nice!");
+		}
+
+		// animate each selected tile
+		foreach (Vector2 v in currentSelection) {
+			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
+			gameObject.GetComponent<BoxScript> ().animateSuccess ();
+		}
+	}
+
 	public static void deleteAllSelectedTiles() {
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
@@ -183,7 +208,11 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public void animateSuccess() {
-		
+		// TODO: little animation from each tile when it gets submitted
+	}
+
+	public void animateSelect() {
+		// TODO: little animation from each tile when it gets selected??
 	}
 
 	public static bool isValidWord(string word) {

@@ -55,6 +55,7 @@
      <Compile Include="Assets\Scripts\CamShakeSimpleScript.cs" />
      <Compile Include="Assets\Scripts\GameManagerScript.cs" />
      <Compile Include="Assets\Scripts\SpawnBoxScript.cs" />
+     <Compile Include="Assets\Scripts\TextFaderScript.cs" />
      <None Include="Assets\Dictionaries\wordsEn.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
