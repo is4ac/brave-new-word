@@ -23,7 +23,7 @@ public class SpawnBoxScript : MonoBehaviour {
         28,10,24,10,20,10}; // U V W X Y Z
 	public const int MAX_LETTER_FREQ = 90;
 
-    void addToLetterFreqList() {
+    void AddToLetterFreqList() {
         for (int letter_index = 0; letter_index < 26; letter_index++)
         {
             int letterFreqCount = letterDistributions[letter_index];
@@ -34,53 +34,41 @@ public class SpawnBoxScript : MonoBehaviour {
        }
     }
 
+	void ImportDictionary() {
+		// import words list and put it in set
+		if (BoxScript.freqDictionary == null)
+		{
+			BoxScript.freqDictionary  = new Dictionary<string, float>();
+
+			string line;
+
+			// Read the file and store it line by line.  
+			StreamReader file = new StreamReader(@"Assets/Dictionaries/sortedenddict.csv");
+			while ((line = file.ReadLine()) != null)
+			{
+				string[] tokens = line.Split(',');
+				string word = tokens[0].ToUpper();
+				float val = float.Parse(tokens[1]);
+				BoxScript.freqDictionary.Add(word,val);
+			}
+			file.Close();
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
 		// initialize letter frequency array for spawning statistics
 		letterFreq = new List<int>();
 
-        addToLetterFreqList();
+        AddToLetterFreqList();
 
-
-		// import words list and put it in set
-		if (BoxScript.dictionary == null) {
-			BoxScript.dictionary = new HashSet<string> ();
-
-			string line;  
-
-			// Read the file and store it line by line.  
-			StreamReader file = new StreamReader(@"Assets/Dictionaries/wordsEn.txt");  
-			while((line = file.ReadLine()) != null)  
-			{  
-				BoxScript.dictionary.Add(line);
-			}  
-
-			file.Close();  
-		}
-
-        // import words list and put it in set
-        if (BoxScript.freqDictionary == null)
-        {
-            BoxScript.freqDictionary  = new Dictionary<string, float>();
-
-            string line;
-
-            // Read the file and store it line by line.  
-            StreamReader file = new StreamReader(@"Assets/Dictionaries/sortedenddict.csv");
-            while ((line = file.ReadLine()) != null)
-            {
-                string[] tokens = line.Split(',');
-                string word = tokens[0].ToUpper();
-                float val = float.Parse(tokens[1]);
-                BoxScript.freqDictionary.Add(word,val);
-            }
-            file.Close();
-        }
+		ImportDictionary ();
+        
 	}
 
 	void Update() {
 		if (BoxScript.grid [myX, BoxScript.gridHeight - 1] == null &&
-			!BoxScript.isBoxInColumnFalling(myX)) {
+			!BoxScript.IsBoxInColumnFalling(myX)) {
 			if (init && initCount < 9) {
 				++initCount;
 				SpawnNewBox ();

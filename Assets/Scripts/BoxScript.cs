@@ -20,7 +20,6 @@ public class BoxScript : MonoBehaviour {
 	private static int score = 0;
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
-	public static HashSet<string> dictionary = null;
     public static Dictionary<string,float> freqDictionary = null;
 
 	float fall = 0f;
@@ -36,7 +35,7 @@ public class BoxScript : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		// Add the location of the block to the grid
-		Vector2 v = round(transform.position);
+		Vector2 v = Round(transform.position);
 		myX = (int)v.x + gridWidthRadius;
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;
@@ -56,7 +55,7 @@ public class BoxScript : MonoBehaviour {
 			submittedScoreText = GameObject.Find ("SubmittedScore").GetComponent<Text> ();
 		}
 
-		if (!isValidPosition ()) {
+		if (!IsValidPosition ()) {
 			//SceneManager.LoadScene (0);
 			Destroy (gameObject);
 		}
@@ -66,8 +65,8 @@ public class BoxScript : MonoBehaviour {
 	void Update () {
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
-			if (!isOtherBoxInColumnFalling ()) {
-				columnDown ();
+			if (!IsOtherBoxInColumnFalling ()) {
+				ColumnDown ();
 				fall = Time.time;
 			}
 		} else if (columnFalling && ((myY > 0 && grid [myX, myY - 1] != null) || myY == 0)) {
@@ -78,7 +77,7 @@ public class BoxScript : MonoBehaviour {
 		if (falling && Time.time - fall >= fallSpeed) {
 			transform.position += new Vector3(0, -1, 0);
 
-			if (isValidPosition()) {
+			if (IsValidPosition()) {
 				GridUpdate();
 			} else {
 				transform.position += new Vector3 (0, 1, 0);
@@ -96,17 +95,17 @@ public class BoxScript : MonoBehaviour {
 			// there is no previously clicked box OR
 			// this box is selectable (it is adjacent to the previously 
 			// selected tile and it isn't already selected)
-			if (currentSelection.Count == 0 || isNextTo (currentSelection [currentSelection.Count - 1]) &&
+			if (currentSelection.Count == 0 || IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 			           !currentSelection.Contains (new Vector2 (myX, myY))) {
-				selectThisTile();
+				SelectThisTile();
 			} else {
 				// de-select what has already been selected
-				clearAllSelectedTiles();
+				ClearAllSelectedTiles();
 			}
 		}
 	}
 
-	bool isNoBoxAboveMe() {
+	bool IsNoBoxAboveMe() {
 		for (int y = myY+1; y < gridHeight; ++y) {
 			if (grid [myX, y] != null) {
 				return false;
@@ -116,7 +115,8 @@ public class BoxScript : MonoBehaviour {
 		return true;
 	}
 
-	bool isOtherBoxInColumnFalling() {
+	// Checks to see if there is another box in my column that is falling with me in a 'column fall'
+	bool IsOtherBoxInColumnFalling() {
 		for (int y = myY-1; y >= 0; --y) {
 			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
 				return true;
@@ -126,7 +126,8 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
-	public static bool isBoxInColumnFalling(int x) {
+	// Checks to see if there are any boxes in column x that is currently falling (or column falling)
+	public static bool IsBoxInColumnFalling(int x) {
 		for (int y = 0; y < gridHeight; ++y) {
 			if (grid [x, y] != null && (grid [x, y].gameObject.GetComponent<BoxScript> ().falling ||
 										grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling)) {
@@ -137,29 +138,29 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
-	public static bool updateScore() {
-		if (isValidWord (currentWord)) {
-			int submittedScore = getScoringFunction (currentWord);
+	public static bool UpdateScore() {
+		if (IsValidWord (currentWord)) {
+			int submittedScore = GetScoringFunction (currentWord);
 			score += submittedScore;
 			scoreText.text = "Total Points: " + score;
 			submittedWordText.text = currentWord;
 			submittedScoreText.text = ": " + submittedScore + " points";
 
-			animateSelectedTiles (submittedScore);
-			deleteAllSelectedTiles ();
+			AnimateSelectedTiles (submittedScore);
+			DeleteAllSelectedTiles ();
 
 			return true;
 		} else {
-			clearAllSelectedTiles ();
+			ClearAllSelectedTiles ();
 
 			return false;
 		}
 	}
 
-	public static int getScoringFunction(string word) {
+	public static int GetScoringFunction(string word) {
 		// scoring function based on freq of word + freq of letters
 		// TODO: do more balance testing of scoring function to make sure it is balanced?
-		float wordFreq = getWordFreq (word);
+		float wordFreq = GetWordFreq (word);
 		Debug.Log(currentWord + ": " + wordFreq);
 
 		int baseScore = 0;
@@ -171,19 +172,19 @@ public class BoxScript : MonoBehaviour {
 		return baseScore + (int)(baseScore * (wordFreq * 20));
 	}
 
-	public static void animateSelectedTiles(int submittedScore) {
+	public static void AnimateSelectedTiles(int submittedScore) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-		if (submittedScore >= 50) {
+		if (submittedScore >= 50 || currentWord.Length > 6) {
 			// PHENOMENAL!
 			textFader.FadeText (0.5f, "Phenomenal!");
-		} else if (submittedScore >= 40) {
+		} else if (submittedScore >= 40 || currentWord.Length > 5) {
 			// FANTASTIC!
 			textFader.FadeText (0.5f, "Fantastic!");
-		} else if (submittedScore >= 30) {
+		} else if (submittedScore >= 30 || currentWord.Length > 4) {
 			// GREAT!
 			textFader.FadeText (0.5f, "Great!");
-		} else if (submittedScore >= 20) {
+		} else if (submittedScore >= 20 || currentWord.Length > 3) {
 			// NICE!
 			textFader.FadeText (0.5f, "Nice!");
 		}
@@ -191,15 +192,15 @@ public class BoxScript : MonoBehaviour {
 		// animate each selected tile
 		foreach (Vector2 v in currentSelection) {
 			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			gameObject.GetComponent<BoxScript> ().animateSuccess ();
+			gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
 		}
 	}
 
-	public static void deleteAllSelectedTiles() {
+	public static void DeleteAllSelectedTiles() {
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
 			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			gameObject.GetComponent<BoxScript> ().animateSuccess ();
+			gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
 			Destroy (gameObject);
 			grid [(int)v.x, (int)v.y] = null;
 		}
@@ -207,33 +208,34 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Clear ();
 	}
 
-	public void animateSuccess() {
+	public void AnimateSuccess() {
 		// TODO: little animation from each tile when it gets submitted
 	}
 
-	public void animateSelect() {
+	public void AnimateSelect() {
 		// TODO: little animation from each tile when it gets selected??
 	}
 
-	public static bool isValidWord(string word) {
-		return word.Length >= 3 && dictionary.Contains(word.ToLower());
+	public static bool IsValidWord(string word) {
+		return word.Length >= 3 && freqDictionary.ContainsKey(word);
 	}
 
-    public static float getWordFreq(string word) {
+    public static float GetWordFreq(string word) {
         if (freqDictionary.ContainsKey(word)) {
             return freqDictionary[word];
         }
+
         return -1;
     }
 
-	void selectThisTile() {
+	void SelectThisTile() {
 		currentSelection.Add (new Vector2 (myX, myY));
-		currentWord += getLetterFromPrefab (this.gameObject.name);
+		currentWord += GetLetterFromPrefab (this.gameObject.name);
 		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
 	}
 
 	// Checks to see if the other tile is adjacent (or diagonal) to the current location
-	public bool isNextTo(Vector2 otherLoc) {
+	public bool IsNextTo(Vector2 otherLoc) {
 		int otherX = (int)otherLoc.x;
 		int otherY = (int)otherLoc.y;
 
@@ -273,7 +275,7 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
-	public static void clearAllSelectedTiles() {
+	public static void ClearAllSelectedTiles() {
 		currentWord = "";
 
 		// remove all coloring
@@ -284,22 +286,22 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Clear ();
 	}
 
-	public static string getLetterFromPrefab(string name) {
+	public static string GetLetterFromPrefab(string name) {
 		// kind of a hack.. the prefab names' 7th character is the letter of the block
 		return name.Substring (6, 1);
 	}
 
-	public static Vector2 round(Vector2 v) {
+	public static Vector2 Round(Vector2 v) {
 		return new Vector2(Mathf.Round(v.x), Mathf.Round(v.y));
 	}
 
-	public static bool isInsideGrid(Vector2 pos) {
+	public static bool IsInsideGrid(Vector2 pos) {
 		int x = (int)pos.x;
 		int y = (int)pos.y;
 		return (x >= -gridWidthRadius && x <= gridWidthRadius && y >= -gridHeightRadius && y <= gridHeightRadius);
 	}
 
-	public static bool isColumnFull(int x) {
+	public static bool IsColumnFull(int x) {
 		for (int y = 0; y < gridHeight; ++y) {
 			if (grid [x, y] == null) {
 				return false;
@@ -308,21 +310,11 @@ public class BoxScript : MonoBehaviour {
 
 		return true;
 	}
-
-	public static bool isColumnEmpty(int x) {
-		for (int y = 0; y < gridHeight; ++y) {
-			if (grid[x, y] != null) {
-				return false;
-			}
-		}
-
-		return true;
-	}
 		
-	bool isValidPosition() {        
-		Vector2 v = round(transform.position);
+	bool IsValidPosition() {        
+		Vector2 v = Round(transform.position);
 
-		if (!isInsideGrid (v)) {
+		if (!IsInsideGrid (v)) {
 			return false;
 		}
 		if (grid [(int)v.x + gridWidthRadius, (int)v.y + gridHeightRadius] != null &&
@@ -333,7 +325,7 @@ public class BoxScript : MonoBehaviour {
 		return true;
 	}
 
-	void columnDown() {
+	void ColumnDown() {
 		columnFalling = true;
 
 		// move every other block on top of this block down 1 as well
@@ -355,7 +347,7 @@ public class BoxScript : MonoBehaviour {
 		grid [myX, myY] = null;
 
 		// Add the new location of the block to the grid
-		Vector2 v = round(transform.position);
+		Vector2 v = Round(transform.position);
 		myX = (int)v.x + gridWidthRadius;
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;

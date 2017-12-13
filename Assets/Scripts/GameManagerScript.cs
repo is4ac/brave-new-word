@@ -16,13 +16,13 @@ public class GameManagerScript : MonoBehaviour {
 		// if the enter key is pressed, then submit the word
 		// check against dictionary and give it points
 		if (Input.GetKeyDown (KeyCode.Return)) {
-			playWord ();
+			PlayWord ();
 		}
 	}
 
 	// Play word!
-	public void playWord() {
-		bool valid = BoxScript.updateScore ();
+	public void PlayWord() {
+		bool valid = BoxScript.UpdateScore ();
 
 		if (valid) {
 			// do something celebratory! like sparkles?

@@ -24,10 +24,10 @@ public class CamShakeSimpleScript : MonoBehaviour {
 	// Shake the camera and make the walls red!
 	public void ShakeRed(float amount) {
 		shakeAmt = amount;
-		colorWalls (Color.red);
+		ColorWalls (Color.red);
 	}
 
-	void colorWalls(Color changeColor) {
+	void ColorWalls(Color changeColor) {
 		GameObject wallsObj = GameObject.FindGameObjectWithTag ("Walls");
 
 		foreach (Transform wall in wallsObj.transform) {
@@ -46,7 +46,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 			if (shakeAmt <= 0.0f) {
 				shakeAmt = 0.0f;
 				mainCamera.transform.position = originalCameraPosition;
-				colorWalls (Color.white);
+				ColorWalls (Color.white);
 			}
 		}
 	}
