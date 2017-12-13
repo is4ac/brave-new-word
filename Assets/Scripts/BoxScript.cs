@@ -14,7 +14,9 @@ public class BoxScript : MonoBehaviour {
 	public static int gridHeight = gridHeightRadius*2 + 1; // -4 to 4
 	public static Transform[,] grid = new Transform[gridWidth, gridHeight];
 	public static List<Vector2> currentSelection = new List<Vector2> ();
-	public static Text scoreText;
+	public static Text scoreText = null;
+	public static Text submittedWordText = null;
+	public static Text submittedScoreText = null;
 	private static int score = 0;
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
@@ -44,6 +46,14 @@ public class BoxScript : MonoBehaviour {
 
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
+		}
+
+		if (submittedWordText == null) {
+			submittedWordText = GameObject.Find ("SubmittedWord").GetComponent<Text> ();
+		}
+
+		if (submittedScoreText == null) {
+			submittedScoreText = GameObject.Find ("SubmittedScore").GetComponent<Text> ();
 		}
 
 		if (!isValidPosition ()) {
@@ -129,8 +139,11 @@ public class BoxScript : MonoBehaviour {
 
 	public static bool updateScore() {
 		if (isValidWord (currentWord)) {
-			score += getScoringFunction(currentWord);
-			scoreText.text = "Points: " + score;
+			int submittedScore = getScoringFunction (currentWord);
+			score += submittedScore;
+			scoreText.text = "Total Points: " + score;
+			submittedWordText.text = currentWord;
+			submittedScoreText.text = ": " + submittedScore + " points";
 
 			deleteAllSelectedTiles ();
 
@@ -160,11 +173,17 @@ public class BoxScript : MonoBehaviour {
 	public static void deleteAllSelectedTiles() {
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
-			Destroy (grid [(int)v.x, (int)v.y].gameObject);
+			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
+			gameObject.GetComponent<BoxScript> ().animateSuccess ();
+			Destroy (gameObject);
 			grid [(int)v.x, (int)v.y] = null;
 		}
 		currentWord = "";
 		currentSelection.Clear ();
+	}
+
+	public void animateSuccess() {
+		
 	}
 
 	public static bool isValidWord(string word) {
