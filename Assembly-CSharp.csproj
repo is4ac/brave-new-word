@@ -9,7 +9,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{F492AF71-3CE8-9E4B-4EAB-71C62A02F75A}</ProjectGuid>
+    <ProjectGuid>{4643E731-41EB-52AE-EA5E-48F768D6192E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -56,7 +56,6 @@
      <Compile Include="Assets\Scripts\GameManagerScript.cs" />
      <Compile Include="Assets\Scripts\SpawnBoxScript.cs" />
      <Compile Include="Assets\Scripts\TextFaderScript.cs" />
-     <None Include="Assets\Dictionaries\wordsEn.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
