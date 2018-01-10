@@ -72,7 +72,8 @@ public class BoxScript : MonoBehaviour {
 				// there is no previously clicked box
 				if (currentSelection.Count == 0) {
 					SelectThisTile ();
-				} else if (IsNextTo (currentSelection[currentSelection.Count-1])) {
+				} else if (IsNextTo (currentSelection[currentSelection.Count-1]) && 
+						   !currentSelection.Contains (new Vector2 (myX, myY))) {
 					// add on to the current selection 
 					SelectThisTile();
 				} else {
