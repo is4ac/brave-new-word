@@ -131,8 +131,7 @@ public class BoxScript : MonoBehaviour {
 			fall = Time.time;
 		}
 	}
-
-	/*
+		
 	// Click on blocks to select them
 	void OnMouseDown() {
 		// regular left mouse click
@@ -149,7 +148,6 @@ public class BoxScript : MonoBehaviour {
 			}
 		}
 	}
-	*/
 
 	public static void PlayWord() {
 		bool valid = UpdateScore ();
