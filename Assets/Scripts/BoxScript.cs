@@ -64,8 +64,9 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		// Check touch input updates
-		if (Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+		// ButtonUI touch inputs
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
 			//Debug.Log ("Inside Tile worked!");
 
 			if (Input.GetTouch (0).phase == TouchPhase.Began) {
@@ -100,9 +101,43 @@ public class BoxScript : MonoBehaviour {
 				}
 			}
 		}
+		// SwipeUI touch input
+		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+			//Debug.Log ("Inside Tile worked!");
 
-		if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
-			//PlayWord ();
+			if (Input.GetTouch (0).phase == TouchPhase.Began) {
+				// there is no previously clicked box
+				if (currentSelection.Count == 0) {
+					SelectThisTile ();
+				} else {
+					// de-select what has already been selected
+					ClearAllSelectedTiles ();
+				}
+			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+				// selected tile and it isn't already selected)
+				if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					!currentSelection.Contains (new Vector2 (myX, myY))) {
+					SelectThisTile ();
+				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+					// de-select the most recent tile(s) if you move back to an old one
+					for (int i = currentSelection.Count - 1; i > 0; --i) {
+						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+							RemoveLastSelection ();
+						} else {
+							break;
+						}
+					}
+				} else {
+					// just do nothing?
+				}
+			}
+		}
+
+		// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+			PlayWord ();
 		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
 			ClearAllSelectedTiles ();
 		}
@@ -254,16 +289,16 @@ public class BoxScript : MonoBehaviour {
 	public static void AnimateSelectedTiles(int submittedScore) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-		if (submittedScore >= 50 || currentWord.Length > 6) {
+		if (submittedScore >= 45) {
 			// PHENOMENAL!
 			textFader.FadeText (0.5f, "Phenomenal!");
-		} else if (submittedScore >= 40 || currentWord.Length > 5) {
+		} else if (submittedScore >= 35) {
 			// FANTASTIC!
 			textFader.FadeText (0.5f, "Fantastic!");
-		} else if (submittedScore >= 30 || currentWord.Length > 4) {
+		} else if (submittedScore >= 25) {
 			// GREAT!
 			textFader.FadeText (0.5f, "Great!");
-		} else if (submittedScore >= 20 || currentWord.Length > 3) {
+		} else if (submittedScore >= 15) {
 			// NICE!
 			textFader.FadeText (0.5f, "Nice!");
 		}
