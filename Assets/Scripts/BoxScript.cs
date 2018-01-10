@@ -8,9 +8,9 @@ using UnityEngine.UI;
 
 public class BoxScript : MonoBehaviour {
 
-	public static int gridWidthRadius = 5;
+	public static float gridWidthRadius = 2.5f;
 	public static int gridHeightRadius = 4;
-	public static int gridWidth = gridWidthRadius*2 + 1; // -5 to 5 
+	public static int gridWidth = (int)(gridWidthRadius*2) + 1; // -2.5 to 2.5 
 	public static int gridHeight = gridHeightRadius*2 + 1; // -4 to 4
 	public static Transform[,] grid = new Transform[gridWidth, gridHeight];
 	public static List<Vector2> currentSelection = new List<Vector2> ();
@@ -21,13 +21,14 @@ public class BoxScript : MonoBehaviour {
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
     public static Dictionary<string,float> freqDictionary = null;
+	public static CamShakeSimpleScript camShake = null;
 
 	float fall = 0f;
 	bool falling = true;
 	bool columnFalling = false;
 	int myX = 0;
 	int myY = 0;
-
+	bool isSelected = false;
 
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
@@ -35,8 +36,8 @@ public class BoxScript : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		// Add the location of the block to the grid
-		Vector2 v = Round(transform.position);
-		myX = (int)v.x + gridWidthRadius;
+		Vector2 v = transform.position;
+		myX = (int)(v.x + gridWidthRadius);
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;
 		falling = true;
@@ -63,6 +64,84 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+		// ButtonUI touch inputs
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+			//Debug.Log ("Inside Tile worked!");
+
+			if (Input.GetTouch (0).phase == TouchPhase.Began) {
+				// there is no previously clicked box
+				if (currentSelection.Count == 0) {
+					SelectThisTile ();
+				} else if (IsNextTo (currentSelection[currentSelection.Count-1]) && 
+						   !currentSelection.Contains (new Vector2 (myX, myY))) {
+					// add on to the current selection 
+					SelectThisTile();
+				} else {
+					// de-select what has already been selected
+					ClearAllSelectedTiles ();
+				}
+			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+				// selected tile and it isn't already selected)
+				if (currentSelection.Count > 0 && 
+					IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					!currentSelection.Contains (new Vector2 (myX, myY))) {
+					SelectThisTile ();
+				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+					// de-select the most recent tile(s) if you move back to an old one
+					for (int i = currentSelection.Count - 1; i > 0; --i) {
+						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+							RemoveLastSelection ();
+						} else {
+							break;
+						}
+					}
+				} else {
+					// just do nothing?
+				}
+			}
+		}
+		// SwipeUI touch input
+		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+			//Debug.Log ("Inside Tile worked!");
+
+			if (Input.GetTouch (0).phase == TouchPhase.Began) {
+				// there is no previously clicked box
+				if (currentSelection.Count == 0) {
+					SelectThisTile ();
+				} else {
+					// de-select what has already been selected
+					ClearAllSelectedTiles ();
+				}
+			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+				// selected tile and it isn't already selected)
+				if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					!currentSelection.Contains (new Vector2 (myX, myY))) {
+					SelectThisTile ();
+				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+					// de-select the most recent tile(s) if you move back to an old one
+					for (int i = currentSelection.Count - 1; i > 0; --i) {
+						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+							RemoveLastSelection ();
+						} else {
+							break;
+						}
+					}
+				} else {
+					// just do nothing?
+				}
+			}
+		}
+
+		// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+			PlayWord ();
+		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
+			ClearAllSelectedTiles ();
+		}
+			
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
 			if (!IsOtherBoxInColumnFalling ()) {
@@ -88,6 +167,7 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
+	/*
 	// Click on blocks to select them
 	void OnMouseDown() {
 		// regular left mouse click
@@ -103,6 +183,40 @@ public class BoxScript : MonoBehaviour {
 				ClearAllSelectedTiles();
 			}
 		}
+	}
+	*/
+
+	public static void PlayWord() {
+		bool valid = UpdateScore ();
+
+		if (valid) {
+			// do something celebratory! like sparkles?
+		} else {
+			camShake.ShakeRed (1f);
+		}
+	}
+
+	static void RemoveLastSelection() {
+		Vector2 v = currentSelection [currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
+		currentSelection.Remove (v);
+		currentWord = currentWord.Substring (0, currentWord.Length - 1);
+
+		// select the most recent one
+		v = currentSelection[currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = true;
+	}
+
+	bool IsInsideTile(Vector2 pos) {
+		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
+		float trueX = myX - gridWidthRadius;
+		int trueY = myY - gridHeightRadius;
+		float radius = 0.37f;
+
+		// slight border around edge to make it easier to get diagonals
+		return (realPos.x > trueX - radius && realPos.x <= trueX + radius &&
+			realPos.y > trueY - radius && realPos.y <= trueY + radius);
 	}
 
 	bool IsNoBoxAboveMe() {
@@ -142,7 +256,7 @@ public class BoxScript : MonoBehaviour {
 		if (IsValidWord (currentWord)) {
 			int submittedScore = GetScoringFunction (currentWord);
 			score += submittedScore;
-			scoreText.text = "Total Points: " + score;
+			scoreText.text = "Points: " + score;
 			submittedWordText.text = currentWord;
 			submittedScoreText.text = ": " + submittedScore + " points";
 
@@ -175,16 +289,16 @@ public class BoxScript : MonoBehaviour {
 	public static void AnimateSelectedTiles(int submittedScore) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-		if (submittedScore >= 50 || currentWord.Length > 6) {
+		if (submittedScore >= 45) {
 			// PHENOMENAL!
 			textFader.FadeText (0.5f, "Phenomenal!");
-		} else if (submittedScore >= 40 || currentWord.Length > 5) {
+		} else if (submittedScore >= 35) {
 			// FANTASTIC!
 			textFader.FadeText (0.5f, "Fantastic!");
-		} else if (submittedScore >= 30 || currentWord.Length > 4) {
+		} else if (submittedScore >= 25) {
 			// GREAT!
 			textFader.FadeText (0.5f, "Great!");
-		} else if (submittedScore >= 20 || currentWord.Length > 3) {
+		} else if (submittedScore >= 15) {
 			// NICE!
 			textFader.FadeText (0.5f, "Nice!");
 		}
@@ -232,6 +346,7 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Add (new Vector2 (myX, myY));
 		currentWord += GetLetterFromPrefab (this.gameObject.name);
 		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+		isSelected = true;
 	}
 
 	// Checks to see if the other tile is adjacent (or diagonal) to the current location
@@ -281,6 +396,7 @@ public class BoxScript : MonoBehaviour {
 		// remove all coloring
 		foreach (Vector2 v in currentSelection) {
 			grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
+			grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
 		}
 
 		currentSelection.Clear ();
@@ -291,12 +407,8 @@ public class BoxScript : MonoBehaviour {
 		return name.Substring (6, 1);
 	}
 
-	public static Vector2 Round(Vector2 v) {
-		return new Vector2(Mathf.Round(v.x), Mathf.Round(v.y));
-	}
-
 	public static bool IsInsideGrid(Vector2 pos) {
-		int x = (int)pos.x;
+		float x = pos.x;
 		int y = (int)pos.y;
 		return (x >= -gridWidthRadius && x <= gridWidthRadius && y >= -gridHeightRadius && y <= gridHeightRadius);
 	}
@@ -312,13 +424,13 @@ public class BoxScript : MonoBehaviour {
 	}
 		
 	bool IsValidPosition() {        
-		Vector2 v = Round(transform.position);
+		Vector2 v = transform.position;
 
 		if (!IsInsideGrid (v)) {
 			return false;
 		}
-		if (grid [(int)v.x + gridWidthRadius, (int)v.y + gridHeightRadius] != null &&
-		    grid [(int)v.x + gridWidthRadius, (int)v.y + gridHeightRadius] != transform) {
+		if (grid [(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != null &&
+			grid [(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != transform) {
 			return false;
 		}
 
@@ -347,8 +459,8 @@ public class BoxScript : MonoBehaviour {
 		grid [myX, myY] = null;
 
 		// Add the new location of the block to the grid
-		Vector2 v = Round(transform.position);
-		myX = (int)v.x + gridWidthRadius;
+		Vector2 v = transform.position;
+		myX = (int)(v.x + gridWidthRadius);
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;
 	}
