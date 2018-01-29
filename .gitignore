@@ -7,3 +7,6 @@ Thumbs.db
 ehthumbs.db
 Temp/
 Library/
+Assembly-CSharp.csproj
+*.p12
+builds/

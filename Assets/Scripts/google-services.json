@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1075442183974",
+    "firebase_url": "https://wordflood-bf7c4.firebaseio.com",
+    "project_id": "wordflood-bf7c4",
+    "storage_bucket": "wordflood-bf7c4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1075442183974:android:fb9531cd9e9b4e08",
+        "android_client_info": {
+          "package_name": "com.complexplay.wordflood"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1075442183974-2t0ib2fhd72fc9d08r6gg4oafamo0668.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.complexplay.wordflood",
+            "certificate_hash": "4e5140bffceb1ab3c1461deafa228e2278b84a68"
+          }
+        },
+        {
+          "client_id": "1075442183974-tuq80hlj4rs2ns2savcpnahf4jv7t6oj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAgnz5d27xNxSjELAHabbdGYnT9rifuU0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1075442183974-tuq80hlj4rs2ns2savcpnahf4jv7t6oj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
