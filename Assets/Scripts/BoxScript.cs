@@ -2,9 +2,12 @@
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+//using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using Firebase;
+using Firebase.Database;
+using Firebase.Unity.Editor;
 
 public class BoxScript : MonoBehaviour {
 
@@ -33,6 +36,32 @@ public class BoxScript : MonoBehaviour {
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
 
+	public class WordEntry {
+		public string username;
+//		public string email;
+		public int value;
+		public bool success;
+		public int time;
+		public int userID;
+		public int score;
+		public int timeTaken;
+		public WordEntry() {
+		}
+
+		public WordEntry(bool success, string username, int score) {
+			this.username = username;
+			this.score = score;
+			this.success = success;
+		}
+	}
+
+//	private void writeNewUser(string name) {
+//		WordEntry wrd = new WordEntry(false, name, 45);
+//		string json = JsonUtility.ToJson(wrd);
+//
+//		reference.Child("users").Child(userId).SetRawJsonValueAsync(json);
+//	}
+
 	// Use this for initialization
 	void Start () {
 		// Add the location of the block to the grid
@@ -43,6 +72,11 @@ public class BoxScript : MonoBehaviour {
 		falling = true;
 		columnFalling = false;
 		fall = Time.time;
+		FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
+		FirebaseApp.DefaultInstance.SetEditorP12FileName("WordFlood-c8f715f65d35.p12");
+		FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
+		FirebaseApp.DefaultInstance.SetEditorP12Password("notasecret");
+//		DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
 
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
@@ -151,10 +185,16 @@ public class BoxScript : MonoBehaviour {
 
 	public static void PlayWord() {
 		bool valid = UpdateScore ();
+		Debug.Log ("Attempts to log data");
+		WordEntry wrd = new WordEntry(false, currentWord, 45);
+		string json = JsonUtility.ToJson(wrd);
 
+		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference("words");
+		reference.SetRawJsonValueAsync (json);
 		if (valid) {
 			// do something celebratory! like sparkles?
 		} else {
+			
 			camShake.ShakeRed (1f);
 		}
 	}
