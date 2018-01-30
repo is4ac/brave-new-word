@@ -38,19 +38,21 @@ public class BoxScript : MonoBehaviour {
 
 	public class WordEntry {
 		public string username;
-//		public string email;
-		public int value;
+		public string value;
 		public bool success;
 		public int time;
 		public int userID;
 		public int score;
 		public int timeTaken;
+		public int gameID;
+
 		public WordEntry() {
 		}
 
-		public WordEntry(bool success, string username, int score) {
+		public WordEntry(bool success, string username, string value, int score) {
 			this.username = username;
 			this.score = score;
+			this.value = value;
 			this.success = success;
 		}
 	}
@@ -73,9 +75,10 @@ public class BoxScript : MonoBehaviour {
 		columnFalling = false;
 		fall = Time.time;
 		FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
-		FirebaseApp.DefaultInstance.SetEditorP12FileName("WordFlood-c8f715f65d35.p12");
+		FirebaseApp.DefaultInstance.SetEditorP12FileName("WordFlood-66029aead4c6.p12");
 		FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
 		FirebaseApp.DefaultInstance.SetEditorP12Password("notasecret");
+
 //		DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
 
 		if (scoreText == null) {
@@ -185,12 +188,7 @@ public class BoxScript : MonoBehaviour {
 
 	public static void PlayWord() {
 		bool valid = UpdateScore ();
-		Debug.Log ("Attempts to log data");
-		WordEntry wrd = new WordEntry(false, currentWord, 45);
-		string json = JsonUtility.ToJson(wrd);
 
-		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference("words");
-		reference.SetRawJsonValueAsync (json);
 		if (valid) {
 			// do something celebratory! like sparkles?
 		} else {
@@ -263,11 +261,29 @@ public class BoxScript : MonoBehaviour {
 			submittedWordText.text = currentWord;
 			submittedScoreText.text = ": " + submittedScore + " points";
 
+			// firebase logging
+			Debug.Log ("Attempts to log data");
+			WordEntry wrd = new WordEntry(true, "isaacsung", currentWord, submittedScore);
+			string json = JsonUtility.ToJson(wrd);
+
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
+			DatabaseReference child = reference.Child ("words").Push ();
+			child.SetRawJsonValueAsync(json);
+
 			AnimateSelectedTiles (submittedScore);
 			DeleteAllSelectedTiles ();
 
 			return true;
 		} else {
+			// firebase logging
+			Debug.Log ("Attempts to log data");
+			WordEntry wrd = new WordEntry(false, "isaacsung", currentWord, 0);
+			string json = JsonUtility.ToJson(wrd);
+
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference("words");
+			DatabaseReference child = reference.Child ("users").Push ();
+			child.SetRawJsonValueAsync(json);
+
 			ClearAllSelectedTiles ();
 
 			return false;
