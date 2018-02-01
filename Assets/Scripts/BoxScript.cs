@@ -2,7 +2,6 @@
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-//using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Firebase;
@@ -25,7 +24,10 @@ public class BoxScript : MonoBehaviour {
 	public static string currentWord = "";
     public static Dictionary<string,float> freqDictionary = null;
 	public static CamShakeSimpleScript camShake = null;
+	public static float lastSubmitTime;
+	public static float lastActionTime;
 
+	char myLetter;
 	float fall = 0f;
 	bool falling = true;
 	bool columnFalling = false;
@@ -36,33 +38,69 @@ public class BoxScript : MonoBehaviour {
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
 
-	public class WordEntry {
+	public class ActionEntry {
 		public string username;
-		public string value;
-		public bool success;
-		public int time;
-		public int userID;
-		public int score;
-		public int timeTaken;
 		public int gameID;
+		public int gameType;
+		public char letter;
+		public string type;
+		public string dateTime;
+		public float timeSinceLastAction; // in seconds
+		public int x; // -1 if n/a
+		public int y; // -1 if n/a
 
-		public WordEntry() {
+		public ActionEntry() {
+			username = GameManagerScript.username;
+			gameID = GameManagerScript.GAME_ID;
+			dateTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		}
 
-		public WordEntry(bool success, string username, string value, int score) {
-			this.username = username;
-			this.score = score;
-			this.value = value;
-			this.success = success;
+		public ActionEntry(string type, char letter, float timeSinceLastAction, int x, int y) : this() {
+			this.type = type;
+			this.timeSinceLastAction = timeSinceLastAction;
+			this.x = x;
+			this.y = y;
+			this.letter = letter;
 		}
 	}
 
-//	private void writeNewUser(string name) {
-//		WordEntry wrd = new WordEntry(false, name, 45);
-//		string json = JsonUtility.ToJson(wrd);
-//
-//		reference.Child("users").Child(userId).SetRawJsonValueAsync(json);
-//	}
+	public class WordEntry {
+		public string username; // e.g. Tranquil Red Panda
+		public string word; 	// the word that was submitted
+		public bool success; 	// whether or not the word was valid
+		public string dateTime; // the date and time that it was played
+		public int scoreTotal; 	// the total score of the word
+		public int scoreBase; 	// the base score of the word (based on letter freq)
+		public float timeTaken;	// number of seconds from previous submission to now
+		public int gameID;		// unique game ID identifying unique game sessions
+		public int gameType;	// 0 = SwipeUI, 1 = ButtonUI, 2 = Button and Time?
+		public float frequency;	// the frequency rate of the word as given in the dictionary
+
+		public WordEntry() {
+			username = GameManagerScript.username;
+			gameID = GameManagerScript.GAME_ID;
+			gameType = (int) GameManagerScript.currentVersion;
+			dateTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+		}
+
+		public WordEntry(bool success, string word, int scoreTotal, int scoreBase, float frequency, float timeTaken) : this() {
+			this.scoreTotal = scoreTotal;
+			this.scoreBase = scoreBase;
+			this.word = word;
+			this.success = success;
+			this.frequency = frequency;
+			this.timeTaken = timeTaken;
+		}
+
+		public void setValues(bool success, string word, int scoreTotal, int scoreBase, float frequency, float timeTaken) {
+			this.scoreTotal = scoreTotal;
+			this.scoreBase = scoreBase;
+			this.word = word;
+			this.success = success;
+			this.frequency = frequency;
+			this.timeTaken = timeTaken;
+		}
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -74,12 +112,7 @@ public class BoxScript : MonoBehaviour {
 		falling = true;
 		columnFalling = false;
 		fall = Time.time;
-		FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
-		FirebaseApp.DefaultInstance.SetEditorP12FileName("WordFlood-66029aead4c6.p12");
-		FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
-		FirebaseApp.DefaultInstance.SetEditorP12Password("notasecret");
-
-//		DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
+		myLetter = GetLetterFromPrefab (this.gameObject.name);
 
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
@@ -101,21 +134,25 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		// Check touch input updates
-		if (Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+		// ButtonUI touch inputs
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
 			//Debug.Log ("Inside Tile worked!");
 
 			if (Input.GetTouch (0).phase == TouchPhase.Began) {
 				// there is no previously clicked box
 				if (currentSelection.Count == 0) {
 					SelectThisTile ();
+					LogAction ("select", myLetter, myX, myY);
 				} else if (IsNextTo (currentSelection[currentSelection.Count-1]) && 
-						   !currentSelection.Contains (new Vector2 (myX, myY))) {
+					!currentSelection.Contains (new Vector2 (myX, myY))) {
 					// add on to the current selection 
 					SelectThisTile();
+					LogAction ("select", myLetter, myX, myY);
 				} else {
 					// de-select what has already been selected
 					ClearAllSelectedTiles ();
+					LogAction ("deselect", myLetter, myX, myY);
 				}
 			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
 				// selected tile and it isn't already selected)
@@ -123,11 +160,49 @@ public class BoxScript : MonoBehaviour {
 					IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 					!currentSelection.Contains (new Vector2 (myX, myY))) {
 					SelectThisTile ();
+					LogAction ("select", myLetter, myX, myY);
 				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
 					// de-select the most recent tile(s) if you move back to an old one
 					for (int i = currentSelection.Count - 1; i > 0; --i) {
 						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
 							RemoveLastSelection ();
+							LogAction ("deselectOne", myLetter, myX, myY);
+						} else {
+							break;
+						}
+					}
+				} else {
+					// just do nothing?
+				}
+			}
+		}
+		// SwipeUI touch input
+		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI && 
+			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+			//Debug.Log ("Inside Tile worked!");
+
+			if (Input.GetTouch (0).phase == TouchPhase.Began) {
+				// there is no previously clicked box
+				if (currentSelection.Count == 0) {
+					SelectThisTile ();
+					LogAction ("select", myLetter, myX, myY);
+				} else {
+					// de-select what has already been selected
+					ClearAllSelectedTiles ();
+					LogAction ("deselect", myLetter, myX, myY);
+				}
+			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+				// selected tile and it isn't already selected)
+				if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					!currentSelection.Contains (new Vector2 (myX, myY))) {
+					SelectThisTile ();
+					LogAction ("select", myLetter, myX, myY);
+				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+					// de-select the most recent tile(s) if you move back to an old one
+					for (int i = currentSelection.Count - 1; i > 0; --i) {
+						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+							RemoveLastSelection ();
+							LogAction ("deselectOne", myLetter, myX, myY);
 						} else {
 							break;
 						}
@@ -138,10 +213,13 @@ public class BoxScript : MonoBehaviour {
 			}
 		}
 
-		if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
-			//PlayWord ();
+		// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+		if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+			PlayWord ();
 		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
 			ClearAllSelectedTiles ();
+			LogAction ("submit", '-', myX, myY);
 		}
 			
 		// check to see if the column needs to go down, or if it needs to be refilled
@@ -168,31 +246,57 @@ public class BoxScript : MonoBehaviour {
 			fall = Time.time;
 		}
 	}
+
+	static void LogAction(string type, char letter, int x, int y) {
+		if (GameManagerScript.logging) {
+			//Debug.Log ("Attempts to log data");
+
+			ActionEntry action = new ActionEntry (type, letter, Time.time - lastActionTime, x, y);
+			string json = JsonUtility.ToJson (action);
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference ("actions").Child(GameManagerScript.username);
+			DatabaseReference child = reference.Push ();
+			child.SetRawJsonValueAsync (json);
+			lastActionTime = Time.time;
+		}
+	}
 		
 	// Click on blocks to select them
 	void OnMouseDown() {
 		// regular left mouse click
-		if (Input.GetMouseButton (0)) {
+		if (false && GameManagerScript.currentVersion != GameManagerScript.Versions.SwipeUI && Input.GetMouseButton (0)) {
 			// there is no previously clicked box OR
 			// this box is selectable (it is adjacent to the previously 
 			// selected tile and it isn't already selected)
 			if (currentSelection.Count == 0 || IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 			           !currentSelection.Contains (new Vector2 (myX, myY))) {
 				SelectThisTile();
+				LogAction ("select", myLetter, myX, myY);
 			} else {
 				// de-select what has already been selected
 				ClearAllSelectedTiles();
+				LogAction ("deselect", myLetter, myX, myY);
 			}
 		}
 	}
 
 	public static void PlayWord() {
-		bool valid = UpdateScore ();
+		WordEntry dbEntry = new WordEntry ();
+		bool valid = UpdateScore (dbEntry);
 
+		// Firebase logging
+		if (GameManagerScript.logging) {
+			Debug.Log ("Attempts to log data");
+			string json = JsonUtility.ToJson (dbEntry);
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference ("words");
+			DatabaseReference child = reference.Push ();
+			child.SetRawJsonValueAsync (json);
+			LogAction ("submit", '-', -1, -1);
+		}
+
+		// Screen animations baesd on if word was valid or not
 		if (valid) {
 			// do something celebratory! like sparkles?
 		} else {
-			
 			camShake.ShakeRed (1f);
 		}
 	}
@@ -253,22 +357,22 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
-	public static bool UpdateScore() {
+	public static bool UpdateScore(WordEntry dbEntry) {
+		float timeTaken = Time.time - lastSubmitTime;
+		lastSubmitTime = Time.time;
+
 		if (IsValidWord (currentWord)) {
-			int submittedScore = GetScoringFunction (currentWord);
+			int submittedScore = GetScoringFunction (currentWord, dbEntry);
 			score += submittedScore;
 			scoreText.text = "Points: " + score;
 			submittedWordText.text = currentWord;
 			submittedScoreText.text = ": " + submittedScore + " points";
 
 			// firebase logging
-			Debug.Log ("Attempts to log data");
-			WordEntry wrd = new WordEntry(true, "isaacsung", currentWord, submittedScore);
-			string json = JsonUtility.ToJson(wrd);
-
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
-			DatabaseReference child = reference.Child ("words").Push ();
-			child.SetRawJsonValueAsync(json);
+			dbEntry.word = currentWord;
+			dbEntry.success = true;
+			dbEntry.timeTaken = timeTaken;
+			dbEntry.scoreTotal = submittedScore;
 
 			AnimateSelectedTiles (submittedScore);
 			DeleteAllSelectedTiles ();
@@ -276,50 +380,46 @@ public class BoxScript : MonoBehaviour {
 			return true;
 		} else {
 			// firebase logging
-			Debug.Log ("Attempts to log data");
-			WordEntry wrd = new WordEntry(false, "isaacsung", currentWord, 0);
-			string json = JsonUtility.ToJson(wrd);
-
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference("words");
-			DatabaseReference child = reference.Child ("users").Push ();
-			child.SetRawJsonValueAsync(json);
-
+			dbEntry.setValues(false, currentWord, 0, 0, 0, timeTaken);
+			
 			ClearAllSelectedTiles ();
 
 			return false;
 		}
 	}
 
-	public static int GetScoringFunction(string word) {
+	public static int GetScoringFunction(string word, WordEntry dbEntry) {
 		// scoring function based on freq of word + freq of letters
 		// TODO: do more balance testing of scoring function to make sure it is balanced?
 		float wordFreq = GetWordFreq (word);
 		Debug.Log(currentWord + ": " + wordFreq);
+		dbEntry.frequency = wordFreq;
 
 		int baseScore = 0;
 		for (int i = 0; i < word.Length; ++i) {
-			baseScore += SpawnBoxScript.MAX_LETTER_FREQ / SpawnBoxScript.letterDistributions[word[i]-'A'];
+			baseScore +=  (int)Math.Ceiling(SpawnBoxScript.letterDistributions[word[i]-'A'] / (SpawnBoxScript.MAX_LETTER_FREQ / 3.0));
 		}
 		Debug.Log ("baseScore: " + baseScore);
+		dbEntry.scoreBase = baseScore;
 
-		return baseScore + (int)(baseScore * (wordFreq * 20));
+		return baseScore + (int)(baseScore * (wordFreq * 25));
 	}
 
 	public static void AnimateSelectedTiles(int submittedScore) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-		if (submittedScore >= 50 || currentWord.Length > 6) {
+		if (submittedScore >= 50) {
 			// PHENOMENAL!
-			textFader.FadeText (0.5f, "Phenomenal!");
-		} else if (submittedScore >= 40 || currentWord.Length > 5) {
+			textFader.FadeText (0.7f, "Phenomenal!");
+		} else if (submittedScore >= 40) {
 			// FANTASTIC!
-			textFader.FadeText (0.5f, "Fantastic!");
-		} else if (submittedScore >= 30 || currentWord.Length > 4) {
+			textFader.FadeText (0.7f, "Fantastic!");
+		} else if (submittedScore >= 30) {
 			// GREAT!
-			textFader.FadeText (0.5f, "Great!");
-		} else if (submittedScore >= 20 || currentWord.Length > 3) {
+			textFader.FadeText (0.7f, "Great!");
+		} else if (submittedScore >= 20) {
 			// NICE!
-			textFader.FadeText (0.5f, "Nice!");
+			textFader.FadeText (0.7f, "Nice!");
 		}
 
 		// animate each selected tile
@@ -350,6 +450,12 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static bool IsValidWord(string word) {
+		if (word.Length < 3) {
+			// Error message
+			TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
+			textFader.FadeErrorText (0.8f, "Word must be at least 3 letters");
+		}
+
 		return word.Length >= 3 && freqDictionary.ContainsKey(word);
 	}
 
@@ -363,7 +469,7 @@ public class BoxScript : MonoBehaviour {
 
 	void SelectThisTile() {
 		currentSelection.Add (new Vector2 (myX, myY));
-		currentWord += GetLetterFromPrefab (this.gameObject.name);
+		currentWord += myLetter;
 		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
 		isSelected = true;
 	}
@@ -421,9 +527,9 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Clear ();
 	}
 
-	public static string GetLetterFromPrefab(string name) {
+	public static char GetLetterFromPrefab(string name) {
 		// kind of a hack.. the prefab names' 7th character is the letter of the block
-		return name.Substring (6, 1);
+		return name[6];
 	}
 
 	public static bool IsInsideGrid(Vector2 pos) {
@@ -482,5 +588,18 @@ public class BoxScript : MonoBehaviour {
 		myX = (int)(v.x + gridWidthRadius);
 		myY = (int)v.y + gridHeightRadius;
 		grid[myX, myY] = transform;
+	}
+
+	public static void Reset() {
+		foreach (Transform transform in grid) {
+			Destroy (transform.gameObject);
+		}
+
+		grid = new Transform[gridWidth, gridHeight];
+		currentSelection.Clear ();
+		score = 0;
+		scoreText.text = "Points: " + score;
+		submittedScoreText.text = "";
+		submittedWordText.text = "";
 	}
 }

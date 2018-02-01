@@ -10,6 +10,7 @@ public class SpawnBoxScript : MonoBehaviour {
 	[SerializeField]
 	public int myX;
 
+	static bool isInit = false;
 	bool init = true;
 	int initCount = 0;
 	bool wait = true;
@@ -22,6 +23,10 @@ public class SpawnBoxScript : MonoBehaviour {
         19,8,60,63,90,      // P Q R S T
         28,10,24,10,20,10}; // U V W X Y Z
 	public const int MAX_LETTER_FREQ = 90;
+
+	public static bool isInitialized() {
+		return isInit;
+	}
 
     void AddToLetterFreqList() {
         for (int letter_index = 0; letter_index < 26; letter_index++)
@@ -57,10 +62,14 @@ public class SpawnBoxScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		// initialize letter frequency array for spawning statistics
-		letterFreq = new List<int>();
+		Debug.Log ("spawn box start");
 
-        AddToLetterFreqList();
+		// initialize letter frequency array for spawning statistics
+		if (letterFreq == null) {
+			letterFreq = new List<int> ();
+
+			AddToLetterFreqList ();
+		}
 
 		ImportDictionary ();
         
@@ -72,6 +81,12 @@ public class SpawnBoxScript : MonoBehaviour {
 			if (init && initCount < 9) {
 				++initCount;
 				SpawnNewBox ();
+
+				if (initCount == 9) {
+					isInit = true;
+					BoxScript.lastSubmitTime = Time.time;
+					BoxScript.lastActionTime = Time.time;
+				}
 			} else if (wait) {
 				StartCoroutine(WaitForSpawn ());
 				wait = false;
@@ -95,5 +110,11 @@ public class SpawnBoxScript : MonoBehaviour {
 		if (init) {
 			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
 		}
+	}
+
+	public void Reset() {
+		init = true;
+		initCount = 0;
+		isInit = false;
 	}
 }
