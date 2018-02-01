@@ -51,15 +51,38 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUI.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUIButton.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUIData.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUIImage.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUISlider.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\FlexibleUI\FlexibleUIText.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\DontDestroy.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\EventSystemChecker.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\MenuObject.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\MenuSettings.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\Pause.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\PlayMusic.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\QuitApplication.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\SetAudioLevels.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\ShowPanels.cs" />
+     <Compile Include="Assets\Game Jam Template\Scripts\Menu\StartOptions.cs" />
      <Compile Include="Assets\Scripts\BoxScript.cs" />
      <Compile Include="Assets\Scripts\CamShakeSimpleScript.cs" />
      <Compile Include="Assets\Scripts\GameManagerScript.cs" />
+     <Compile Include="Assets\Scripts\PlayerPrefsX.cs" />
+     <Compile Include="Assets\Scripts\RandomNameScript.cs" />
      <Compile Include="Assets\Scripts\SpawnBoxScript.cs" />
      <Compile Include="Assets\Scripts\TextFaderScript.cs" />
      <None Include="Assets\Firebase\m2repository\com\google\firebase\firebase-auth-unity\maven-metadata.xml" />
      <None Include="Assets\Firebase\Plugins\link.xml" />
+     <None Include="Assets\Textures and Sprites\SF UI\Background\LICENSE.txt" />
+     <None Include="Assets\Game Jam Template\Fonts\OpenSans\License!.txt" />
+     <None Include="Assets\Materials\UI-Default-No-Alpha.shader" />
      <None Include="Assets\Firebase\m2repository\com\google\firebase\firebase-app-unity\maven-metadata.xml" />
      <None Include="Assets\Firebase\Plugins\Http\link.xml" />
+     <None Include="Assets\Game Jam Template\GameJamTemplateReadMe.txt" />
+     <None Include="Assets\Game Jam Template\README.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
@@ -132,6 +155,45 @@
  <Reference Include="UnityEditor.OSXStandalone.Extensions">
  <HintPath>/Applications/Unity/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
  </Reference>
+ <Reference Include="Firebase.Editor">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Editor/Firebase.Editor.dll</HintPath>
+ </Reference>
+ <Reference Include="Firebase.App">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.App.dll</HintPath>
+ </Reference>
+ <Reference Include="Firebase.Auth">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Auth.dll</HintPath>
+ </Reference>
+ <Reference Include="Firebase.Database">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Database.dll</HintPath>
+ </Reference>
+ <Reference Include="Firebase.Platform">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Platform.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.MiniJson">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Google.MiniJson.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.Sharpen">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Google.Sharpen.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.Compat">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Parse/Plugins/Unity.Compat.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.Tasks">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Parse/Plugins/Unity.Tasks.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.IOSResolver_v1.2.59.0">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.IOSResolver_v1.2.59.0.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.JarResolver_v1.2.59.0">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.JarResolver_v1.2.59.0.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.VersionHandler">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.VersionHandler.dll</HintPath>
+ </Reference>
+ <Reference Include="Google.VersionHandlerImpl_v1.2.59.0">
+ <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.VersionHandlerImpl_v1.2.59.0.dll</HintPath>
+ </Reference>
  <Reference Include="UnityEngine.Advertisements">
  <HintPath>/Users/isung/Library/Unity/cache/packages/packages.unity.com/com.unity.ads@2.0.3/UnityEngine.Advertisements.dll</HintPath>
  </Reference>
@@ -152,45 +214,6 @@
  </Reference>
  <Reference Include="UnityEngine.StandardEvents">
  <HintPath>/Users/isung/Library/Unity/cache/packages/packages.unity.com/com.unity.standardevents@1.0.10/UnityEngine.StandardEvents.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Compat">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Parse/Plugins/Unity.Compat.dll</HintPath>
- </Reference>
- <Reference Include="Google.MiniJson">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Google.MiniJson.dll</HintPath>
- </Reference>
- <Reference Include="Firebase.Database">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Database.dll</HintPath>
- </Reference>
- <Reference Include="Google.Sharpen">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Google.Sharpen.dll</HintPath>
- </Reference>
- <Reference Include="Google.VersionHandler">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.VersionHandler.dll</HintPath>
- </Reference>
- <Reference Include="Firebase.Platform">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Platform.dll</HintPath>
- </Reference>
- <Reference Include="Google.VersionHandlerImpl_v1.2.59.0">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.VersionHandlerImpl_v1.2.59.0.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Tasks">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Parse/Plugins/Unity.Tasks.dll</HintPath>
- </Reference>
- <Reference Include="Firebase.Editor">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Editor/Firebase.Editor.dll</HintPath>
- </Reference>
- <Reference Include="Google.JarResolver_v1.2.59.0">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.JarResolver_v1.2.59.0.dll</HintPath>
- </Reference>
- <Reference Include="Firebase.Auth">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.Auth.dll</HintPath>
- </Reference>
- <Reference Include="Google.IOSResolver_v1.2.59.0">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/PlayServicesResolver/Editor/Google.IOSResolver_v1.2.59.0.dll</HintPath>
- </Reference>
- <Reference Include="Firebase.App">
- <HintPath>/Users/isung/UnityProjects/ohno-wordflood-ver1/Assets/Firebase/Plugins/Firebase.App.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

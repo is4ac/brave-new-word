@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class TextFaderScript : MonoBehaviour {
 
+	public static Color normalColor = new Color32( 0x16, 0xE8, 0xE3, 0xFF );
+	public static Color errorColor = Color.black;
+
+
 	// Use this for initialization
 	void Start () {
 		
@@ -16,7 +20,19 @@ public class TextFaderScript : MonoBehaviour {
 	}
 
 	public void FadeText(float t, string text) {
+		Text myText = GetComponentInChildren<Text> ();
+		Image myPanel = GetComponent<Image> (); 
+		myPanel.color = normalColor; 
+		myText.fontSize = 58;
 		StartCoroutine (FadeTextToFullAlpha(t, text));
+	}
+
+	public void FadeErrorText(float t, string text) {
+		Text myText = GetComponentInChildren<Text> ();
+		Image myPanel = GetComponent<Image> (); 
+		myPanel.color = errorColor;
+		myText.fontSize = 30;
+		StartCoroutine (FadeTextToFullAlpha (t, text));
 	}
 
 	public IEnumerator FadeTextToFullAlpha(float t, string text)
