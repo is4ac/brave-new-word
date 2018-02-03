@@ -1,11 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CamShakeSimpleScript : MonoBehaviour {
 
 	Vector3 originalCameraPosition;
-
+	Color originalColor;
 	float shakeAmt = 0;
 	float shakeFactor = 0.1f;
 	public float decreaseFactor = 2.5f;
@@ -15,6 +16,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 	void Start() {
 		mainCamera = Camera.main;
 		originalCameraPosition = mainCamera.transform.position;
+		originalColor = GameObject.FindGameObjectWithTag ("Walls").GetComponent<Image> ().color;
 	}
 
 	public void Shake(float amount) {
@@ -28,10 +30,10 @@ public class CamShakeSimpleScript : MonoBehaviour {
 	}
 
 	void ColorWalls(Color changeColor) {
-		GameObject wallsObj = GameObject.FindGameObjectWithTag ("Walls");
+		GameObject[] wallObjs = GameObject.FindGameObjectsWithTag ("Walls");
 
-		foreach (Transform wall in wallsObj.transform) {
-			wall.gameObject.GetComponent<SpriteRenderer> ().color = changeColor;
+		foreach (GameObject wall in wallObjs) {
+			wall.GetComponent<Image> ().color = changeColor;
 		}
 	}
 
@@ -46,7 +48,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 			if (shakeAmt <= 0.0f) {
 				shakeAmt = 0.0f;
 				mainCamera.transform.position = originalCameraPosition;
-				ColorWalls (Color.white);
+				ColorWalls (originalColor);
 			}
 		}
 	}
