@@ -1,97 +1,102 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO;
-using System;
+using UnityEngine.SceneManagement;
+using Firebase;
+using Firebase.Database;
+using Firebase.Unity.Editor;
 
 public class GameManagerScript : MonoBehaviour {
 
+	// Set to true to log to Firebase database, false to turn off
+	public const bool logging = true;
+
 	CamShakeSimpleScript camShake;
-	private const int NUM_OF_PATHS = 2;
+	private const int NUM_OF_PATHS = 6;
 	public enum Versions { SwipeUI, ButtonUI, ButtonTimeUI };
+	private static Versions[][] allPaths = { 
+		new Versions[] { Versions.SwipeUI, Versions.ButtonUI, Versions.SwipeUI },
+		new Versions[] { Versions.ButtonUI, Versions.SwipeUI, Versions.ButtonUI },
+		new Versions[] { Versions.SwipeUI, Versions.SwipeUI, Versions.SwipeUI },
+		new Versions[] { Versions.ButtonUI, Versions.ButtonUI, Versions.ButtonUI },
+		new Versions[] { Versions.ButtonUI, Versions.ButtonUI, Versions.SwipeUI },
+		new Versions[] { Versions.SwipeUI, Versions.SwipeUI, Versions.ButtonUI } 
+	};
+	private static Versions[] currentPath;
+	private static int versionIndex;
 	public static Versions currentVersion;
 	GameObject playButton;
+	GameObject nextButton;
+	Text usernameText;
+	Text timerText;
+	public static int GAME_ID;
+	public static string username;
+	public static float timer = 10; // 5 minutes in seconds
+	public static bool timerEnded = false;
 
 	// Use this for initialization
 	void Start () {
+		// Using time since epoch date as unique game ID
+		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+		GAME_ID = (int)(System.DateTime.UtcNow - epochStart).TotalSeconds;
+		//Debug.Log ("Game id: " + GAME_ID);
+
 		BoxScript.camShake = gameObject.AddComponent<CamShakeSimpleScript> ();
-		playButton = GameObject.FindGameObjectWithTag ("PlayButton");
+		playButton = GameObject.Find ("PlayButton");
+		nextButton = GameObject.Find ("NextStageButton");
+		nextButton.SetActive (false);
+		username = PlayerPrefs.GetString ("username");
+		timerText = GameObject.Find ("TimerText").GetComponent<Text> ();
+		DisplayTime ();
 
-		try {
-			string line;
-			string firstLine = null;
-			int[] versions = null;
-			int versionIndex = -1;
+		// display the username on the screen
+		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
+		usernameText.text = username;
 
-			// Read the config file and determine what the order of UI versions will be
-			using (StreamReader file = new StreamReader(Application.persistentDataPath + "/config.config")) {
-				if ((line = file.ReadLine()) != null) {
-					firstLine = line;
-					string[] tokens = line.Split(',');
-					versions = new int[tokens.Length];
-
-					for (int i = 0; i < tokens.Length; ++i) {
-						if (!int.TryParse(tokens[i], out versions[i])) {
-							// some sort of error handling message debug log here
-						}
-					}
-				}
-
-				if ((line = file.ReadLine()) != null) {
-					if (!int.TryParse(line, out versionIndex)) {
-						// some sort of error handling message debug log here
-					}
-				}
-
-				if (versionIndex < versions.Length) {
-					if (Enum.IsDefined(typeof(Versions), versions[versionIndex])) {
-						currentVersion = (Versions) versions[versionIndex];
-					}
-				} else {
-					// reset the index back to the beginning
-					versionIndex = 0;
-
-					if (Enum.IsDefined(typeof(Versions), versions[versionIndex])) {
-						currentVersion = (Versions) versions[versionIndex];
-					}
-				}
-
-				Debug.Log(currentVersion);
-
-				file.Close();
+		// check to see if a path has already been saved in PlayerPrefsX
+		if (PlayerPrefs.HasKey ("currentPath")) {
+			currentPath = (Versions[])(object)PlayerPrefsX.GetIntArray ("currentPath");
+			versionIndex = PlayerPrefs.GetInt ("versionIndex");
+			if (versionIndex >= currentPath.Length) {
+				versionIndex = 0;
 			}
-
-			// advance version to next version in config file
-			FileInfo f = new FileInfo (Application.persistentDataPath + "/config.config");
-			StreamWriter writer = f.CreateText ();
-			writer.WriteLine (firstLine);
-			writer.WriteLine (versionIndex + 1);
-			writer.Close ();
-
-		} catch (FileNotFoundException ex) {
-			// choose a random path for the player by writing to the file
-
-			FileInfo file = new FileInfo (Application.persistentDataPath + "/config.config");
-			StreamWriter writer = file.CreateText ();
-
+		} else {
+			// Randomly decide on the version path this game will take
 			int i = UnityEngine.Random.Range (0, NUM_OF_PATHS);
+			currentPath = allPaths[i];
+			versionIndex = 0;
 
-			if (i == 0) {
-				writer.WriteLine ("0,1,0");
-			} else {
-				writer.WriteLine ("1,0,1");
-			}
-
-			writer.WriteLine ("0");
-			writer.Close ();
+			PlayerPrefsX.SetIntArray ("currentPath", (int[])(object)currentPath);
 		}
+
+		Debug.Log ("index: " + versionIndex);
+		currentVersion = currentPath[versionIndex++];
+		if (versionIndex >= currentPath.Length) {
+			versionIndex = 0;
+		}
+
+		PlayerPrefs.SetInt ("versionIndex", versionIndex);
 
 		// check version and hide/show Play Word button depending on version
 		if (currentVersion == Versions.SwipeUI) {
 			playButton.SetActive (false);
 		} else {
 			playButton.SetActive (true);
+		}
+
+		Debug.Log ("Version: " + currentVersion);
+
+		// insert user and game data into users table in firebase
+		if (logging) {
+			Debug.Log ("logging user??");
+
+			// insert new user entry into database
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference ("users");
+			DatabaseReference child = reference.Child (username);
+			child.Child ("gameTypes").Push ().SetValueAsync ((int)currentVersion);
+			child.Child ("gameIDs").Push ().SetValueAsync (GAME_ID);
 		}
 	}
 	
@@ -102,10 +107,50 @@ public class GameManagerScript : MonoBehaviour {
 		if (currentVersion == Versions.ButtonUI && Input.GetKeyDown (KeyCode.Return)) {
 			BoxScript.PlayWord ();
 		}
+
+		// timer start
+		if (SpawnBoxScript.isInitialized() && !timerEnded) {
+			timer -= Time.deltaTime;
+
+			if (timer <= 0) {
+				timer = 0;
+				timerEnded = true;
+			}
+
+			DisplayTime ();
+		}
+
+		if (timerEnded) {
+			nextButton.SetActive (true);
+		}
+	}
+
+	void DisplayTime() {
+		int minutes = Mathf.FloorToInt(timer / 60F);
+		int seconds = Mathf.FloorToInt(timer - minutes * 60);
+		string niceTime = string.Format("{0:0}:{1:00}", minutes, seconds);
+		timerText.text = niceTime;
 	}
 
 	// Play word!
 	public void PlayWord() {
 		BoxScript.PlayWord ();
+	}
+
+	public void Reset() {
+		timer = 10; // 5 minutes in seconds
+		timerEnded = false;
+
+		GameObject boxes = GameObject.Find ("SpawnBoxes");
+
+		foreach (Transform child in boxes.transform) {
+			child.gameObject.GetComponent<SpawnBoxScript> ().Reset ();
+		}
+
+		BoxScript.Reset ();
+
+		int scene = SceneManager.GetActiveScene().buildIndex;
+		SceneManager.LoadScene(scene);		// eventually delete the key "currentPath"
+		// PlayerPrefs.DeleteKey("currentPath");
 	}
 }
