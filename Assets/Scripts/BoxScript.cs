@@ -39,8 +39,8 @@ public class BoxScript : MonoBehaviour {
 	public float fallSpeed = FALL_SPEED_CONST;
 
 	public class ActionEntry {
-		//public string username;
-		//public int gameID;
+		public string username;
+		public int gameID;
 		public int gameType;
 		public string letter;
 		public string type;
@@ -50,8 +50,8 @@ public class BoxScript : MonoBehaviour {
 		public int y; // -1 if n/a
 
 		public ActionEntry() {
-			//username = GameManagerScript.username;
-			//gameID = GameManagerScript.GAME_ID;
+			username = GameManagerScript.username;
+			gameID = GameManagerScript.GAME_ID;
 			dateTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		}
 
@@ -65,20 +65,20 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public class WordEntry {
-		//public string username; // e.g. Tranquil Red Panda
+		public string username; // e.g. Tranquil Red Panda
 		public string word; 	// the word that was submitted
 		public bool success; 	// whether or not the word was valid
 		public string dateTime; // the date and time that it was played
 		public int scoreTotal; 	// the total score of the word
 		public int scoreBase; 	// the base score of the word (based on letter freq)
 		public float deltaTime;	// number of seconds from previous submission to now
-		//public int gameID;		// unique game ID identifying unique game sessions
+		public int gameID;		// unique game ID identifying unique game sessions
 		public int gameType;	// 0 = SwipeUI, 1 = ButtonUI, 2 = Button and Time?
 		public float frequency;	// the frequency rate of the word as given in the dictionary
 
 		public WordEntry() {
-			//username = GameManagerScript.username;
-			//gameID = GameManagerScript.GAME_ID;
+			username = GameManagerScript.username;
+			gameID = GameManagerScript.GAME_ID;
 			gameType = (int) GameManagerScript.currentVersion;
 			dateTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		}
