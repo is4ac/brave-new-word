@@ -10,3 +10,6 @@ Library/
 Assembly-CSharp.csproj
 *.p12
 builds/
+builds-*
+server-dash/adminsdk-key.json
+server-dash/node_modules/*
