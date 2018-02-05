@@ -14,3 +14,9 @@ The game is a simple word game where you must select adjacent (including diagona
 ## Research
 
 This game is being used as part of an on-going research project at UW-Madison studying frictional design patterns and learning. Visit the [Complex Play Lab website](http://complexplay.org/) for more info.
+
+
+##Building for Android
+
+Download build-tools for v7.0 (Nougat), the correct sdk version from this link: https://answers.unity.com/questions/1320634/unable-to-list-target-platforms-when-i-try-to-buil.html and download the correct version of the NDK from Unity -> Preferences -> External Tools -> Download JDK and NDK inside.
+
