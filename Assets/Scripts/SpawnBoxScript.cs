@@ -84,8 +84,6 @@ public class SpawnBoxScript : MonoBehaviour {
 
 				if (initCount == 9) {
 					isInit = true;
-					BoxScript.lastSubmitTime = Time.time;
-					BoxScript.lastActionTime = Time.time;
 				}
 			} else if (wait) {
 				StartCoroutine(WaitForSpawn ());
