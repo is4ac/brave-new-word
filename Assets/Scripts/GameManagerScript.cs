@@ -12,7 +12,7 @@ public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
 	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V0_1_1";
+	public const string LOGGING_VERSION = "WFLogs_V0_1_2";
 	public const string APP_VERSION = "WF_0.1.0";
 
 	CamShakeSimpleScript camShake;
@@ -27,7 +27,6 @@ public class GameManagerScript : MonoBehaviour {
 		new Versions[] { Versions.ButtonUI, Versions.ButtonUI, Versions.SwipeUI },
 		new Versions[] { Versions.SwipeUI, Versions.SwipeUI, Versions.ButtonUI } 
 	};
-
 	private static Versions[] currentPath;
 	private static int versionIndex;
 	*/
@@ -39,6 +38,7 @@ public class GameManagerScript : MonoBehaviour {
 	public static int GAME_ID;
 	public static string username;
 	public static int userID;
+	static float logTimer = 0f;
 	//public static float timer = 10; // 5 minutes in seconds
 	//public static bool timerEnded = false;
 
@@ -52,7 +52,9 @@ public class GameManagerScript : MonoBehaviour {
 		BoxScript.camShake = gameObject.AddComponent<CamShakeSimpleScript> ();
 		playButton = GameObject.Find ("PlayButton");
 		nextButton = GameObject.Find ("NextStageButton");
-		nextButton.SetActive (false);
+		if (nextButton != null) {
+			nextButton.SetActive (false);
+		}
 		username = PlayerPrefs.GetString ("username");
 
 		// TODO: randomize userID
@@ -61,10 +63,12 @@ public class GameManagerScript : MonoBehaviour {
 		// Log beginning of game
 		if (LOGGING) {
 			MetaLogEntry entry = new MetaLogEntry ();
-			entry.setValues ("WF_GameStart", "WF_Meta", "start");
+			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("Start"));
 			string json = JsonUtility.ToJson (entry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 			reference.Push ().SetRawJsonValueAsync (json);
+
+			StartCoroutine(WaitUntilGameInitAndLog ()); // log keyframe after the board is set
 		}
 
 		/*
@@ -133,6 +137,15 @@ public class GameManagerScript : MonoBehaviour {
 			BoxScript.PlayWord ();
 		}
 
+		// Log the full game state every 30 seconds or so
+		if (LOGGING) {
+			logTimer += Time.deltaTime;
+			if (logTimer >= 30) {
+				logTimer = 0;
+				LogKeyFrame ();
+			}
+		}
+
 		/*
 		// timer start
 		if (SpawnBoxScript.isInitialized() && !timerEnded) {
@@ -166,6 +179,11 @@ public class GameManagerScript : MonoBehaviour {
 		BoxScript.PlayWord ();
 	}
 
+	public void CloseInstructionsPanel() {
+		GameObject panel = GameObject.Find ("Instructions");
+		panel.SetActive (false);
+	}
+
 	public void Reset() {
 		/*
 		timer = 10; // 5 minutes in seconds
@@ -181,7 +199,34 @@ public class GameManagerScript : MonoBehaviour {
 		BoxScript.Reset ();
 
 		int scene = SceneManager.GetActiveScene().buildIndex;
-		SceneManager.LoadScene(scene);		// eventually delete the key "currentPath"
+		SceneManager.LoadScene(scene); // eventually delete the key "currentPath"
 		// PlayerPrefs.DeleteKey("currentPath");
+	}
+
+	IEnumerator WaitUntilGameInitAndLog() {
+		while (!SpawnBoxScript.isInitialized ()) {
+			yield return null;
+		}
+
+		LogKeyFrame ();
+	}
+
+	public static void LogKeyFrame() {
+		Debug.Log ("Logging full game state");
+
+		// log the current full game state
+		KeyFrameLogEntry entry = new KeyFrameLogEntry ();
+		KeyFrameLogEntry.KeyFramePayload payload = new KeyFrameLogEntry.KeyFramePayload ();
+
+		payload.board = BoxScript.GetBoardPayload();
+		payload.totalScore = BoxScript.score;
+		payload.timeElapsed = Time.time;
+		payload.totalInteractions = BoxScript.totalInteractions; // TODO: change
+		payload.wordsPlayed = BoxScript.wordsPlayed; // TODO: change
+
+		entry.setValues ("WF_GameState", "WF_KeyFrame", payload);
+		string json = JsonUtility.ToJson (entry);
+		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+		reference.Push ().SetRawJsonValueAsync (json);
 	}
 }
