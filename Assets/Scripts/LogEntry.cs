@@ -6,7 +6,11 @@ using System.Collections.Generic;
 [System.Serializable]
 public class LogEntry {
 	[System.Serializable]
-	public class LetterPayload {
+	public class Payload {
+	}
+
+	[System.Serializable]
+	public class LetterPayload : Payload {
 		public string letter;
 		public int x;
 		public int y;
@@ -67,17 +71,6 @@ public class LogEntry {
 	}
 }
 
-[System.Serializable]
-public class MetaLogEntry : LogEntry {
-	public string payload;
-
-	public void setValues(string key, string parentKey, string payload) {
-		base.setValues (key, parentKey);
-		this.payload = payload;
-	}
-}
-
-[System.Serializable]
 public class LetterLogEntry : LogEntry {
 	public LetterPayload payload;
 
@@ -88,9 +81,28 @@ public class LetterLogEntry : LogEntry {
 }
 
 [System.Serializable]
+public class MetaLogEntry : LogEntry {
+	[System.Serializable]
+	public class MetaPayload : Payload {
+		public string value;
+
+		public MetaPayload(string value) {
+			this.value = value;
+		}
+	}
+
+	public MetaPayload payload;
+
+	public void setValues(string key, string parentKey, MetaPayload payload) {
+		base.setValues (key, parentKey);
+		this.payload = payload;
+	}
+}
+
+[System.Serializable]
 public class DeselectWordLogEntry : LogEntry {
 	[System.Serializable]
-	public class DeselectWordPayload {
+	public class DeselectWordPayload : Payload {
 		public string word;
 		public LetterPayload[] letters;
 	}
@@ -106,7 +118,7 @@ public class DeselectWordLogEntry : LogEntry {
 [System.Serializable]
 public class SubmitWordLogEntry : LogEntry {
 	[System.Serializable]
-	public class SubmitWordPayload {
+	public class SubmitWordPayload : Payload {
 		public string word;
 		public int scoreTotal;
 		public int scoreBase;
@@ -117,7 +129,26 @@ public class SubmitWordLogEntry : LogEntry {
 
 	public SubmitWordPayload payload;
 
-	public void setValues (string key, string parentKey, SubmitWordPayload payload) {
+	public void setValues(string key, string parentKey, SubmitWordPayload payload) {
+		base.setValues (key, parentKey);
+		this.payload = payload;
+	}
+}
+
+[System.Serializable]
+public class KeyFrameLogEntry : LogEntry {
+	[System.Serializable]
+	public class KeyFramePayload : Payload {
+		public LetterPayload[] board;
+		public float timeElapsed;
+		public int totalScore;
+		public int wordsPlayed;
+		public int totalInteractions;
+	}
+
+	public KeyFramePayload payload;
+
+	public void setValues(string key, string parentKey, KeyFramePayload payload) {
 		base.setValues (key, parentKey);
 		this.payload = payload;
 	}

@@ -19,11 +19,13 @@ public class BoxScript : MonoBehaviour {
 	public static Text scoreText = null;
 	public static Text submittedWordText = null;
 	public static Text submittedScoreText = null;
-	private static int score = 0;
+	public static int score = 0;
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
     public static Dictionary<string,float> freqDictionary = null;
 	public static CamShakeSimpleScript camShake = null;
+	public static int totalInteractions = 0;
+	public static int wordsPlayed = 0;
 
 	string myLetter;
 	float fall = 0f;
@@ -190,7 +192,8 @@ public class BoxScript : MonoBehaviour {
 			DatabaseReference child = reference.Push ();
 			child.SetRawJsonValueAsync (json);
 
-			Debug.Log (json);
+			++totalInteractions;
+			//Debug.Log (json);
 		}
 	}
 
@@ -208,6 +211,8 @@ public class BoxScript : MonoBehaviour {
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
 			DatabaseReference child = reference.Push ();
 			child.SetRawJsonValueAsync (json);
+
+			++totalInteractions;
 		}
 	}
 
@@ -252,11 +257,13 @@ public class BoxScript : MonoBehaviour {
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
 			DatabaseReference child = reference.Push ();
 			child.SetRawJsonValueAsync (json);
+			++totalInteractions;
 		}
 
 		// Screen animations baesd on if word was valid or not
 		if (valid) {
 			// do something celebratory! like sparkles?
+			++wordsPlayed;
 		} else {
 			camShake.ShakeRed (1f);
 		}
@@ -375,7 +382,7 @@ public class BoxScript : MonoBehaviour {
 		float freqMultiplied = wordFreq;
 		for (float freq = 0.1f; freq < 0.65f; freq += 0.05f) {
 			if (wordFreq > freq) {
-				freqMultiplied *= 1.5f;
+				freqMultiplied *= 1.25f;
 			}
 		}
 
@@ -392,25 +399,25 @@ public class BoxScript : MonoBehaviour {
 			return 9001; // over 9000
 		} else if (freq > 0.5) {
 			// PREMIUM ULTRA RARE
-			return 1000;
+			return 100;
 		} else if (freq > 0.45) { 
 			// ULTRA RARE+
-			return 500;
+			return 80;
 		} else if (freq > 0.4) {
 			// ULTRA RARE
-			return 300;
+			return 70;
 		} else if (freq > 0.35) { 
 			// SUPER RARE+
-			return 150;
+			return 60;
 		} else if (freq > 0.3) {
 			// SUPER RARE
-			return 100;
+			return 50;
 		} else if (freq > 0.25) {
 			// RARE+
-			return 50;
+			return 40;
 		} else if (freq > 0.2) {
 			// RARE
-			return 40;
+			return 30;
 		} else if (freq > 0.15) {
 			// UNCOMMON+
 			return 20;
@@ -634,5 +641,22 @@ public class BoxScript : MonoBehaviour {
 		scoreText.text = "Points: " + score;
 		submittedScoreText.text = "";
 		submittedWordText.text = "";
+	}
+
+	public static LogEntry.LetterPayload[] GetBoardPayload() {
+		LogEntry.LetterPayload[] board = new LogEntry.LetterPayload[gridWidth * gridHeight];
+
+		int ind = 0;
+		for (int i = 0; i < gridWidth; ++i) {
+			for (int j = 0; j < gridHeight; ++j) {
+				board [ind] = new LogEntry.LetterPayload ();
+				board [ind].letter = grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter;
+				board [ind].x = i;
+				board [ind].y = j;
+				++ind;
+			}
+		}
+
+		return board;
 	}
 }
