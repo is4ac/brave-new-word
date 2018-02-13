@@ -26,6 +26,7 @@ public class BoxScript : MonoBehaviour {
 	public static CamShakeSimpleScript camShake = null;
 	public static int totalInteractions = 0;
 	public static int wordsPlayed = 0;
+	public static bool touchEnabled = false;
 
 	string myLetter;
 	float fall = 0f;
@@ -70,88 +71,90 @@ public class BoxScript : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		// ButtonUI touch inputs
-		if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI && 
-			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
-			//Debug.Log ("Inside Tile worked!");
+		if (touchEnabled) {
+			// ButtonUI touch inputs
+			if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI &&
+			   Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+				//Debug.Log ("Inside Tile worked!");
 
-			if (Input.GetTouch (0).phase == TouchPhase.Began) {
-				// there is no previously clicked box
-				if (currentSelection.Count == 0) {
-					SelectThisTile ();
-					LogAction ("WF_LetterSelected", myLetter, myX, myY);
-				} else if (IsNextTo (currentSelection[currentSelection.Count-1]) && 
-					!currentSelection.Contains (new Vector2 (myX, myY))) {
-					// add on to the current selection 
-					SelectThisTile();
-					LogAction ("WF_LetterSelected", myLetter, myX, myY);
-				} else {
-					// de-select what has already been selected
-					ClearAllSelectedTiles ();
-					LogAction ("WF_DeselectAll");
-				}
-			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
-				// selected tile and it isn't already selected)
-				if (currentSelection.Count > 0 && 
-					IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-					!currentSelection.Contains (new Vector2 (myX, myY))) {
-					SelectThisTile ();
-					LogAction ("WF_LetterSelected", myLetter, myX, myY);
-				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
-					// de-select the most recent tile(s) if you move back to an old one
-					for (int i = currentSelection.Count - 1; i > 0; --i) {
-						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
-							RemoveLastSelection ();
-						} else {
-							break;
+				if (Input.GetTouch (0).phase == TouchPhase.Began) {
+					// there is no previously clicked box
+					if (currentSelection.Count == 0) {
+						SelectThisTile ();
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
+					} else if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					          !currentSelection.Contains (new Vector2 (myX, myY))) {
+						// add on to the current selection 
+						SelectThisTile ();
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
+					} else {
+						// de-select what has already been selected
+						ClearAllSelectedTiles ();
+						LogAction ("WF_DeselectAll");
+					}
+				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+					// selected tile and it isn't already selected)
+					if (currentSelection.Count > 0 &&
+					   IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					   !currentSelection.Contains (new Vector2 (myX, myY))) {
+						SelectThisTile ();
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
+					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+						// de-select the most recent tile(s) if you move back to an old one
+						for (int i = currentSelection.Count - 1; i > 0; --i) {
+							if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+								RemoveLastSelection ();
+							} else {
+								break;
+							}
 						}
 					}
 				}
 			}
-		}
 		// SwipeUI touch input
-		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI && 
-			Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
-			//Debug.Log ("Inside Tile worked!");
+		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			        Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
+				//Debug.Log ("Inside Tile worked!");
 
-			if (Input.GetTouch (0).phase == TouchPhase.Began) {
-				// there is no previously clicked box
-				if (currentSelection.Count == 0) {
-					SelectThisTile ();
-					LogAction ("WF_LetterSelected", myLetter, myX, myY);
-				} else {
-					// de-select what has already been selected
-					ClearAllSelectedTiles ();
-					LogAction ("WF_DeselectAll");
-				}
-			} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
-				// selected tile and it isn't already selected)
-				if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-					!currentSelection.Contains (new Vector2 (myX, myY))) {
-					SelectThisTile ();
-					LogAction ("WF_LetterSelected", myLetter, myX, myY);
-				} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
-					// de-select the most recent tile(s) if you move back to an old one
-					for (int i = currentSelection.Count - 1; i > 0; --i) {
-						if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
-							RemoveLastSelection ();
-						} else {
-							break;
-						}
+				if (Input.GetTouch (0).phase == TouchPhase.Began) {
+					// there is no previously clicked box
+					if (currentSelection.Count == 0) {
+						SelectThisTile ();
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
+					} else {
+						// de-select what has already been selected
+						ClearAllSelectedTiles ();
+						LogAction ("WF_DeselectAll");
 					}
-				} else {
-					// just do nothing?
+				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
+					// selected tile and it isn't already selected)
+					if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
+					   !currentSelection.Contains (new Vector2 (myX, myY))) {
+						SelectThisTile ();
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
+					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
+						// de-select the most recent tile(s) if you move back to an old one
+						for (int i = currentSelection.Count - 1; i > 0; --i) {
+							if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
+								RemoveLastSelection ();
+							} else {
+								break;
+							}
+						}
+					} else {
+						// just do nothing?
+					}
 				}
 			}
-		}
 
-		// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
-		if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
-			Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
-			PlayWord ();
-		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
-			ClearAllSelectedTiles ();
-			LogAction ("WF_DeselectAll");
+			// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+			if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			   Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+				PlayWord ();
+			} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
+				ClearAllSelectedTiles ();
+				LogAction ("WF_DeselectAll");
+			}
 		}
 			
 		// check to see if the column needs to go down, or if it needs to be refilled

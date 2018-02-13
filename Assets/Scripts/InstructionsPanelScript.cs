@@ -21,5 +21,6 @@ public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
 	public void OnPointerClick (PointerEventData eventData)
 	{
 		panel.SetActive (false);
+		BoxScript.touchEnabled = true;
 	}
 }
