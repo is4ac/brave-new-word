@@ -12,8 +12,8 @@ public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
 	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V0_1_2";
-	public const string APP_VERSION = "WF_0.1.0";
+	public const string LOGGING_VERSION = "WFLogs_V1_0_0";
+	public const string APP_VERSION = "WF_1.0.0";
 
 	CamShakeSimpleScript camShake;
 	//private const int NUM_OF_PATHS = 6;
@@ -44,6 +44,8 @@ public class GameManagerScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		Screen.orientation = ScreenOrientation.Portrait;
+
 		// Using time since epoch date as unique game ID
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
 		GAME_ID = (int)(System.DateTime.UtcNow - epochStart).TotalSeconds;
@@ -106,7 +108,7 @@ public class GameManagerScript : MonoBehaviour {
 		PlayerPrefs.SetInt ("versionIndex", versionIndex);
 		*/
 
-		currentVersion = (Versions) Random.Range (0, 1);
+		currentVersion = (Versions) Random.Range (0, 2);
 
 		// check version and hide/show Play Word button depending on version
 		if (currentVersion == Versions.SwipeUI) {
@@ -228,5 +230,9 @@ public class GameManagerScript : MonoBehaviour {
 		string json = JsonUtility.ToJson (entry);
 		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 		reference.Push ().SetRawJsonValueAsync (json);
+	}
+
+	void OnDestroy() {
+		RandomNameScript.auth.SignOut();
 	}
 }

@@ -10,23 +10,23 @@
   <files>
     <file>Assets/Plugins/Android/firebase-analytics-11.8.0.aar</file>
     <file>Assets/Plugins/Android/firebase-analytics-impl-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-analytics-impl-license-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-analytics-license-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-app-unity-4.4.0.aar</file>
+    <file>Assets/Plugins/Android/firebase-analytics-impl-license-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-analytics-license-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-app-unity-4.4.0</file>
     <file>Assets/Plugins/Android/firebase-auth-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-auth-license-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-auth-unity-4.4.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-common-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-common-license-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-core-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-iid-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/firebase-iid-license-11.8.0.aar</file>
+    <file>Assets/Plugins/Android/firebase-auth-license-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-auth-unity-4.4.0</file>
+    <file>Assets/Plugins/Android/firebase-common-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-common-license-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-core-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-iid-11.8.0</file>
+    <file>Assets/Plugins/Android/firebase-iid-license-11.8.0</file>
     <file>Assets/Plugins/Android/play-services-base-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/play-services-base-license-11.8.0.aar</file>
+    <file>Assets/Plugins/Android/play-services-base-license-11.8.0</file>
     <file>Assets/Plugins/Android/play-services-basement-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/play-services-basement-license-11.8.0.aar</file>
+    <file>Assets/Plugins/Android/play-services-basement-license-11.8.0</file>
     <file>Assets/Plugins/Android/play-services-tasks-11.8.0.aar</file>
-    <file>Assets/Plugins/Android/play-services-tasks-license-11.8.0.aar</file>
+    <file>Assets/Plugins/Android/play-services-tasks-license-11.8.0</file>
     <file>Assets/Plugins/Android/support-annotations-25.2.0.jar</file>
     <file>Assets/Plugins/Android/support-compat-25.2.0.aar</file>
     <file>Assets/Plugins/Android/support-core-ui-25.2.0.aar</file>
