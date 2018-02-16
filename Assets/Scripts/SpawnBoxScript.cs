@@ -5,6 +5,8 @@ using System.IO;
 
 public class SpawnBoxScript : MonoBehaviour {
 
+	public TextAsset dictionary;
+
 	[SerializeField]
 	public GameObject[] boxList;
 	[SerializeField]
@@ -48,15 +50,15 @@ public class SpawnBoxScript : MonoBehaviour {
 			string line;
 
 			// Read the file and store it line by line.  
-			StreamReader file = new StreamReader(@"Assets/Dictionaries/sortedenddict.csv");
-			while ((line = file.ReadLine()) != null)
+			string[] lines = dictionary.text.Split ('\n');
+			for (int i = 0; i < lines.Length; ++i)
 			{
+				line = lines [i];
 				string[] tokens = line.Split(',');
 				string word = tokens[0].ToUpper();
 				float val = float.Parse(tokens[1]);
 				BoxScript.freqDictionary.Add(word,val);
 			}
-			file.Close();
 		}
 	}
 
@@ -84,8 +86,6 @@ public class SpawnBoxScript : MonoBehaviour {
 
 				if (initCount == 9) {
 					isInit = true;
-					BoxScript.lastSubmitTime = Time.time;
-					BoxScript.lastActionTime = Time.time;
 				}
 			} else if (wait) {
 				StartCoroutine(WaitForSpawn ());
