@@ -40,7 +40,7 @@ public class LogEntry {
 	public double timestampEpoch;
 	public int gameID;
 	public int gameType;
-	public string deviceType;
+	public string deviceModel;
 	public string location;
 
 	// attributes that must be assigned
@@ -54,6 +54,7 @@ public class LogEntry {
 		username = GameManagerScript.username;
 		gameID = GameManagerScript.GAME_ID;
 		gameType = (int) GameManagerScript.currentVersion;
+		deviceModel = GameManagerScript.deviceModel;
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
 		timestampEpoch = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds); // epoch time in milliseconds
@@ -61,7 +62,6 @@ public class LogEntry {
 		//Debug.Log (timestampEpoch);
 
 		// TODO:
-		deviceType = "";
 		location = "";
 	}
 
@@ -139,11 +139,12 @@ public class SubmitWordLogEntry : LogEntry {
 public class KeyFrameLogEntry : LogEntry {
 	[System.Serializable]
 	public class KeyFramePayload : Payload {
-		public LetterPayload[] board;
+		public string board;
 		public float timeElapsed;
 		public int totalScore;
 		public int wordsPlayed;
 		public int totalInteractions;
+		public string preOrPost;
 	}
 
 	public KeyFramePayload payload;

@@ -55,9 +55,11 @@ public class SpawnBoxScript : MonoBehaviour {
 			{
 				line = lines [i];
 				string[] tokens = line.Split(',');
-				string word = tokens[0].ToUpper();
-				float val = float.Parse(tokens[1]);
-				BoxScript.freqDictionary.Add(word,val);
+				if (tokens.Length > 1) {
+					string word = tokens [0].ToUpper ();
+					float val = float.Parse (tokens [1]);
+					BoxScript.freqDictionary.Add (word, val);
+				}
 			}
 		}
 	}
