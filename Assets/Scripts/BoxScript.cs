@@ -91,16 +91,16 @@ public class BoxScript : MonoBehaviour {
 					// there is no previously clicked box
 					if (currentSelection.Count == 0) {
 						SelectThisTile ();
-						LogAction ("WD_LetterSelected", myLetter, myX, myY);
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
 					} else if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 					          !currentSelection.Contains (new Vector2 (myX, myY))) {
 						// add on to the current selection 
 						SelectThisTile ();
-						LogAction ("WD_LetterSelected", myLetter, myX, myY);
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
 					} else {
 						// de-select what has already been selected
 						ClearAllSelectedTiles ();
-						LogAction ("WD_DeselectAll");
+						LogAction ("WF_DeselectAll");
 					}
 				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
 					// selected tile and it isn't already selected)
@@ -108,7 +108,7 @@ public class BoxScript : MonoBehaviour {
 					   IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 					   !currentSelection.Contains (new Vector2 (myX, myY))) {
 						SelectThisTile ();
-						LogAction ("WD_LetterSelected", myLetter, myX, myY);
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
 					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
 						// de-select the most recent tile(s) if you move back to an old one
 						for (int i = currentSelection.Count - 1; i > 0; --i) {
@@ -130,18 +130,18 @@ public class BoxScript : MonoBehaviour {
 					// there is no previously clicked box
 					if (currentSelection.Count == 0) {
 						SelectThisTile ();
-						LogAction ("WD_LetterSelected", myLetter, myX, myY);
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
 					} else {
 						// de-select what has already been selected
 						ClearAllSelectedTiles ();
-						LogAction ("WD_DeselectAll");
+						LogAction ("WF_DeselectAll");
 					}
 				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
 					// selected tile and it isn't already selected)
 					if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 					   !currentSelection.Contains (new Vector2 (myX, myY))) {
 						SelectThisTile ();
-						LogAction ("WD_LetterSelected", myLetter, myX, myY);
+						LogAction ("WF_LetterSelected", myLetter, myX, myY);
 					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
 						// de-select the most recent tile(s) if you move back to an old one
 						for (int i = currentSelection.Count - 1; i > 0; --i) {
@@ -161,7 +161,7 @@ public class BoxScript : MonoBehaviour {
 					PlayWord ();
 				} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
 					ClearAllSelectedTiles ();
-					LogAction ("WD_DeselectAll");
+					LogAction ("WF_DeselectAll");
 				}
 			}
 
@@ -193,14 +193,14 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	// WD_LetterSelected or WD_LetterDeselected logging
+	// WF_LetterSelected or WF_LetterDeselected logging
 	static void LogAction(string key, string letter, int x, int y) {
 		if (GameManagerScript.LOGGING) {
 			Debug.Log ("Attempts to log data");
 			LogEntry.LetterPayload payload = new LogEntry.LetterPayload ();
 			payload.setValues (letter, x, y);
 			LetterLogEntry entry = new LetterLogEntry ();
-			entry.setValues (key, "WD_Action", payload);
+			entry.setValues (key, "WF_Action", payload);
 			string json = JsonUtility.ToJson (entry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
 			DatabaseReference child = reference.Push ();
@@ -211,7 +211,7 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	// WD_DeselectAll logging
+	// WF_DeselectAll logging
 	static void LogAction(string key) {
 		if (GameManagerScript.LOGGING) {
 			Debug.Log ("Attempts to log data");
@@ -220,7 +220,7 @@ public class BoxScript : MonoBehaviour {
 			wordPayload.word = currentWord;
 			wordPayload.letters = letters;
 			DeselectWordLogEntry entry = new DeselectWordLogEntry ();
-			entry.setValues (key, "WD_Action", wordPayload);
+			entry.setValues (key, "WF_Action", wordPayload);
 			string json = JsonUtility.ToJson (entry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
 			DatabaseReference child = reference.Push ();
@@ -250,11 +250,11 @@ public class BoxScript : MonoBehaviour {
 			if (currentSelection.Count == 0 || IsNextTo (currentSelection [currentSelection.Count - 1]) &&
 			           !currentSelection.Contains (new Vector2 (myX, myY))) {
 				SelectThisTile();
-				LogAction ("WD_LetterSelected", myLetter, myX, myY);
+				LogAction ("WF_LetterSelected", myLetter, myX, myY);
 			} else {
 				// de-select what has already been selected
 				ClearAllSelectedTiles();
-				LogAction ("WD_LetterDeselected", myLetter, myX, myY);
+				LogAction ("WF_LetterDeselected", myLetter, myX, myY);
 			}
 		}
 	}
@@ -262,8 +262,8 @@ public class BoxScript : MonoBehaviour {
 
 	public static void PlayWord() {
 		SubmitWordLogEntry dbEntry = new SubmitWordLogEntry ();
-		dbEntry.parentKey = "WD_Action";
-		dbEntry.key = "WD_Submit";
+		dbEntry.parentKey = "WF_Action";
+		dbEntry.key = "WF_Submit";
 		bool valid = UpdateScore (dbEntry);
 
 		// Firebase logging
@@ -312,7 +312,7 @@ public class BoxScript : MonoBehaviour {
 		currentSelection.Remove (v);
 
 		// log the last removed letter
-		LogAction ("WD_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
+		LogAction ("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
 		// Remove the last letter
 		currentWord = currentWord.Substring (0, currentWord.Length - 1);
