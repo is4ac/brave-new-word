@@ -44,8 +44,8 @@ public class LogEntry {
 	public string location;
 
 	// attributes that must be assigned
-	public string key; // "WF_LetterSelected", "WF_LetterDeselected", "WF_DeselectAll", "WF_Submit"
-	public string parentKey; // "WF_Action", "WF_KeyFrame", "WF_Meta"
+	public string key; // "WD_LetterSelected", "WD_LetterDeselected", "WD_DeselectAll", "WD_Submit"
+	public string parentKey; // "WD_Action", "WD_KeyFrame", "WD_Meta"
 
 	public LogEntry() {
 		logVersion = GameManagerScript.LOGGING_VERSION;
