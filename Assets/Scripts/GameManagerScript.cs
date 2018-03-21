@@ -12,8 +12,9 @@ public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
 	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_1";
-	public const string APP_VERSION = "WF_1.0.1";
+	public const string LOGGING_VERSION = "WDLogs_V1_0_2";
+	//public const string LOGGING_VERSION = "WDLogs_DEBUG";
+	public const string APP_VERSION = "WD_1.0.2";
 
 	CamShakeSimpleScript camShake;
 	//private const int NUM_OF_PATHS = 6;
@@ -40,8 +41,14 @@ public class GameManagerScript : MonoBehaviour {
 	public static int userID;
 	public static string deviceModel;
 	static bool areBoxesFalling = true;
+	public static GameObject gameOverPanel = null;
 	//public static float timer = 10; // 5 minutes in seconds
 	//public static bool timerEnded = false;
+
+	void Awake() {
+		gameOverPanel = GameObject.Find ("GameOver");
+		gameOverPanel.SetActive (false);
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -63,16 +70,7 @@ public class GameManagerScript : MonoBehaviour {
 		// randomize userID
 		userID = Random.Range (0, int.MaxValue);
 
-		// Log beginning of game
-		if (LOGGING) {
-			MetaLogEntry entry = new MetaLogEntry ();
-			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("Start"));
-			string json = JsonUtility.ToJson (entry);
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-			reference.Push ().SetRawJsonValueAsync (json);
-
-			//StartCoroutine(WaitUntilGameInitAndLog ()); // log keyframe after the board is set
-		}
+		// TODO: check to see that userID is unique
 
 		/*
 		timerText = GameObject.Find ("TimerText").GetComponent<Text> ();
@@ -120,16 +118,25 @@ public class GameManagerScript : MonoBehaviour {
 
 		Debug.Log ("Version: " + currentVersion);
 
-		// insert user and game data into users table in firebase
+		// do various logging for the start of the game
 		if (LOGGING) {
-			Debug.Log ("logging user??");
+			Debug.Log ("Logging beginning of game");
+			// Log beginning of game
+			MetaLogEntry entry = new MetaLogEntry ();
+			entry.setValues ("WD_GameStart", "WD_Meta", new MetaLogEntry.MetaPayload("Start"));
+			string json = JsonUtility.ToJson (entry);
+			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+			reference.Push ().SetRawJsonValueAsync (json);
 
+			Debug.Log ("logging user info");
 			// insert new user entry into database
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference ("users");
+			reference = FirebaseDatabase.DefaultInstance.GetReference ("users");
 			DatabaseReference child = reference.Child (username);
 			child.Child ("gameType").SetValueAsync ((int)currentVersion);
 			child.Child ("gameID").SetValueAsync (GAME_ID);
 			child.Child ("userID").SetValueAsync (userID);
+			child.Child ("loggingVersion").SetValueAsync (LOGGING_VERSION);
+			child.Child ("appVersion").SetValueAsync (APP_VERSION);
 		}
 	}
 	
@@ -254,7 +261,18 @@ public class GameManagerScript : MonoBehaviour {
 		payload.wordsPlayed = BoxScript.wordsPlayed;
 		payload.preOrPost = preOrPost;
 
-		entry.setValues ("WF_GameState", "WF_KeyFrame", payload);
+		entry.setValues ("WD_GameState", "WD_KeyFrame", payload);
+		string json = JsonUtility.ToJson (entry);
+		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+		reference.Push ().SetRawJsonValueAsync (json);
+	}
+
+	public static void LogEndOfGame() {
+		Debug.Log ("Logging end of game");
+
+		// log the current full game state
+		MetaLogEntry entry = new MetaLogEntry ();
+		entry.setValues ("WD_GameEnd", "WD_Meta", new MetaLogEntry.MetaPayload ("End"));
 		string json = JsonUtility.ToJson (entry);
 		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 		reference.Push ().SetRawJsonValueAsync (json);
