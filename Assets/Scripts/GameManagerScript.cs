@@ -12,9 +12,9 @@ public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
 	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WDLogs_V1_0_2";
-	//public const string LOGGING_VERSION = "WDLogs_DEBUG";
-	public const string APP_VERSION = "WD_1.0.2";
+	public const string LOGGING_VERSION = "WFLogs_V1_0_2";
+	//public const string LOGGING_VERSION = "WFLogs_DEBUG";
+	public const string APP_VERSION = "WF_1.0.2";
 
 	CamShakeSimpleScript camShake;
 	//private const int NUM_OF_PATHS = 6;
@@ -123,7 +123,7 @@ public class GameManagerScript : MonoBehaviour {
 			Debug.Log ("Logging beginning of game");
 			// Log beginning of game
 			MetaLogEntry entry = new MetaLogEntry ();
-			entry.setValues ("WD_GameStart", "WD_Meta", new MetaLogEntry.MetaPayload("Start"));
+			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("Start"));
 			string json = JsonUtility.ToJson (entry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 			reference.Push ().SetRawJsonValueAsync (json);
@@ -261,7 +261,7 @@ public class GameManagerScript : MonoBehaviour {
 		payload.wordsPlayed = BoxScript.wordsPlayed;
 		payload.preOrPost = preOrPost;
 
-		entry.setValues ("WD_GameState", "WD_KeyFrame", payload);
+		entry.setValues ("WF_GameState", "WF_KeyFrame", payload);
 		string json = JsonUtility.ToJson (entry);
 		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 		reference.Push ().SetRawJsonValueAsync (json);
@@ -272,7 +272,7 @@ public class GameManagerScript : MonoBehaviour {
 
 		// log the current full game state
 		MetaLogEntry entry = new MetaLogEntry ();
-		entry.setValues ("WD_GameEnd", "WD_Meta", new MetaLogEntry.MetaPayload ("End"));
+		entry.setValues ("WF_GameEnd", "WF_Meta", new MetaLogEntry.MetaPayload ("End"));
 		string json = JsonUtility.ToJson (entry);
 		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 		reference.Push ().SetRawJsonValueAsync (json);
