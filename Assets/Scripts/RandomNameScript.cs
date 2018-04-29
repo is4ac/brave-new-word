@@ -36,12 +36,11 @@ public class RandomNameScript : MonoBehaviour
 		RandomizeName ();
 
 		// Firebase database logistics for editor
-		/*
 		FirebaseApp.DefaultInstance.SetEditorDatabaseUrl ("https://wordflood-bf7c4.firebaseio.com/");
 		FirebaseApp.DefaultInstance.SetEditorP12FileName (@"Assets/Firebase/WordFlood-66029aead4c6.p12.txt");
 		FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail ("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
 		FirebaseApp.DefaultInstance.SetEditorP12Password ("notasecret");
-		*/
+
 
 		FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
 			Firebase.DependencyStatus dependencyStatus = task.Result;
@@ -150,7 +149,7 @@ public class RandomNameScript : MonoBehaviour
 		int j = UnityEngine.Random.Range (0, colors.Count);
 		int k = UnityEngine.Random.Range (0, animals.Count);
 
-		username = attributes [i] + " " + colors [j] + " " + animals [k];
+		username = attributes [i].Trim() + " " + colors [j].Trim() + " " + animals [k].Trim();
 		DisplayUsername ();
 	}
 }

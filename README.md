@@ -1,6 +1,6 @@
 # README
 
-## word flood
+## word deluge
 
 The game is a simple word game where you must select adjacent (including diagonal!) tiles to create words. Rarer words generate more points. The frequency of the words was calculated using data collected from Reddit comments.
 

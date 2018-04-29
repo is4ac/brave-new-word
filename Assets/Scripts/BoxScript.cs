@@ -28,6 +28,10 @@ public class BoxScript : MonoBehaviour {
 	public static int wordsPlayed = 0;
 	public static bool touchEnabled = false;
 
+	public static float MAX_SCORE = 1000f;
+
+	static BoxScript instance = null;
+
 	string myLetter;
 	float fall = 0f;
 	bool falling = true;
@@ -38,6 +42,12 @@ public class BoxScript : MonoBehaviour {
 
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
+
+	void Awake() {
+		if (instance == null) {
+			instance = this;
+		}
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -111,8 +121,8 @@ public class BoxScript : MonoBehaviour {
 					}
 				}
 			}
-		// SwipeUI touch input
-		else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
+			// SwipeUI touch input
+			else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
 			        Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
 				//Debug.Log ("Inside Tile worked!");
 
@@ -145,16 +155,17 @@ public class BoxScript : MonoBehaviour {
 						// just do nothing?
 					}
 				}
+
+				// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+				else if (Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
+					PlayWord ();
+				} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
+					ClearAllSelectedTiles ();
+					LogAction ("WF_DeselectAll");
+				}
 			}
 
-			// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
-			if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
-			   Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
-				PlayWord ();
-			} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
-				ClearAllSelectedTiles ();
-				LogAction ("WF_DeselectAll");
-			}
+
 		}
 			
 		// check to see if the column needs to go down, or if it needs to be refilled
@@ -229,6 +240,7 @@ public class BoxScript : MonoBehaviour {
 	}
 		
 	// Click on blocks to select them
+	/*
 	void OnMouseDown() {
 		// regular left mouse click
 		if (false && GameManagerScript.currentVersion != GameManagerScript.Versions.SwipeUI && Input.GetMouseButton (0)) {
@@ -246,6 +258,7 @@ public class BoxScript : MonoBehaviour {
 			}
 		}
 	}
+	*/
 
 	public static void PlayWord() {
 		SubmitWordLogEntry dbEntry = new SubmitWordLogEntry ();
@@ -256,6 +269,8 @@ public class BoxScript : MonoBehaviour {
 		// Firebase logging
 		if (GameManagerScript.LOGGING) {
 			Debug.Log ("Attempts to log data");
+			GameManagerScript.LogKeyFrame ("pre");
+
 			string json = JsonUtility.ToJson (dbEntry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
 			DatabaseReference child = reference.Push ();
@@ -265,10 +280,27 @@ public class BoxScript : MonoBehaviour {
 
 		// Screen animations baesd on if word was valid or not
 		if (valid) {
-			// do something celebratory! like sparkles?
+			// keep track of how many words have been successfully played
 			++wordsPlayed;
 		} else {
 			camShake.ShakeRed (1f);
+		}
+
+		CheckGameEnd ();
+	}
+
+	/**
+	 * 
+	 */
+	public static void CheckGameEnd() {
+		if (score >= MAX_SCORE) {
+			GameManagerScript.gameOverPanel.SetActive (true);
+
+			// disable touch events
+			touchEnabled = false;
+
+			// Log the final state of the game
+			GameManagerScript.LogEndOfGame();
 		}
 	}
 
@@ -334,6 +366,16 @@ public class BoxScript : MonoBehaviour {
 		return false;
 	}
 
+	public static void UpdateScoreProgressBar() {
+		float scale = score * 1.0f / MAX_SCORE;
+
+		if (scale > 1) {
+			scale = 1.0f;
+		}
+
+		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
+	}
+
 	public static bool UpdateScore(SubmitWordLogEntry dbEntry) {
 		// firebase logging
 		SubmitWordLogEntry.SubmitWordPayload payload = new SubmitWordLogEntry.SubmitWordPayload();
@@ -351,8 +393,10 @@ public class BoxScript : MonoBehaviour {
 			payload.success = true;
 			payload.scoreTotal = submittedScore;
 
-			AnimateSelectedTiles (submittedScore);
-			DeleteAllSelectedTiles ();
+			// Do something celebratory! highlight in green briefly before removing from screen
+			instance.StartCoroutine(instance.AnimateSelectedTiles (submittedScore));
+
+			UpdateScoreProgressBar ();
 
 			return true;
 		} else {
@@ -448,7 +492,7 @@ public class BoxScript : MonoBehaviour {
 		return 1 + LengthScoreFunction (length - 1);
 	}
 
-	public static void AnimateSelectedTiles(int submittedScore) {
+	public IEnumerator AnimateSelectedTiles(int submittedScore) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
 		if (submittedScore >= 50) {
@@ -470,6 +514,10 @@ public class BoxScript : MonoBehaviour {
 			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
 			gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
 		}
+
+		// brief pause for the color to change before removing them from screen
+		yield return new WaitForSeconds(0.17f);
+		DeleteAllSelectedTiles ();
 	}
 
 	public static void DeleteAllSelectedTiles() {
@@ -485,7 +533,8 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public void AnimateSuccess() {
-		// TODO: little animation from each tile when it gets submitted
+		// highlight in green briefly when successfully played
+		grid[myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.green;
 	}
 
 	public void AnimateSelect() {
@@ -646,20 +695,21 @@ public class BoxScript : MonoBehaviour {
 		submittedWordText.text = "";
 	}
 
-	public static LogEntry.LetterPayload[] GetBoardPayload() {
-		LogEntry.LetterPayload[] board = new LogEntry.LetterPayload[gridWidth * gridHeight];
+	public static string GetBoardPayload() {
+		string boardString = "";
 
-		int ind = 0;
-		for (int i = 0; i < gridWidth; ++i) {
-			for (int j = 0; j < gridHeight; ++j) {
-				board [ind] = new LogEntry.LetterPayload ();
-				board [ind].letter = grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter;
-				board [ind].x = i;
-				board [ind].y = j;
-				++ind;
+		for (int j = gridHeight-1; j >= 0; --j) {
+			for (int i = 0; i < gridWidth; ++i) {
+				if (grid [i, j] != null) {
+					boardString += grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter;
+				}
+			}
+
+			if (j > 0) {
+				boardString += "\n";
 			}
 		}
 
-		return board;
+		return boardString;
 	}
 }

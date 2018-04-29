@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ohno-wordflood-master", "Assembly-CSharp.csproj", "{3FC62C3C-38DA-61D7-9B49-A79A11DA5C2C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "word-deluge", "Assembly-CSharp.csproj", "{1BBC96E8-07E9-1B90-F6DA-202257137B50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3FC62C3C-38DA-61D7-9B49-A79A11DA5C2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3FC62C3C-38DA-61D7-9B49-A79A11DA5C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3FC62C3C-38DA-61D7-9B49-A79A11DA5C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3FC62C3C-38DA-61D7-9B49-A79A11DA5C2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BBC96E8-07E9-1B90-F6DA-202257137B50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BBC96E8-07E9-1B90-F6DA-202257137B50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BBC96E8-07E9-1B90-F6DA-202257137B50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BBC96E8-07E9-1B90-F6DA-202257137B50}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

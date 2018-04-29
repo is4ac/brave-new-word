@@ -20,7 +20,9 @@ public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
 	// When this panel is clicked
 	public void OnPointerClick (PointerEventData eventData)
 	{
-		panel.SetActive (false);
-		BoxScript.touchEnabled = true;
+		if (panel.activeSelf) {
+			BoxScript.touchEnabled = true;
+			panel.SetActive (false);
+		}
 	}
 }

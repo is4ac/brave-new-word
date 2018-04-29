@@ -40,12 +40,12 @@ public class LogEntry {
 	public double timestampEpoch;
 	public int gameID;
 	public int gameType;
-	public string deviceType;
+	public string deviceModel;
 	public string location;
 
 	// attributes that must be assigned
-	public string key; // "WF_LetterSelected", "WF_LetterDeselected", "WF_DeselectAll", "WF_Submit"
-	public string parentKey; // "WF_Action", "WF_KeyFrame", "WF_Meta"
+	public string key; // "WD_LetterSelected", "WD_LetterDeselected", "WD_DeselectAll", "WD_Submit"
+	public string parentKey; // "WD_Action", "WD_KeyFrame", "WD_Meta"
 
 	public LogEntry() {
 		logVersion = GameManagerScript.LOGGING_VERSION;
@@ -54,6 +54,7 @@ public class LogEntry {
 		username = GameManagerScript.username;
 		gameID = GameManagerScript.GAME_ID;
 		gameType = (int) GameManagerScript.currentVersion;
+		deviceModel = GameManagerScript.deviceModel;
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
 		timestampEpoch = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds); // epoch time in milliseconds
@@ -61,7 +62,6 @@ public class LogEntry {
 		//Debug.Log (timestampEpoch);
 
 		// TODO:
-		deviceType = "";
 		location = "";
 	}
 
@@ -139,11 +139,12 @@ public class SubmitWordLogEntry : LogEntry {
 public class KeyFrameLogEntry : LogEntry {
 	[System.Serializable]
 	public class KeyFramePayload : Payload {
-		public LetterPayload[] board;
+		public string board;
 		public float timeElapsed;
 		public int totalScore;
 		public int wordsPlayed;
 		public int totalInteractions;
+		public string preOrPost;
 	}
 
 	public KeyFramePayload payload;
