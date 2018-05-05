@@ -3,23 +3,48 @@ var admin = require("firebase-admin");
 var serviceAccount = require("/Users/vishesh/Documents/ohno-wordflood/server-dash/adminsdk-key.json");
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+const assert = require('assert');
+
+// const mongoose = require('mongoose');
+const MongoClient = require('mongodb').MongoClient;
+ 
+// mongoose.connect('mongodb://localhost/my_database');
+const url = 'mongodb://localhost:27017';
+const dbName = 'wordflood';
+
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/test');
+
+// Use connect method to connect to the Server
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://wordflood-bf7c4.firebaseio.com"
 });
 
-var db = admin.database();
-var ref = db.ref("WFLogs_V0_1_2");
 
-ref.orderByChild("key").equalTo("WF_Submit").limitToLast(1).on("child_added", function(snapshot, prevChildKey) {
+var fdb = admin.database();
+var ref = fdb.ref("WFLogs_V1_0_2");
+
+
+// ref.orderByChild("key").equalTo("WF_Submit").limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
+ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
   var newPost = snapshot.val();
   var postPayload = newPost.payload;
   // console.log("Author: " + newPost.author);
   // console.log("Title: " + newPost.title);
   // console.log("Previous Post ID: " + prevChildKey);
-  console.log(postPayload);
+  // console.log(newPost);
   io.sockets.emit("newWord", postPayload);
+  if (newPost.key == "WF_Submit") {
+    console.log("Word " + newPost.payload.word + "success: " + newPost.payload.success + "Points: " + newPost.payload.scoreTotal);
+    console.log();
+  }
+
+  if (newPost.key == "WF_GameState") {
+
+  }
+
 });
 
 app.get('/', function(req, res){
