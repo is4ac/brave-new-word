@@ -5,9 +5,12 @@
   "main": "index.js",
   "dependencies": {
     "assert": "^1.4.1",
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.8.5",
     "express": "^4.16.3",
     "firebase-admin": "^5.11.0",
     "mongodb": "^3.0.5",
+    "mongojs": "^2.5.0",
     "mongoose": "^5.0.17",
     "socket.io": "^2.1.0"
   },

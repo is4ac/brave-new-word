@@ -4,6 +4,10 @@ var serviceAccount = require("/Users/vishesh/Documents/ohno-wordflood/server-das
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const assert = require('assert');
+// const db = require('./config/db');
+// var ObjectID = require('mongodb').ObjectID
+
+// var mdb = {};
 
 // const mongoose = require('mongoose');
 const MongoClient = require('mongodb').MongoClient;
@@ -11,10 +15,60 @@ const MongoClient = require('mongodb').MongoClient;
 // mongoose.connect('mongodb://localhost/my_database');
 const url = 'mongodb://localhost:27017';
 const dbName = 'wordflood';
+var mongojs = require('mongojs');
 
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/test');
+var db = mongojs("mongodb://localhost:27017/wordflood");
 
+var blessed = require('blessed');
+    //, contrib = require('../server-dash/blessed-deps');
+var contrib = require('blessed-contrib');
+
+var screen = blessed.screen();
+
+var grid = new contrib.grid({rows: 12, cols: 12, screen: screen})
+
+
+// MongoClient.connect(db.url, (err, client) => {
+//   if (err) return console.log(err)
+//   else {
+//     // console.log(database);
+//     // console.log(db);
+//     console.log("connection success!")
+//     const mdb = client.db(dbName)
+//   }
+//   // Make sure you add the database name and not the collection name
+//   // db = database.db("wordflood")
+//   // console.log(mdb);
+
+// })
+// console.log(mdb);
+
+
+// mdb.collection('notes').find(details, (err, item) => {
+//   if (err) {
+//     console.log("error~ " + err);
+//   }
+//   else {
+//     console.log(item);
+//   }
+// })
+
+// var mongoose = require('mongoose');
+// mongoose.connect('mongodb://localhost:27017/test');
+// var db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', function() {
+//   console.log("connected to server!");
+// });
+
+// var loginSchema = mongoose.Schema({
+//   username: String;
+//   timestamp: Number;
+//   day: Number;
+//   hour: Number;
+//   minute: Number;
+//   second: Number;
+// });
 // Use connect method to connect to the Server
 
 admin.initializeApp({
@@ -25,7 +79,6 @@ admin.initializeApp({
 
 var fdb = admin.database();
 var ref = fdb.ref("WFLogs_V1_0_2");
-
 
 // ref.orderByChild("key").equalTo("WF_Submit").limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
 ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
@@ -41,9 +94,21 @@ ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
     console.log();
   }
 
-  if (newPost.key == "WF_GameState") {
+  else if (newPost.key == "WF_GameState") {
 
   }
+
+  db.userConnects.update(
+    {"username": newPost.username},
+    {$set: {
+      "lastActionEpoch": newPost.timestampEpoch,
+      "lastActionTime": newPost.timestamp
+    } },
+    {upsert: true}
+  );
+
+
+
 
 });
 
