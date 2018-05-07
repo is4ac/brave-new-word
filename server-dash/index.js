@@ -19,13 +19,19 @@ var mongojs = require('mongojs');
 
 var db = mongojs("mongodb://localhost:27017/wordflood");
 
-var blessed = require('blessed');
-    //, contrib = require('../server-dash/blessed-deps');
-var contrib = require('blessed-contrib');
+var blessed = require('blessed')
+    , contrib = require('../server-dash/blessed-deps');
+// var contrib = require('blessed-contrib');
 
 var screen = blessed.screen();
 
-var grid = new contrib.grid({rows: 12, cols: 12, screen: screen})
+var grid = new contrib.grid({rows: 16, cols: 16, screen: screen})
+
+// var map = grid.set(0, 0, 4, 4, contrib.map, {label: 'World Map'})
+var log = grid.set(8, 6, 4, 2, contrib.log, 
+  { fg: "green"
+  , selectedFg: "green"
+  , label: 'Submitted Words'})
 
 
 // MongoClient.connect(db.url, (err, client) => {
@@ -77,11 +83,20 @@ admin.initializeApp({
 });
 
 
+// var listOfPlayers = db.userConnects.find({}, {"username": 1}, {tailable:true, timeout:false});
+
+// listOfPlayers.on('data', function (doc) {
+//   console.log(doc);
+// });
+
+
+
 var fdb = admin.database();
 var ref = fdb.ref("WFLogs_V1_0_2");
 
 // ref.orderByChild("key").equalTo("WF_Submit").limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
-ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
+// ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
+ref.on("child_added", function(snapshot, prevChildKey) {
   var newPost = snapshot.val();
   var postPayload = newPost.payload;
   // console.log("Author: " + newPost.author);
@@ -90,13 +105,32 @@ ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
   // console.log(newPost);
   io.sockets.emit("newWord", postPayload);
   if (newPost.key == "WF_Submit") {
-    console.log("Word " + newPost.payload.word + "success: " + newPost.payload.success + "Points: " + newPost.payload.scoreTotal);
-    console.log();
+    // console.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
+    // lo
+    // console.log();
   }
 
   else if (newPost.key == "WF_GameState") {
 
   }
+
+
+  if (newPost.parentKey == "WF_Action"){
+    if (newPost.hasOwnProperty("username")) {
+      // console.log(newPost["username"]);
+      updateUserList(newPost);
+    }
+    else{
+      // console.log(newPost);
+    }
+  }
+
+});
+
+// userList = db.userConnects.distinct("username", {});
+// var userList = []
+// console.log(userList);
+updateUserList = function (newPost) {
 
   db.userConnects.update(
     {"username": newPost.username},
@@ -104,13 +138,71 @@ ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
       "lastActionEpoch": newPost.timestampEpoch,
       "lastActionTime": newPost.timestamp
     } },
-    {upsert: true}
+    {upsert: true},
+    function(err, docs) {}
   );
+    
+    db.collection('userConnects').distinct(
+       "username",
+       {}, // query object
+       (function(err, docs){
+            if(err){
+                // return console.log(err);
+            }
+            if(docs){  
+                // console.log(docs);
+            }
+       })
+    );
 
-
-
-
-});
+  // console.log(db.userConnects.distinct("username", {}), (function (err, doc) {
+  //     if (err) {
+  //       console.log(err);
+  //     }
+  //     else {
+  //       console.log(doc);
+  //     }
+  //   }) 
+  // );
+  // au = false
+  // db.userConnects.findOne({"key": "activeUsers"}, function (err, doc) {
+  //   if (err) {
+  //     console.log(err);
+  //   }
+  //   else {
+  //     console.log(doc);
+  //     au = true;
+  //   }
+  // });
+  // if (au == true) {
+  //   db.userConnects.update(
+  //     {"key": "activeUsers",
+  //     "user": username}, 
+  //     {$addToSet: {}}, 
+  //     function (err, doc) {
+  //       if (err) {
+  //         console.log(err);
+  //       }
+  //       else {
+  //         console.log(doc);
+  //       }
+  //     }
+  //   );
+  //   // console.log("adding to active users list");
+  // }
+  // else {
+  //   // console.log("making active users list");
+  //   db.userConnects.insert({"key": "activeUsers", "userList": [username]}, function (err, doc) {
+  //     console.log(doc);
+  //   });
+  // }
+  // // if (userList.length == 0) {
+  // //   userList = db.userConnects.distinct("username", {});
+  // //   console.log(userList);
+  // // }
+  // // if 
+  // console.log(db.userConnects.findOne({"key": "activeUsers"}, function (err, doc) {}));
+}
 
 app.get('/', function(req, res){
   // res.send('<h1>Hello world</h1>');
