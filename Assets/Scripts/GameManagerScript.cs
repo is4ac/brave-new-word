@@ -11,10 +11,10 @@ using Firebase.Unity.Editor;
 public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
-	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_2";
+	public const bool LOGGING = false;
+	public const string LOGGING_VERSION = "WFLogs_V1_0_3";
 	//public const string LOGGING_VERSION = "WFLogs_DEBUG";
-	public const string APP_VERSION = "WF_1.0.2";
+	public const string APP_VERSION = "WF_1.0.3";
 
 	CamShakeSimpleScript camShake;
 	//private const int NUM_OF_PATHS = 6;

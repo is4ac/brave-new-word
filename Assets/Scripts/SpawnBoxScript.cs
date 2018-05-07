@@ -17,6 +17,7 @@ public class SpawnBoxScript : MonoBehaviour {
 	int initCount = 0;
 	bool wait = true;
 	List<int> letterFreq;
+	static char[,] initialBoard = new char[6, 9];
 
     public static int[] letterDistributions = new int[] {
         81,20,28,43,90,     // A B C D E
@@ -75,9 +76,13 @@ public class SpawnBoxScript : MonoBehaviour {
 			AddToLetterFreqList ();
 		}
 
+
+
 		ImportDictionary ();
         
 	}
+
+
 
 	void Update() {
 		if (BoxScript.grid [myX, BoxScript.gridHeight - 1] == null &&
@@ -104,10 +109,30 @@ public class SpawnBoxScript : MonoBehaviour {
 		wait = true;
 	}
 
-	// Update is called once per frame
+	/**
+	 * Creates a new spawnbox with a random letter at this location
+	 */
 	public void SpawnNewBox() {
 		int i = Random.Range (0, letterFreq.Count);
 		GameObject box = Instantiate (boxList [letterFreq[i]], transform.position, Quaternion.identity);
+
+		if (init) {
+			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
+		}
+	}
+
+	/**
+	 * Creates a new spawnbox with the given letter (in caps, e.g. 'A', 'B', 'C', etc) at this location
+	 */
+	public void SpawnNewBox(char letter) {
+		int index = letter - 'A';
+
+		// input validation/error checking
+		if (index < 0 || index >= 26) {
+			Debug.Log ("Error: SpawnNewBox(char) received a letter that is either not capitalized or is not a letter."); 
+		}
+
+		GameObject box = Instantiate (boxList [index], transform.position, Quaternion.identity);
 
 		if (init) {
 			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
