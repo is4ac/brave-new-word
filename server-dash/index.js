@@ -20,62 +20,25 @@ var mongojs = require('mongojs');
 var db = mongojs("mongodb://localhost:27017/wordflood");
 
 var blessed = require('blessed')
-    , contrib = require('../server-dash/blessed-deps');
-// var contrib = require('blessed-contrib');
+    // , contrib = require('../server-dash/blessed-deps');
+var contrib = require('blessed-contrib');
 
 var screen = blessed.screen();
 
 var grid = new contrib.grid({rows: 16, cols: 16, screen: screen})
 
-// var map = grid.set(0, 0, 4, 4, contrib.map, {label: 'World Map'})
-var log = grid.set(8, 6, 4, 2, contrib.log, 
+var log = grid.set(0, 0, 6, 6, contrib.log, 
   { fg: "green"
   , selectedFg: "green"
   , label: 'Submitted Words'})
 
-
-// MongoClient.connect(db.url, (err, client) => {
-//   if (err) return console.log(err)
-//   else {
-//     // console.log(database);
-//     // console.log(db);
-//     console.log("connection success!")
-//     const mdb = client.db(dbName)
-//   }
-//   // Make sure you add the database name and not the collection name
-//   // db = database.db("wordflood")
-//   // console.log(mdb);
-
-// })
-// console.log(mdb);
-
-
-// mdb.collection('notes').find(details, (err, item) => {
-//   if (err) {
-//     console.log("error~ " + err);
-//   }
-//   else {
-//     console.log(item);
-//   }
-// })
-
-// var mongoose = require('mongoose');
-// mongoose.connect('mongodb://localhost:27017/test');
-// var db = mongoose.connection;
-// db.on('error', console.error.bind(console, 'connection error:'));
-// db.once('open', function() {
-//   console.log("connected to server!");
-// });
-
-// var loginSchema = mongoose.Schema({
-//   username: String;
-//   timestamp: Number;
-//   day: Number;
-//   hour: Number;
-//   minute: Number;
-//   second: Number;
-// });
-// Use connect method to connect to the Server
+var table =  grid.set(0, 7, 8, 5, contrib.table, 
+  { keys: true
+  , fg: 'green'
+  , label: 'Active Users'
+  , columnSpacing: 1
+  , columnWidth: [38, 10]}
+)
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -83,20 +46,12 @@ admin.initializeApp({
 });
 
 
-// var listOfPlayers = db.userConnects.find({}, {"username": 1}, {tailable:true, timeout:false});
-
-// listOfPlayers.on('data', function (doc) {
-//   console.log(doc);
-// });
-
-
-
 var fdb = admin.database();
 var ref = fdb.ref("WFLogs_V1_0_2");
 
 // ref.orderByChild("key").equalTo("WF_Submit").limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
 // ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
-ref.on("child_added", function(snapshot, prevChildKey) {
+ref.limitToLast(1).on("child_added", function(snapshot, prevChildKey) {
   var newPost = snapshot.val();
   var postPayload = newPost.payload;
   // console.log("Author: " + newPost.author);
@@ -106,14 +61,28 @@ ref.on("child_added", function(snapshot, prevChildKey) {
   io.sockets.emit("newWord", postPayload);
   if (newPost.key == "WF_Submit") {
     // console.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
-    // lo
+    log.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
     // console.log();
   }
 
   else if (newPost.key == "WF_GameState") {
 
   }
+  // console.log(newPost);
+  if (db.allLogs.findOne(newPost, function (err, doc) {
+    if (err) {
 
+    }
+    else {
+      if (doc == undefined) {
+        db.allLogs.insert(newPost);
+      }
+      else {
+        // console.log("exists");
+      }
+    }
+  }))
+  
 
   if (newPost.parentKey == "WF_Action"){
     if (newPost.hasOwnProperty("username")) {
@@ -127,9 +96,120 @@ ref.on("child_added", function(snapshot, prevChildKey) {
 
 });
 
-// userList = db.userConnects.distinct("username", {});
-// var userList = []
-// console.log(userList);
+function populateSubmitLog() {
+  db.allLogs.find(
+    {"key": "WF_Submit"},
+    {"username": 1,
+    "payload": 1}
+  ).limit(5).sort({"timestampEpoch": -1}, function (err, docs) {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      for (i = 0; i < 5; i++){
+        doc = docs[i];
+        
+        if (doc.payload != undefined){
+          // console.log(doc);
+          log.log("Word " + doc.payload.word + " success: " + doc.payload.success + " Points: " + doc.payload.scoreTotal);
+        }  
+      }
+      
+    }
+  });
+  
+}
+
+function refreshUserList() {
+  db.allLogs.distinct(
+     "username",
+     {}, // query object
+     function(err, docs){
+      if (err) {}
+      else {
+        // console.log(typeof(docs) + "   tt.   ");
+        // console.log(docs[0]);
+        // userlist.push(docs);
+        refreshUserTable(docs);
+      }
+     }
+  );
+}
+
+function getScore (username, callback) {
+  db.allLogs.find(
+    {$and: [{"key": "WF_GameState"},
+            {"username": username}]}
+  ).limit(1).sort({"timestampEpoch": -1}, score = function (err, docs) {
+  // db.allLogs.findOne({$and: [{"key": "WF_GameState"}, {"username": username}]}, {$orderBy: {"timestampEpoch": -1}}, function (err, res) {
+    if (err) {console.log(err); callback(-5);}
+    else {
+      if (docs.length > 0) {
+        res = docs[0];
+        if (res.payload != undefined){
+          // console.log(res.payload.totalScore);
+          score = res.payload.totalScore;
+          callback(score);
+        }
+        else {
+          // console.log(res);
+          // score = 0;
+          callback(-1);
+        }
+      }
+    }
+  });
+
+  // return score;
+}
+
+function refreshUserTable(userlist) {
+  var data = [];
+  // var userlist = [];
+
+  // console.log(userlist);
+  if(userlist != undefined){
+    // console.log(userlist.length);
+    for (var i = 0; i < userlist.length; i++) {
+      var row = [];         
+      row.push(userlist[i]);
+      
+      score = 0;
+      score = getScore(userlist[i], function (res) {
+        // console.log(res);
+        // row.push(res);
+        // score = res;
+        return res;
+      });
+      // console.log(score);
+      row.push(0);
+      db.userConnects
+      // row.push()
+      // row.push()
+      data.push(row);
+      // console.log(data);
+    }
+  }
+  // console.log(data);
+  
+  table.setData({headers: ['Username', 'Score'], data: data})
+}
+
+table.focus();
+
+table.on('select',function(node){
+  if (node.myCustomProperty){
+    console.log(node.myCustomProperty);
+  }
+  console.log(node.name);
+});
+
+setInterval(function () {
+  refreshUserList();
+  screen.render();
+}, 2000);
+populateSubmitLog();
+
 updateUserList = function (newPost) {
 
   db.userConnects.update(
@@ -141,68 +221,10 @@ updateUserList = function (newPost) {
     {upsert: true},
     function(err, docs) {}
   );
-    
-    db.collection('userConnects').distinct(
-       "username",
-       {}, // query object
-       (function(err, docs){
-            if(err){
-                // return console.log(err);
-            }
-            if(docs){  
-                // console.log(docs);
-            }
-       })
-    );
-
-  // console.log(db.userConnects.distinct("username", {}), (function (err, doc) {
-  //     if (err) {
-  //       console.log(err);
-  //     }
-  //     else {
-  //       console.log(doc);
-  //     }
-  //   }) 
-  // );
-  // au = false
-  // db.userConnects.findOne({"key": "activeUsers"}, function (err, doc) {
-  //   if (err) {
-  //     console.log(err);
-  //   }
-  //   else {
-  //     console.log(doc);
-  //     au = true;
-  //   }
-  // });
-  // if (au == true) {
-  //   db.userConnects.update(
-  //     {"key": "activeUsers",
-  //     "user": username}, 
-  //     {$addToSet: {}}, 
-  //     function (err, doc) {
-  //       if (err) {
-  //         console.log(err);
-  //       }
-  //       else {
-  //         console.log(doc);
-  //       }
-  //     }
-  //   );
-  //   // console.log("adding to active users list");
-  // }
-  // else {
-  //   // console.log("making active users list");
-  //   db.userConnects.insert({"key": "activeUsers", "userList": [username]}, function (err, doc) {
-  //     console.log(doc);
-  //   });
-  // }
-  // // if (userList.length == 0) {
-  // //   userList = db.userConnects.distinct("username", {});
-  // //   console.log(userList);
-  // // }
-  // // if 
-  // console.log(db.userConnects.findOne({"key": "activeUsers"}, function (err, doc) {}));
+  refreshUserTable();    
 }
+
+
 
 app.get('/', function(req, res){
   // res.send('<h1>Hello world</h1>');
@@ -212,12 +234,33 @@ app.get('/', function(req, res){
 
 
 io.on('connection', function(socket){
-  console.log('a user connected');
+  // console.log('a user connected');
   socket.on('disconnect', function(){
-    console.log('user disconnected');
+    // console.log('user disconnected');
   });
 });
 
 http.listen(3000, function(){
   console.log('listening on *:3000');
 });
+
+screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+  return process.exit(0);
+});
+
+// fixes https://github.com/yaronn/blessed-contrib/issues/10
+screen.on('resize', function() {
+  // donut.emit('attach');
+  // gauge.emit('attach');
+  // gauge_two.emit('attach');
+  // sparkline.emit('attach');
+  // bar.emit('attach');
+  table.emit('attach');
+  // lcdLineOne.emit('attach');
+  // errorsLine.emit('attach');
+  // transactionsLine.emit('attach');
+  // map.emit('attach');
+  log.emit('attach');
+});
+
+screen.render()
