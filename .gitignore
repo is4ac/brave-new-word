@@ -13,3 +13,5 @@ builds/
 builds-*
 server-dash/adminsdk-key.json
 server-dash/node_modules/*
+
+server-dash/npm-debug.log

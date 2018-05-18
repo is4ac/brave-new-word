@@ -1,9 +1,14 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var admin = require("firebase-admin");
-var serviceAccount = require("/Users/vishesh/Documents/ohno-wordflood/server-dash/adminsdk-key.json");
+var serviceAccount = require("./adminsdk-key.json");
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const assert = require('assert');
+
+app.use(express.static('public/'));
+
+
 // const db = require('./config/db');
 // var ObjectID = require('mongodb').ObjectID
 
@@ -19,6 +24,7 @@ var mongojs = require('mongojs');
 
 var db = mongojs("mongodb://localhost:27017/wordflood");
 
+/*
 var blessed = require('blessed')
     // , contrib = require('../server-dash/blessed-deps');
 var contrib = require('blessed-contrib');
@@ -39,6 +45,7 @@ var table =  grid.set(0, 7, 8, 5, contrib.table,
   , columnSpacing: 1
   , columnWidth: [38, 10]}
 )
+*/
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -61,7 +68,9 @@ ref.limitToLast(1).on("child_added", function(snapshot, prevChildKey) {
   io.sockets.emit("newWord", postPayload);
   if (newPost.key == "WF_Submit") {
     // console.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
-    log.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
+ 
+    // log.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
+ 
     // console.log();
   }
 
@@ -195,6 +204,7 @@ function refreshUserTable(userlist) {
   table.setData({headers: ['Username', 'Score'], data: data})
 }
 
+/*
 table.focus();
 
 table.on('select',function(node){
@@ -224,6 +234,7 @@ updateUserList = function (newPost) {
   refreshUserTable();    
 }
 
+*/
 
 
 app.get('/', function(req, res){
@@ -244,23 +255,16 @@ http.listen(3000, function(){
   console.log('listening on *:3000');
 });
 
+/*
 screen.key(['escape', 'q', 'C-c'], function(ch, key) {
   return process.exit(0);
 });
 
-// fixes https://github.com/yaronn/blessed-contrib/issues/10
+
 screen.on('resize', function() {
-  // donut.emit('attach');
-  // gauge.emit('attach');
-  // gauge_two.emit('attach');
-  // sparkline.emit('attach');
-  // bar.emit('attach');
   table.emit('attach');
-  // lcdLineOne.emit('attach');
-  // errorsLine.emit('attach');
-  // transactionsLine.emit('attach');
-  // map.emit('attach');
   log.emit('attach');
 });
 
 screen.render()
+*/

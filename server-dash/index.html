@@ -8,13 +8,20 @@
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
     </style>
   </head>
-
+<!--   <link rel="stylesheet" style="text/css" href="../node_modules/bootstrap/dist/css/bootstrap.css">
+  <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+ -->
+   <link rel="stylesheet" style="text/css" href="main.css" crossorigin="anonymous">
+  
   <script src="/socket.io/socket.io.js"></script>
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
   <script>
     var socket = io();
     // $(function () {
@@ -25,9 +32,27 @@
   </script>
   
   <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+  <div class="jumbotron p-3 p-md-5 text-white rounded bg-dark">
+        <div class="col-md-6 px-0">
+          <h1 class="display-4 font-italic">Title of a longer featured blog post</h1>
+          <p class="lead my-3">Multiple lines of text that form the lede, informing new readers quickly and efficiently about what's most interesting in this post's contents.</p>
+          <p class="lead mb-0"><a href="#" class="text-white font-weight-bold">Continue reading...</a></p>
+        </div>
+      </div>
+
+      
+    <div class="container">
+      <div class="row">
+        
+        <div class="card flex-md-row mb-4 box-shadow col-md-8">
+          poop
+        </div>
+
+        <div class="card flex-md-row mb-4 box-shadow col-md-4">
+          poooppeers
+        </div>
+      
+      </div>
+    </div>
   </body>
 </html>
