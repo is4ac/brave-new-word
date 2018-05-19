@@ -140,7 +140,17 @@ io.on('connection', function(socket){
   });
 
   socket.on('getUserMoves', function (msg) {
-    console.log("maker user scores: " + msg);
+    console.log("make user scores: " + msg);
+    latest = db.allLogs.find({$and: [
+      {"key": "WF_Submit"}, 
+      {"username": msg}]
+    }).sort({"payload.scoreTotal": -1})
+    .limit(5)
+    .toArray(function (err, res) {
+      if (err) {console.log(err)}
+      else {socket.emit("user-moves",res);}
+    });
+    // return latest
     
   })
 
