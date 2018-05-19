@@ -58,60 +58,53 @@ var ref = fdb.ref("WFLogs_V1_0_2");
 
 // ref.orderByChild("key").equalTo("WF_Submit").limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
 // ref.limitToLast(25).on("child_added", function(snapshot, prevChildKey) {
-// ref.limitToLast(1).on("child_added", function(snapshot, prevChildKey) {
-ref.on("child_added", function(snapshot, prevChildKey) {  
+ref.limitToLast(1).on("child_added", function(snapshot, prevChildKey) {
+// ref.on("child_added", function(snapshot, prevChildKey) {  
   var newPost = snapshot.val();
   var postPayload = newPost.payload;
   // console.log("Author: " + newPost.author);
   // console.log("Title: " + newPost.title);
   // console.log("Previous Post ID: " + prevChildKey);
   // console.log(newPost);
-  // io.sockets.emit("newWord", postPayload);
+  io.sockets.emit("newWord", postPayload);
   if (newPost.key == "WF_Submit") {
     // console.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
  
     // log.log("Word " + newPost.payload.word + " success: " + newPost.payload.success + " Points: " + newPost.payload.scoreTotal);
-    // io.emit('new-logs', newPost);
+    io.emit('new-logs', newPost);
     // console.log();
   }
 
   else if (newPost.key == "WF_GameState") {
-    // updateUserList(newPost);
-    if (newPost.hasOwnProperty("username")) {
-      // console.log(newPost["username"]);
-      updateUserList(newPost);
-    }
+    updateUserList(newPost);
   }
-  // console.log(newPost);
-  db.allLogs.findOne(newPost, function (err, doc) {
+  console.log(newPost);
+  if (db.allLogs.findOne(newPost, function (err, doc) {
     if (err) {
 
     }
     else {
       if (doc == undefined) {
         db.allLogs.insert(newPost);
-        if (newPost.key == "WF_Submit") {
-          io.sockets.emit('new-logs', newPost);
-        }
-        // else if (newPost.parentKey == "WF_Action"){
-        else if (newPost.key == "WF_GameState"){
-          if (newPost.hasOwnProperty("username")) {
-            // console.log(newPost["username"]);
-            updateUserList(newPost);
-          }
-          else{
-            // console.log(newPost);
-          }
-        }
       }
       else {
         // console.log("exists");
       }
     }
-  })
+  }))
+  
+
+  if (newPost.parentKey == "WF_Action"){
+    if (newPost.hasOwnProperty("username")) {
+      // console.log(newPost["username"]);
+      updateUserList(newPost);
+    }
+    else{
+      // console.log(newPost);
+    }
+  }
+
 });
-
-
 
 updateUserList = function (newPost) {
   db.allLogs.update({$and: [
@@ -120,27 +113,13 @@ updateUserList = function (newPost) {
     {"parentKey": "WF_Dashboard"}]}, 
   {$set: {
     "score": newPost.payload.totalScore, 
-    "wordsPlayed": newPost.payload.wordsPlayed,
-    "fullLog": newPost}
+    "wordsPlayed": newPost.payload.wordsPlayed}
   }, {upsert: true, safe: false},
   function (err, data) {
     if (err) {console.log(err)}
   });
-  setUsers();
+  
 }
-
-setUsers = function () {
-  latest = db.allLogs.find({"key": "dash_ScoreLog"});
-  latest.toArray(function (err, res) {
-    if (err){ return err; }
-    else {
-      console.log("new user");
-      console.log(res);
-      io.sockets.emit("setScoreList", res);
-    }
-  });
-}
-
 
 /*
 function populateSubmitLog() {
@@ -299,15 +278,13 @@ io.on('connection', function(socket){
         return err;
       }
       else {
-        // console.log("new entry");
-        // console.log(res);
+        console.log("new entry");
+        console.log(res);
         for (i = 0; i < res.length; i++) {
           io.emit('new-logs', res[i]);
         }
       }
      });
-
-    setUsers();
     
   });
 

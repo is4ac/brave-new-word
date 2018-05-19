@@ -12,7 +12,6 @@
     "mongodb": "^3.0.5",
     "mongojs": "^2.5.0",
     "mongoose": "^5.0.17",
-    "pug": "^2.0.3",
     "socket.io": "^2.1.0"
   },
   "devDependencies": {},
