@@ -22,6 +22,12 @@ public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
 	{
 		if (panel.activeSelf) {
 			BoxScript.touchEnabled = true;
+			GameManagerScript.BeginGame ();
+
+			/*************************************
+			 * TODO: Do some logging actions here
+			 *************************************/
+
 			panel.SetActive (false);
 		}
 	}

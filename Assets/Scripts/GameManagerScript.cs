@@ -11,10 +11,10 @@ using Firebase.Unity.Editor;
 public class GameManagerScript : MonoBehaviour {
 
 	// Set to true to log to Firebase database, false to turn off
-	public const bool LOGGING = false;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_3";
+	public const bool LOGGING = true;
+	public const string LOGGING_VERSION = "WFLogs_V1_0_3_DEBUG";
 	//public const string LOGGING_VERSION = "WFLogs_DEBUG";
-	public const string APP_VERSION = "WF_1.0.3";
+	public const string APP_VERSION = "WF_1.0.3_DEBUG";
 
 	CamShakeSimpleScript camShake;
 	//private const int NUM_OF_PATHS = 6;
@@ -34,7 +34,7 @@ public class GameManagerScript : MonoBehaviour {
 	public static Versions currentVersion;
 	GameObject playButton;
 	GameObject nextButton;
-	Text usernameText;
+	static Text usernameText;
 	//Text timerText;
 	public static int GAME_ID;
 	public static string username;
@@ -42,12 +42,24 @@ public class GameManagerScript : MonoBehaviour {
 	public static string deviceModel;
 	static bool areBoxesFalling = true;
 	public static GameObject gameOverPanel = null;
-	//public static float timer = 10; // 5 minutes in seconds
-	//public static bool timerEnded = false;
+	static bool gameHasBegun = false;
+	static bool initialLog = true;
+
+	/**********************************
+	 * Feature: Timer in between words
+	 **********************************/
+	static float timer = 10; // 10 seconds to play a word
+	static bool timerEnded = false;
+	Text timerText;
 
 	void Awake() {
 		gameOverPanel = GameObject.Find ("GameOver");
 		gameOverPanel.SetActive (false);
+
+		/**********************************
+	 	* Feature: Timer in between words
+	 	**********************************/
+		//timerText = GameObject.Find ("TimerText").GetComponent<Text> ();
 	}
 
 	// Use this for initialization
@@ -72,40 +84,9 @@ public class GameManagerScript : MonoBehaviour {
 
 		// TODO: check to see that userID is unique
 
-		/*
-		timerText = GameObject.Find ("TimerText").GetComponent<Text> ();
-		DisplayTime ();
-		*/
-
 		// display the username on the screen
-		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
-		usernameText.text = username;
-
-		/*
-		// check to see if a path has already been saved in PlayerPrefsX
-		if (PlayerPrefs.HasKey ("currentPath")) {
-			currentPath = (Versions[])(object)PlayerPrefsX.GetIntArray ("currentPath");
-			versionIndex = PlayerPrefs.GetInt ("versionIndex");
-			if (versionIndex >= currentPath.Length) {
-				versionIndex = 0;
-			}
-		} else {
-			// Randomly decide on the version path this game will take
-			int i = UnityEngine.Random.Range (0, NUM_OF_PATHS);
-			currentPath = allPaths[i];
-			versionIndex = 0;
-
-			PlayerPrefsX.SetIntArray ("currentPath", (int[])(object)currentPath);
-		}
-
-		Debug.Log ("index: " + versionIndex);
-		currentVersion = currentPath[versionIndex++];
-		if (versionIndex >= currentPath.Length) {
-			versionIndex = 0;
-		}
-
-		PlayerPrefs.SetInt ("versionIndex", versionIndex);
-		*/
+		//usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
+		//usernameText.text = username;
 
 		currentVersion = (Versions) Random.Range (0, 2);
 
@@ -123,7 +104,7 @@ public class GameManagerScript : MonoBehaviour {
 			Debug.Log ("Logging beginning of game");
 			// Log beginning of game
 			MetaLogEntry entry = new MetaLogEntry ();
-			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("Start"));
+			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("start"));
 			string json = JsonUtility.ToJson (entry);
 			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
 			reference.Push ().SetRawJsonValueAsync (json);
@@ -142,10 +123,34 @@ public class GameManagerScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		/*********************************
+		 * Feature: Timer
+		 *********************************/
+		/*
+		// timer start
+		if (GameHasStarted() && !timerEnded) {
+			timer -= Time.deltaTime;
+
+			if (timer <= 0) {
+				timer = 0;
+				timerEnded = true;
+			}
+
+			DisplayTime ();
+		}
+
+		if (timerEnded) {
+			// do something here
+		}
+		*/
+		/********************************
+		 * End Feature: Timer
+		 ********************************/
+
 		// if the enter key is pressed, then submit the word
 		// check against dictionary and give it points
 		if (currentVersion == Versions.ButtonUI && Input.GetKeyDown (KeyCode.Return)) {
-			BoxScript.PlayWord ();
+			PlayWord ();
 		}
 
 		if (Input.GetKeyDown(KeyCode.Escape)) { 
@@ -156,7 +161,13 @@ public class GameManagerScript : MonoBehaviour {
 		if (areBoxesFalling) {
 			if (!checkIfBoxesAreFalling ()) {
 				areBoxesFalling = false;
-				LogKeyFrame ("post");
+
+				if (!initialLog) {
+					LogKeyFrame ("postSubmit");
+				} else {
+					LogKeyFrame ("gameStart");
+					initialLog = false;
+				}
 			}
 		} else {
 			if (checkIfBoxesAreFalling ()) {
@@ -188,7 +199,7 @@ public class GameManagerScript : MonoBehaviour {
 		*/
 	}
 
-	bool checkIfBoxesAreFalling() {
+	static bool checkIfBoxesAreFalling() {
 		bool falling = false;
 
 		for (int i = 0; i < BoxScript.gridWidth; ++i) {
@@ -202,22 +213,24 @@ public class GameManagerScript : MonoBehaviour {
 	}
 
 	void DisplayTime() {
-		/*
 		int minutes = Mathf.FloorToInt(timer / 60F);
 		int seconds = Mathf.FloorToInt(timer - minutes * 60);
 		string niceTime = string.Format("{0:0}:{1:00}", minutes, seconds);
-		*/
-		//timerText.text = niceTime; // disable for now
+		timerText.text = niceTime;
 	}
 
 	// Play word!
 	public void PlayWord() {
 		BoxScript.PlayWord ();
+		Debug.Log ("Play word pressed.");
 	}
 
-	public void CloseInstructionsPanel() {
-		GameObject panel = GameObject.Find ("Instructions");
-		panel.SetActive (false);
+	public static void BeginGame() {
+		gameHasBegun = true;
+	}
+
+	public static bool GameHasStarted() {
+		return gameHasBegun;
 	}
 
 	public void Reset() {
@@ -239,15 +252,7 @@ public class GameManagerScript : MonoBehaviour {
 		// PlayerPrefs.DeleteKey("currentPath");
 	}
 
-	IEnumerator WaitUntilGameInitAndLog() {
-		while (!SpawnBoxScript.isInitialized ()) {
-			yield return null;
-		}
-
-		LogKeyFrame ("pre");
-	}
-
-	public static void LogKeyFrame(string preOrPost) {
+	public static void LogKeyFrame(string state) {
 		Debug.Log ("Logging full game state");
 
 		// log the current full game state
@@ -259,7 +264,7 @@ public class GameManagerScript : MonoBehaviour {
 		payload.timeElapsed = Time.time;
 		payload.totalInteractions = BoxScript.totalInteractions;
 		payload.wordsPlayed = BoxScript.wordsPlayed;
-		payload.preOrPost = preOrPost;
+		payload.state = state;
 
 		entry.setValues ("WF_GameState", "WF_KeyFrame", payload);
 		string json = JsonUtility.ToJson (entry);
@@ -270,11 +275,180 @@ public class GameManagerScript : MonoBehaviour {
 	public static void LogEndOfGame() {
 		Debug.Log ("Logging end of game");
 
-		// log the current full game state
-		MetaLogEntry entry = new MetaLogEntry ();
-		entry.setValues ("WF_GameEnd", "WF_Meta", new MetaLogEntry.MetaPayload ("End"));
-		string json = JsonUtility.ToJson (entry);
+		// log the end game state when the player finished the round
+		LogKeyFrame("gameEnd");
+
+		// log the end of the game
+		MetaLogEntry metaEntry = new MetaLogEntry ();
+		metaEntry.setValues ("WF_GameEnd", "WF_Meta", new MetaLogEntry.MetaPayload ("end"));
 		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+		string json = JsonUtility.ToJson (metaEntry);
 		reference.Push ().SetRawJsonValueAsync (json);
 	}
+
+	/**
+	 * User or the OS force quits the application
+	 */
+	public static void LogGamePause() {
+		Debug.Log("Application pausing after " + Time.time + " seconds");
+
+		// log the game state before game pauses
+		LogKeyFrame("gamePause");
+
+		// log the pause
+		MetaLogEntry metaEntry = new MetaLogEntry ();
+		metaEntry.setValues ("WF_GamePaused", "WF_Meta", new MetaLogEntry.MetaPayload ("pause"));
+		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+		string json = JsonUtility.ToJson (metaEntry);
+		reference.Push ().SetRawJsonValueAsync (json);
+	}
+
+	public static void LogGameUnpause() {
+		// log the unpause
+		MetaLogEntry metaEntry = new MetaLogEntry ();
+		metaEntry.setValues ("WF_GameUnpaused", "WF_Meta", new MetaLogEntry.MetaPayload ("unpause"));
+		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
+		string json = JsonUtility.ToJson (metaEntry);
+		reference.Push ().SetRawJsonValueAsync (json);
+	}
+
+	void OnApplicationPause(bool pauseStatus)
+	{
+		if (pauseStatus) {
+			GameManagerScript.LogGamePause ();
+		} else {
+			GameManagerScript.LogGameUnpause ();
+		}
+	}
+
+	/***************************************************
+	 * Functions for checking for combos, initializing the main board, etc
+	 ***************************************************/
+
+	/*
+	bool CheckValidWord(int startX, int startY, int endX, int endY) {
+		string word = "";
+
+		// check to see if word is in column or row
+		if (startX == endX) {
+			// column
+			if (startY < endY) {
+				// forward
+				for (int y = startY; y <= endY; ++y) {
+					word += initialBoard [startX, y];			
+				}
+			} else {
+				// reverse
+				for (int y = startY; y >= endY; --y) {
+					word += initialBoard [startX, y];
+				}
+			}
+		} else if (startY == endY) {
+			// row
+			if (startX < endX) {
+				//forward
+				for (int x = startX; x <= endX; ++x) {
+					word += initialBoard [x, startY];
+				}
+			} else {
+				// reverse
+				for (int x = startX; x >= endX; --x) {
+					word += initialBoard [x, startY];
+				}
+			}
+		} else {
+			Debug.Log ("Error: CheckValidWord only checks rows or columns");
+			return false;
+		}
+
+		return BoxScript.IsValidWord (word);
+	}
+
+	void MarkFlaggedBoard(int startX, int startY, int endX, int endY) {
+		if (startX < endX) {
+			for (int x = startX; x <= endX; ++x) {
+				flaggedBoard [x, startY] = true;
+			}
+		} else {
+			for (int y = startY; y <= endY; ++y) {
+				flaggedBoard [startX, y] = true;
+			}
+		}
+	}
+
+	bool ContainsNoValidWords(char[,] board) {
+		// check all Ngrams to see if they contain valid words
+		bool flag = true;
+		int rLength = board.GetLength (0);
+		int cLength = board.GetLength (1);
+
+		// check rows
+		for (int row = 0; row < board.GetLength (1); ++row) {
+			for (int n = 0; n < rLength; ++n) {
+				for (int len = 3; (n+len) <= rLength; ++len) {
+					// TODO: check to see if any of the letters are flagged
+
+					// check forwards and backwards
+					if (CheckValidWord (n, row, n + len - 1, row) 
+						|| CheckValidWord (n + len - 1, row, n, row)) {
+						flag = false;
+
+						MarkFlaggedBoard (n, row, n + len - 1, row);
+					}
+				}
+			}
+		}
+
+		// check columns
+		for (int col = 0; col < board.GetLength (0); ++col) {
+			for (int n = 0; n < cLength; ++n) {
+				for (int len = 3; (n+len) <= cLength; ++len) {
+					// TODO: check to see if any of the letters are flagged
+
+					// check forwards and backwards
+					if (CheckValidWord (col, n, col, n + len - 1) 
+						|| CheckValidWord (col, n + len - 1, col, n)) {
+						flag = false;
+
+						MarkFlaggedBoard (col, n, col, n + len - 1);
+					}
+				}
+			}
+		}
+
+		return flag;
+	}
+
+	void RerollLetters() {
+		// randomize all letters that are marked "true" in flaggedBoard
+		for (int x = 0; x < flaggedBoard.GetLength (0); ++x) {
+			for (int y = 0; y < flaggedBoard.GetLength (1); ++y) {
+				if (flaggedBoard [x, y]) {
+					int i = Random.Range (0, letterFreq.Count);
+					initialBoard [x, y] = (char)(letterFreq [i] + 'A');
+				}
+			}
+		}
+	}
+
+	void ResetFlaggedBoard() {
+		for (int x = 0; x < flaggedBoard.GetLength (0); ++x) {
+			for (int y = 0; y < flaggedBoard.GetLength (1); ++y) {
+				flaggedBoard [x, y] = false;
+			}
+		}
+	}
+
+	// DEBUGGING PURPOSES ONLY
+	void PrintInitialBoard() {
+		for (int row = 0; row < initialBoard.GetLength (1); ++row) {
+			string rowStr = "";
+			for (int col = 0; col < initialBoard.GetLength (0); ++col) {
+				rowStr += initialBoard [col, row];
+			}
+
+			Debug.Log (rowStr);
+		}
+	}
+	*/
 }

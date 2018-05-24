@@ -286,96 +286,11 @@ public class BoxScript : MonoBehaviour {
 			camShake.ShakeRed (1f);
 		}
 
+		Debug.Log ("BoxScript.PlayWord end");
+
 		CheckGameEnd ();
 	}
-
-	/**
-	 * 
-	 */
-	public static void CheckGameEnd() {
-		if (score >= MAX_SCORE) {
-			GameManagerScript.gameOverPanel.SetActive (true);
-
-			// disable touch events
-			touchEnabled = false;
-
-			// Log the final state of the game
-			GameManagerScript.LogEndOfGame();
-		}
-	}
-
-	static void RemoveLastSelection() {
-		// get the last selected letter tile and remove it from the list (and unhighlight it)
-		Vector2 v = currentSelection [currentSelection.Count - 1];
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
-		currentSelection.Remove (v);
-
-		// log the last removed letter
-		LogAction ("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
-
-		// Remove the last letter
-		currentWord = currentWord.Substring (0, currentWord.Length - 1);
-
-		// select the most recent one
-		v = currentSelection[currentSelection.Count - 1];
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = true;
-	}
-
-	bool IsInsideTile(Vector2 pos) {
-		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
-		float trueX = myX - gridWidthRadius;
-		int trueY = myY - gridHeightRadius;
-		float radius = 0.37f;
-
-		// slight border around edge to make it easier to get diagonals
-		return (realPos.x > trueX - radius && realPos.x <= trueX + radius &&
-			realPos.y > trueY - radius && realPos.y <= trueY + radius);
-	}
-
-	bool IsNoBoxAboveMe() {
-		for (int y = myY+1; y < gridHeight; ++y) {
-			if (grid [myX, y] != null) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	// Checks to see if there is another box in my column that is falling with me in a 'column fall'
-	bool IsOtherBoxInColumnFalling() {
-		for (int y = myY-1; y >= 0; --y) {
-			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	// Checks to see if there are any boxes in column x that is currently falling (or column falling)
-	public static bool IsBoxInColumnFalling(int x) {
-		for (int y = 0; y < gridHeight; ++y) {
-			if (grid [x, y] != null && (grid [x, y].gameObject.GetComponent<BoxScript> ().falling ||
-										grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	public static void UpdateScoreProgressBar() {
-		float scale = score * 1.0f / MAX_SCORE;
-
-		if (scale > 1) {
-			scale = 1.0f;
-		}
-
-		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
-	}
-
+		
 	public static bool UpdateScore(SubmitWordLogEntry dbEntry) {
 		// firebase logging
 		SubmitWordLogEntry.SubmitWordPayload payload = new SubmitWordLogEntry.SubmitWordPayload();
@@ -490,6 +405,94 @@ public class BoxScript : MonoBehaviour {
 		}
 
 		return 1 + LengthScoreFunction (length - 1);
+	}
+
+
+	/**
+	 * 
+	 */
+	public static void CheckGameEnd() {
+		if (score >= MAX_SCORE) {
+			GameManagerScript.gameOverPanel.SetActive (true);
+
+			// disable touch events
+			touchEnabled = false;
+
+			// Log the final state of the game
+			GameManagerScript.LogEndOfGame();
+		}
+	}
+
+	static void RemoveLastSelection() {
+		// get the last selected letter tile and remove it from the list (and unhighlight it)
+		Vector2 v = currentSelection [currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
+		currentSelection.Remove (v);
+
+		// log the last removed letter
+		LogAction ("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
+
+		// Remove the last letter
+		currentWord = currentWord.Substring (0, currentWord.Length - 1);
+
+		// select the most recent one
+		v = currentSelection[currentSelection.Count - 1];
+		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = true;
+	}
+
+	bool IsInsideTile(Vector2 pos) {
+		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
+		float trueX = myX - gridWidthRadius;
+		int trueY = myY - gridHeightRadius;
+		float radius = 0.37f;
+
+		// slight border around edge to make it easier to get diagonals
+		return (realPos.x > trueX - radius && realPos.x <= trueX + radius &&
+			realPos.y > trueY - radius && realPos.y <= trueY + radius);
+	}
+
+	bool IsNoBoxAboveMe() {
+		for (int y = myY+1; y < gridHeight; ++y) {
+			if (grid [myX, y] != null) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	// Checks to see if there is another box in my column that is falling with me in a 'column fall'
+	bool IsOtherBoxInColumnFalling() {
+		for (int y = myY-1; y >= 0; --y) {
+			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	// Checks to see if there are any boxes in column x that is currently falling (or column falling)
+	public static bool IsBoxInColumnFalling(int x) {
+		for (int y = 0; y < gridHeight; ++y) {
+			if (grid [x, y] != null && (grid [x, y].gameObject.GetComponent<BoxScript> ().falling ||
+										grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static void UpdateScoreProgressBar() {
+		float scale = score * 1.0f / MAX_SCORE;
+
+		if (scale > 1) {
+			scale = 1.0f;
+		}
+
+		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
 	}
 
 	public IEnumerator AnimateSelectedTiles(int submittedScore) {

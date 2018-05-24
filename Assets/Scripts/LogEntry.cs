@@ -58,8 +58,6 @@ public class LogEntry {
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
 		timestampEpoch = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds); // epoch time in milliseconds
-		//Debug.Log(System.DateTime.UtcNow);
-		//Debug.Log (timestampEpoch);
 
 		// TODO:
 		location = "";
@@ -144,7 +142,7 @@ public class KeyFrameLogEntry : LogEntry {
 		public int totalScore;
 		public int wordsPlayed;
 		public int totalInteractions;
-		public string preOrPost;
+		public string state; // pre, post (submit word), gameStart, or gameEnd
 	}
 
 	public KeyFramePayload payload;
