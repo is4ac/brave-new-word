@@ -66,6 +66,8 @@ public class SpawnBoxScript : MonoBehaviour {
 					BoxScript.freqDictionary.Add (word, val);
 				}
 			}
+
+			//GameManagerScript.LoadTrie ();
 		}
 	}
 

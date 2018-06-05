@@ -19,6 +19,7 @@ public class BoxScript : MonoBehaviour {
 	public static Text scoreText = null;
 	public static Text submittedWordText = null;
 	public static Text submittedScoreText = null;
+    public static Text selectedScore = null;
 	public static int score = 0;
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
@@ -72,6 +73,11 @@ public class BoxScript : MonoBehaviour {
 		if (submittedScoreText == null) {
 			submittedScoreText = GameObject.Find ("SubmittedScore").GetComponent<Text> ();
 		}
+
+        if (selectedScore == null) {
+            selectedScore = GameObject.Find("SelectedScore").GetComponent<Text>();
+
+        }
 
 		if (!IsValidPosition ()) {
 			//SceneManager.LoadScene (0);
@@ -331,14 +337,24 @@ public class BoxScript : MonoBehaviour {
 		// scoring function based on freq of word + freq of letters
 		// TODO: do more balance testing of scoring function to make sure it is balanced?
 		float wordFreq = GetWordFreq (word);
+
+        if (wordFreq < 0) {
+            // word does not exist in dictionary
+            return 0;
+        }
+
 		Debug.Log(currentWord + ": " + wordFreq);
-		payload.frequency = wordFreq;
 
 		// base score is based on length of word (if word is 3 letters long, base is 1 + 2 + 3 points, etc)
 		int baseScore = CalculateBaseScore(word.Length);
 
 		Debug.Log ("baseScore: " + baseScore);
-		payload.scoreBase = baseScore;
+
+        // record scores and freq into log if necessary
+        if (payload != null) {
+            payload.frequency = wordFreq;
+            payload.scoreBase = baseScore;
+        }
 
 		// freq multiplier to reward rarer words
 		float freqMultiplied = wordFreq;
@@ -369,22 +385,22 @@ public class BoxScript : MonoBehaviour {
 			// ULTRA RARE
 			return 70;
 		} else if (freq > 0.35) { 
-			// SUPER RARE+
+			// SUPER RARE
 			return 60;
 		} else if (freq > 0.3) {
-			// SUPER RARE
+			// RARE
 			return 50;
-		} else if (freq > 0.25) {
-			// RARE+
+		} else if (freq > 0.24) {
+			// AVERAGE
 			return 40;
 		} else if (freq > 0.2) {
-			// RARE
+			// UNCOMMON
 			return 30;
 		} else if (freq > 0.15) {
-			// UNCOMMON+
+			// COMMON
 			return 20;
 		} else if (freq > 0.1) {
-			// UNCOMMON
+			// VERY COMMON
 			return 10;
 		}
 
@@ -423,23 +439,54 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	static void RemoveLastSelection() {
-		// get the last selected letter tile and remove it from the list (and unhighlight it)
-		Vector2 v = currentSelection [currentSelection.Count - 1];
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
-		currentSelection.Remove (v);
+    static void RemoveLastSelection()
+    {
+        // get the last selected letter tile and remove it from the list (and unhighlight it)
+        Vector2 v = currentSelection[currentSelection.Count - 1];
+        grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = Color.white;
+        grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().isSelected = false;
+        currentSelection.Remove(v);
 
-		// log the last removed letter
-		LogAction ("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
-		// Remove the last letter
-		currentWord = currentWord.Substring (0, currentWord.Length - 1);
+        // log the last removed letter
+        LogAction("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
-		// select the most recent one
-		v = currentSelection[currentSelection.Count - 1];
-		grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = true;
-	}
+        // Remove the last letter
+        currentWord = currentWord.Substring(0, currentWord.Length - 1);
+
+        // select the most recent one
+        v = currentSelection[currentSelection.Count - 1];
+        grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().isSelected = true;
+
+        /*****************************************************************
+         * FEATURE: Highlighting color gradient based on frequency feature
+         *****************************************************************/
+        // Rehighlight the currently selected word with the correct color
+        Color highlightColor = GetHighlightColor(currentWord);
+        foreach (Vector2 vec in currentSelection)
+        {
+            grid[(int)vec.x, (int)vec.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+        }
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        // Calculate currently selected score and change the text on screen
+        if (currentWord.Length >= 3)
+        {
+            int currentScore = GetScore(currentWord, null);
+            if (currentScore == 0)
+            {
+                selectedScore.text = "";
+            }
+            else
+            {
+                selectedScore.text = currentScore + " points";
+            }
+        } else {
+            selectedScore.text = "";
+        }
+    }
 
 	bool IsInsideTile(Vector2 pos) {
 		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
@@ -533,6 +580,11 @@ public class BoxScript : MonoBehaviour {
 		}
 		currentWord = "";
 		currentSelection.Clear ();
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        selectedScore.text = "";
 	}
 
 	public void AnimateSuccess() {
@@ -562,11 +614,113 @@ public class BoxScript : MonoBehaviour {
         return -1;
     }
 
+    /*****************************************************************
+     * FEATURE: Highlighting color gradient based on frequency feature
+     *****************************************************************/
+    public static Color IntToColor(int HexVal)
+    {
+        byte R = (byte)((HexVal >> 16) & 0xFF);
+        byte G = (byte)((HexVal >> 8) & 0xFF);
+        byte B = (byte)((HexVal) & 0xFF);
+
+        return new Color(R/255f, G/255f, B/255f, 1);
+    }
+
+    public static Color GetColorGradient(float freq) {
+        float[] highs = new float[] { 0.15f, 0.24f, 0.36f };
+        float[] lows = new float[] { 0.0f, 0.15f, 0.24f };
+
+        // determine which third the freq is in
+        int index = -1;
+        if (freq > lows[2]) {
+            index = 2;
+        } else if (freq > lows[1]) {
+            index = 1;
+        } else {
+            index = 0;
+        }
+
+        float input = (freq - lows[index]) / (highs[index] - lows[index]);
+        if (input > 1) input = 1.0f;
+        int[] rs = new int[] { 241, 46, 52, 155 };
+        int[] gs = new int[] { 196, 204, 152, 89 };
+        int[] bs = new int[] { 15, 113, 219, 182 };
+
+        int rStart = rs[index],
+        gStart = gs[index],
+        bStart = bs[index],
+        rEnd = rs[index+1],
+        gEnd = gs[index+1],
+        bEnd = bs[index+1];
+
+        float r = rStart,
+        g = gStart,
+        b = bStart;
+
+        r -= (rStart - rEnd) * input;
+        g -= (gStart - gEnd) * input;
+        b -= (bStart - bEnd) * input;
+
+        Debug.Log(r + " " + g + " " + b);
+        return new Color(r / 255f, g / 255f, b / 255f, 1);
+    }
+
+    /**
+     * Returns a gradient of the highlighted letters color 
+     */
+    public static Color GetHighlightColor(string word) {
+        Color highlightColor;
+
+        if (word.Length >= 3 && freqDictionary.ContainsKey(word)) {
+            float freq = freqDictionary[word];
+
+            // increase the color gradient by inverse gaussian as the freq increases linearly
+            return GetColorGradient(freq);
+        } else {
+            if (ColorUtility.TryParseHtmlString("#c0392b", out highlightColor))
+                return highlightColor;
+
+            return Color.red;
+        }
+    }
+
+    /**
+     * Highlight the tile when it is selected and add the selection to the list
+     */
 	void SelectThisTile() {
 		currentSelection.Add (new Vector2 (myX, myY));
 		currentWord += myLetter;
-		grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+
+        /*****************************************************************
+         * FEATURE: Highlighting color gradient based on frequency feature
+         *****************************************************************/
+		//grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+        Color highlightColor = GetHighlightColor(currentWord);
+        foreach (Vector2 v in currentSelection)
+        {
+            grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+        }
+
 		isSelected = true;
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        // Calculate currently selected score and change the text on screen
+        if (currentWord.Length >= 3)
+        {
+            int currentScore = GetScore(currentWord, null);
+            if (currentScore == 0)
+            {
+                selectedScore.text = "";
+            }
+            else
+            {
+                selectedScore.text = currentScore + " points";
+            }
+        } else {
+            selectedScore.text = "";
+        }
 	}
 
 	// Checks to see if the other tile is adjacent (or diagonal) to the current location
@@ -620,6 +774,12 @@ public class BoxScript : MonoBehaviour {
 		}
 
 		currentSelection.Clear ();
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        // Calculate currently selected score and change the text on screen
+        selectedScore.text = "";
 	}
 
 	public static string GetLetterFromPrefab(string name) {
@@ -714,5 +874,19 @@ public class BoxScript : MonoBehaviour {
 		}
 
 		return boardString;
+	}
+
+	public static char[,] GetBoardLetters() {
+		char[,] letters = new char[gridWidth, gridHeight];
+
+		for (int j = 0; j < gridHeight; ++j) {
+			for (int i = 0; i < gridWidth; ++i) {
+				if (grid [i, j] != null) {
+					letters[i, j] = grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter[0];
+				}
+			}
+		}
+
+		return letters;
 	}
 }

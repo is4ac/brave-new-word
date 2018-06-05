@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -46,6 +47,11 @@ public class GameManagerScript : MonoBehaviour {
 	static bool initialLog = true;
 
 	/**********************************
+	 * Feature: Analyzing board state and immediate feedback of relative rarity of word using a trie
+	 **********************************/
+	public static Trie trie;
+
+	/**********************************
 	 * Feature: Timer in between words
 	 **********************************/
 	static float timer = 10; // 10 seconds to play a word
@@ -55,11 +61,6 @@ public class GameManagerScript : MonoBehaviour {
 	void Awake() {
 		gameOverPanel = GameObject.Find ("GameOver");
 		gameOverPanel.SetActive (false);
-
-		/**********************************
-	 	* Feature: Timer in between words
-	 	**********************************/
-		//timerText = GameObject.Find ("TimerText").GetComponent<Text> ();
 	}
 
 	// Use this for initialization
@@ -85,8 +86,8 @@ public class GameManagerScript : MonoBehaviour {
 		// TODO: check to see that userID is unique
 
 		// display the username on the screen
-		//usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
-		//usernameText.text = username;
+		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
+		usernameText.text = username;
 
 		currentVersion = (Versions) Random.Range (0, 2);
 
@@ -167,6 +168,7 @@ public class GameManagerScript : MonoBehaviour {
 				} else {
 					LogKeyFrame ("gameStart");
 					initialLog = false;
+					//AnalyzeGameBoard ();
 				}
 			}
 		} else {
@@ -319,6 +321,206 @@ public class GameManagerScript : MonoBehaviour {
 		} else {
 			GameManagerScript.LogGameUnpause ();
 		}
+	}
+
+
+
+	/**
+	 * TODO: This part should be done post-hoc, after gathering log data, and maybe convert this process into
+	 * a tree data structure to make it more efficient??
+	 */
+    /**
+     * Build a Trie!
+     */
+    public static void LoadTrie()
+    {
+        trie = new Trie();
+
+        foreach (string word in BoxScript.freqDictionary.Keys)
+        {
+            trie.Insert(word);
+        }
+
+        Debug.Log("Finished loading Trie");
+        //Debug.Log ("Checking if cat is in Trie: " + trie.Search ("cAt"));
+    }
+
+    /**
+	 * Analyze the game board and generate statistics for the potential game values
+	 * Returns a dictionary of statistics, value pairs:
+	 * <"max", float> // max possible score from a word
+	 * <"min", float> // min possible score from a word
+	 * <"median", float> // median score
+	 * <"mean", float> // mean score
+	 * <"count", int> // number of possible words
+	 */
+	public static Dictionary<string, float> AnalyzeGameBoard() {
+		Dictionary<string, float> results = new Dictionary<string, float>();
+
+		char[,] letters = BoxScript.GetBoardLetters();
+
+		// generate all possible words from the board state
+		List<string> allWords = AllPossibleWords(letters);
+
+		// calculate max possible score and min possible score
+		foreach (string word in allWords) {
+			Debug.Log (word);
+		}
+
+		return results;
+	}
+
+	public static List<string> AllPossibleWords(char[,] letters) {
+		List<string>[,] results = new List<string>[letters.GetLength (0), letters.GetLength (1)];
+		List<string> words = new List<string> ();
+
+		// TODO: Parallelize this section
+		for (int i = 0; i < letters.GetLength (0); ++i) {
+			for (int j = 0; j < letters.GetLength (1); ++j) {
+				results[i, j] = AllPossibleWordsHelper (letters, i, j);
+			}
+		}
+
+		// combine all results into one List
+		for (int i = 0; i < letters.GetLength (0); ++i) {
+			for (int j = 0; j < letters.GetLength (1); ++j) {
+				words = words.Union (results [i, j]).ToList ();
+			}
+		}
+
+		return words;
+	}
+
+	public static int[] ConvertSingleIndexToDoubleIndex(int index, int maxJ) {
+		int[] result = new int[2];
+		result [0] = index / maxJ;
+		result [1] = index % maxJ;
+
+		return result;
+	}
+
+	public static int ConvertDoubleIndexToSingleIndex(int i, int j, int maxJ) {
+		return i * maxJ + j;
+	}
+
+	public static List<string> AllPossibleWordsHelper(char[,] letters, int i, int j) {
+		List<string> words = new List<string> ();
+		List<int> indexes = new List<int> ();
+		int startIndex = ConvertDoubleIndexToSingleIndex(i, j, letters.GetLength (1));
+		indexes.Add (startIndex);
+		char[] flattenedLetters = FlattenArray (letters);
+
+		// use recursion to check all neighbors
+		CheckNeighbors(words, trie._root, indexes, flattenedLetters, startIndex, letters.GetLength(0), letters.GetLength(1));
+
+		return words;
+	}
+
+	public static void CheckNeighbors(List<string> words, Node currentNode, List<int> indexes, char[] letters, int index, int maxI, int maxJ) {
+		List<int> neighbors = GetNeighbors (maxI, maxJ, index);
+
+		foreach (int neighbor in neighbors) {
+			List<int> newIndexes = new List<int> (indexes);
+			Node nextNode = currentNode.FindChildNode(letters[neighbor]);
+
+			// neighboring letter does not exist in trie
+			if (nextNode == null) {
+				continue;
+			} else {
+				// check to see if neighbor already exists in newIndexes
+				if (newIndexes.Contains (neighbor)) {
+					continue;
+				}
+
+				newIndexes.Add (neighbor);
+
+				// this current word is a valid word in the dictionary
+				if (nextNode.FindChildNode ('$') != null) {
+					words.Add (StringFromIndexes(newIndexes, letters));
+				}
+
+				// end this search if nextNode is a leaf node
+				if (nextNode.IsLeaf ()) {
+					continue;
+				}
+
+				CheckNeighbors (words, nextNode, newIndexes, letters, neighbor, maxI, maxJ);
+			}
+			
+		}
+	}
+
+	public static string StringFromIndexes(List<int> indexes, char[] letters) {
+		string word = "";
+
+		foreach (int index in indexes) {
+			word += letters [index];
+		}
+
+		return word;
+	}
+
+	public static List<int> GetNeighbors(int maxI, int maxJ, int index) {
+		List<int> neighbors = new List<int> ();
+		int[] ij = ConvertSingleIndexToDoubleIndex (index, maxJ);
+		int i = ij [0];
+		int j = ij [1];
+
+		// check left
+		if (i - 1 >= 0) {
+			neighbors.Add (ConvertDoubleIndexToSingleIndex (i - 1, j, maxJ));
+
+			// check upper left
+			if (j + 1 < maxJ) {
+				neighbors.Add(ConvertDoubleIndexToSingleIndex (i - 1, j + 1, maxJ));
+			}
+
+			// check lower left
+			if (j - 1 >= 0) {
+				neighbors.Add(ConvertDoubleIndexToSingleIndex (i - 1, j - 1, maxJ));
+			}
+		}
+
+		// check right
+		if (i + 1 < maxI) {
+			neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j, maxJ));
+
+			// check upper right
+			if (j + 1 < maxJ) {
+				neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j + 1, maxJ));
+			}
+
+			// check lower right
+			if (j - 1 >= 0) {
+				neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j - 1, maxJ));
+			}
+		}
+
+		// check up
+		if (j + 1 < maxJ) {
+			neighbors.Add (ConvertDoubleIndexToSingleIndex (i, j + 1, maxJ));
+		}
+
+		// check down
+		if (j - 1 >= 0) {
+			neighbors.Add(ConvertDoubleIndexToSingleIndex (i, j - 1, maxJ));
+		}
+
+		return neighbors;
+	}
+
+	public static char[] FlattenArray(char[,] array) {
+		char[] result = new char[array.GetLength (0) * array.GetLength (1)];
+		int index = 0;
+
+		for (int i = 0; i < array.GetLength (0); ++i) {
+			for (int j = 0; j < array.GetLength (1); ++j) {
+				result [index] = array [i, j];
+				++index;
+			}
+		}
+
+		return result;
 	}
 
 	/***************************************************
