@@ -39,7 +39,6 @@ public class BoxScript : MonoBehaviour {
 	bool columnFalling = false;
 	int myX = 0;
 	int myY = 0;
-	bool isSelected = false;
 
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
@@ -86,94 +85,7 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	// Update is called once per frame
-	void Update () {
-		if (touchEnabled) {
-			// ButtonUI touch inputs
-			if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI &&
-			   Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
-				//Debug.Log ("Inside Tile worked!");
-
-				if (Input.GetTouch (0).phase == TouchPhase.Began) {
-					// there is no previously clicked box
-					if (currentSelection.Count == 0) {
-						SelectThisTile ();
-						LogAction ("WF_LetterSelected", myLetter, myX, myY);
-					} else if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-					          !currentSelection.Contains (new Vector2 (myX, myY))) {
-						// add on to the current selection 
-						SelectThisTile ();
-						LogAction ("WF_LetterSelected", myLetter, myX, myY);
-					} else {
-						// de-select what has already been selected
-						ClearAllSelectedTiles ();
-						LogAction ("WF_DeselectAll");
-					}
-				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
-					// selected tile and it isn't already selected)
-					if (currentSelection.Count > 0 &&
-					   IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-					   !currentSelection.Contains (new Vector2 (myX, myY))) {
-						SelectThisTile ();
-						LogAction ("WF_LetterSelected", myLetter, myX, myY);
-					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
-						// de-select the most recent tile(s) if you move back to an old one
-						for (int i = currentSelection.Count - 1; i > 0; --i) {
-							if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
-								RemoveLastSelection ();
-							} else {
-								break;
-							}
-						}
-					}
-				}
-			}
-			// SwipeUI touch input
-			else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
-			        Input.touchCount > 0 && IsInsideTile (Input.GetTouch (0).position)) {
-				//Debug.Log ("Inside Tile worked!");
-
-				if (Input.GetTouch (0).phase == TouchPhase.Began) {
-					// there is no previously clicked box
-					if (currentSelection.Count == 0) {
-						SelectThisTile ();
-						LogAction ("WF_LetterSelected", myLetter, myX, myY);
-					} else {
-						// de-select what has already been selected
-						ClearAllSelectedTiles ();
-						LogAction ("WF_DeselectAll");
-					}
-				} else if (Input.GetTouch (0).phase == TouchPhase.Moved) {
-					// selected tile and it isn't already selected)
-					if (IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-					   !currentSelection.Contains (new Vector2 (myX, myY))) {
-						SelectThisTile ();
-						LogAction ("WF_LetterSelected", myLetter, myX, myY);
-					} else if (currentSelection.Contains (new Vector2 (myX, myY))) {
-						// de-select the most recent tile(s) if you move back to an old one
-						for (int i = currentSelection.Count - 1; i > 0; --i) {
-							if (currentSelection [currentSelection.Count - 1] != new Vector2 (myX, myY)) {
-								RemoveLastSelection ();
-							} else {
-								break;
-							}
-						}
-					} else {
-						// just do nothing?
-					}
-				}
-
-				// If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
-				else if (Input.GetTouch (0).phase == TouchPhase.Ended && isSelected) {
-					PlayWord ();
-				} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Canceled && isSelected) {
-					ClearAllSelectedTiles ();
-					LogAction ("WF_DeselectAll");
-				}
-			}
-
-
-		}
-			
+	void Update () {	
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
 			if (!IsOtherBoxInColumnFalling ()) {
@@ -199,8 +111,28 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
+    // WF_LetterSelected or WF_LetterDeselected logging
+    public static void LogAction(string key, Vector2 pos)
+    {
+        if (GameManagerScript.LOGGING)
+        {
+            Debug.Log("Attempts to log data");
+            string letter = grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<BoxScript>().myLetter;
+            LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
+            payload.setValues(letter, (int)pos.x, (int)pos.y);
+            LetterLogEntry entry = new LetterLogEntry();
+            entry.setValues(key, "WF_Action", payload);
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
+            DatabaseReference child = reference.Push();
+            child.SetRawJsonValueAsync(json);
+
+            ++totalInteractions;
+        }
+    }
+
 	// WF_LetterSelected or WF_LetterDeselected logging
-	static void LogAction(string key, string letter, int x, int y) {
+	public static void LogAction(string key, string letter, int x, int y) {
 		if (GameManagerScript.LOGGING) {
 			Debug.Log ("Attempts to log data");
 			LogEntry.LetterPayload payload = new LogEntry.LetterPayload ();
@@ -218,7 +150,7 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	// WF_DeselectAll logging
-	static void LogAction(string key) {
+	public static void LogAction(string key) {
 		if (GameManagerScript.LOGGING) {
 			Debug.Log ("Attempts to log data");
 			LogEntry.LetterPayload[] letters = GetLetterPayloadsFromCurrentWord ();
@@ -309,7 +241,7 @@ public class BoxScript : MonoBehaviour {
 			score += submittedScore;
 			scoreText.text = "Points: " + score;
 			submittedWordText.text = currentWord;
-			submittedScoreText.text = ": " + submittedScore + " points";
+			submittedScoreText.text = submittedScore + " points";
 
 			payload.success = true;
 			payload.scoreTotal = submittedScore;
@@ -439,12 +371,11 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-    static void RemoveLastSelection()
+    public static void RemoveLastSelection()
     {
         // get the last selected letter tile and remove it from the list (and unhighlight it)
         Vector2 v = currentSelection[currentSelection.Count - 1];
         grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = Color.white;
-        grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().isSelected = false;
         currentSelection.Remove(v);
 
 
@@ -456,7 +387,6 @@ public class BoxScript : MonoBehaviour {
 
         // select the most recent one
         v = currentSelection[currentSelection.Count - 1];
-        grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().isSelected = true;
 
         /*****************************************************************
          * FEATURE: Highlighting color gradient based on frequency feature
@@ -488,7 +418,7 @@ public class BoxScript : MonoBehaviour {
         }
     }
 
-	bool IsInsideTile(Vector2 pos) {
+	public bool IsInsideTile(Vector2 pos) {
 		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
 		float trueX = myX - gridWidthRadius;
 		int trueY = myY - gridHeightRadius;
@@ -685,6 +615,45 @@ public class BoxScript : MonoBehaviour {
     }
 
     /**
+     * Method that selects the tile at the given coordinate (pos)
+     */ 
+    public static void SelectTile(Vector2 pos) {
+        currentSelection.Add(pos);
+        currentWord += grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<BoxScript>().myLetter;
+
+        /*****************************************************************
+         * FEATURE: Highlighting color gradient based on frequency feature
+         *****************************************************************/
+        //grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
+        Color highlightColor = GetHighlightColor(currentWord);
+        foreach (Vector2 v in currentSelection)
+        {
+            grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+        }
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        // Calculate currently selected score and change the text on screen
+        if (currentWord.Length >= 3)
+        {
+            int currentScore = GetScore(currentWord, null);
+            if (currentScore == 0)
+            {
+                selectedScore.text = "";
+            }
+            else
+            {
+                selectedScore.text = currentScore + " points";
+            }
+        }
+        else
+        {
+            selectedScore.text = "";
+        }
+    }
+
+    /**
      * Highlight the tile when it is selected and add the selection to the list
      */
 	void SelectThisTile() {
@@ -700,8 +669,6 @@ public class BoxScript : MonoBehaviour {
         {
             grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
         }
-
-		isSelected = true;
 
         /******************************************************************
          * FEATURE: Display currently selected score
@@ -722,6 +689,56 @@ public class BoxScript : MonoBehaviour {
             selectedScore.text = "";
         }
 	}
+
+    public static bool IsNextTo(Vector2 someLoc, Vector2 otherLoc) {
+        int myX = (int)someLoc.x;
+        int myY = (int)someLoc.y;
+        int otherX = (int)otherLoc.x;
+        int otherY = (int)otherLoc.y;
+
+        // check to the right
+        if (myX + 1 == otherX && myY == otherY)
+        {
+            return true;
+        }
+        // check to the left
+        else if (myX - 1 == otherX && myY == otherY)
+        {
+            return true;
+        }
+        // check up
+        else if (myX == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check down
+        else if (myX == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal top right
+        else if (myX + 1 == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal top left
+        else if (myX - 1 == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal bottom right
+        else if (myX + 1 == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal bottom left
+        else if (myX - 1 == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
 	// Checks to see if the other tile is adjacent (or diagonal) to the current location
 	public bool IsNextTo(Vector2 otherLoc) {
@@ -770,7 +787,6 @@ public class BoxScript : MonoBehaviour {
 		// remove all coloring
 		foreach (Vector2 v in currentSelection) {
 			grid [(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer> ().color = Color.white;
-			grid [(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript> ().isSelected = false;
 		}
 
 		currentSelection.Clear ();

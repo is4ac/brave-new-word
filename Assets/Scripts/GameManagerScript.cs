@@ -10,7 +10,7 @@ using Firebase.Database;
 using Firebase.Unity.Editor;
 
 public class GameManagerScript : MonoBehaviour {
-
+    
 	// Set to true to log to Firebase database, false to turn off
 	public const bool LOGGING = true;
 	public const string LOGGING_VERSION = "WFLogs_V1_0_3_DEBUG";
@@ -33,9 +33,9 @@ public class GameManagerScript : MonoBehaviour {
 	private static int versionIndex;
 	*/
 	public static Versions currentVersion;
-	GameObject playButton;
+	public GameObject playButton;
 	GameObject nextButton;
-	static Text usernameText;
+	public static Text usernameText;
 	//Text timerText;
 	public static int GAME_ID;
 	public static string username;
@@ -89,14 +89,7 @@ public class GameManagerScript : MonoBehaviour {
 		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
 		usernameText.text = username;
 
-		currentVersion = (Versions) Random.Range (0, 2);
-
-		// check version and hide/show Play Word button depending on version
-		if (currentVersion == Versions.SwipeUI) {
-			playButton.SetActive (false);
-		} else {
-			playButton.SetActive (true);
-		}
+        currentVersion = (Versions) Random.Range(0, 2);
 
 		Debug.Log ("Version: " + currentVersion);
 
@@ -147,6 +140,16 @@ public class GameManagerScript : MonoBehaviour {
 		/********************************
 		 * End Feature: Timer
 		 ********************************/
+
+        // check version and hide/show Play Word button depending on version
+        if (currentVersion == Versions.SwipeUI)
+        {
+            playButton.SetActive(false);
+        }
+        else
+        {
+            playButton.SetActive(true);
+        }
 
 		// if the enter key is pressed, then submit the word
 		// check against dictionary and give it points
@@ -228,6 +231,7 @@ public class GameManagerScript : MonoBehaviour {
 	}
 
 	public static void BeginGame() {
+        TouchInputHandler.touchEnabled = true;
 		gameHasBegun = true;
 	}
 
