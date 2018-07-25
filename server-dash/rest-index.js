@@ -1,8 +1,7 @@
+require('dotenv').config()
 var express = require('express');
 var app = express();
 var bodyParser = require("body-parser");
-require('dotenv').config()
-
 
 var admin = require("firebase-admin");
 var serviceAccount = require("./adminsdk-key.json");
@@ -135,11 +134,11 @@ app.get('/', function(req, res){
 });
 
 app.post('/logs/', function (req, res) {
-  res.send('POST request to the homepage');
-  console.log(req.headers.newheader);
-  // console.log(req.header.NewHeader);
+  console.log(req.headers[headCheck] == headText);
+
   if (req.headers[headCheck] == headText){
-    io.emit('postLog', req.body);
+      res.send('Successful POST');
+      io.emit('postLog', req.body);
   }
 
   // newDbLog(req);

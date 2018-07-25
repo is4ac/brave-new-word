@@ -19,3 +19,5 @@ server-dash/npm-debug.log
 server-dash/vars.env
 
 server-dash/vk@cplsr.complexplay.org
+
+server-dash/.env
