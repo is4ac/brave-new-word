@@ -1,6 +1,7 @@
 var express = require('express');
 var app = express();
 var bodyParser = require("body-parser");
+require('dotenv').config()
 
 
 var admin = require("firebase-admin");
@@ -16,6 +17,9 @@ const router = express.Router();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+headCheck = process.env.HEADERTYPE;
+headText = process.env.HEADERCONTENT;
 
 
 // const db = require('./config/db');
@@ -91,6 +95,7 @@ newDbLog = function (postPayload) {
 ref.on("child_added", function(snapshot, prevChildKey) {  
   var newPost = snapshot.val();
   var postPayload = newPost.payload;
+  // console.log(postPayload);
   // newDbLog(postPayload);
 });
 
@@ -131,7 +136,12 @@ app.get('/', function(req, res){
 
 app.post('/logs/', function (req, res) {
   res.send('POST request to the homepage');
-  console.log(req.body);
+  console.log(req.headers.newheader);
+  // console.log(req.header.NewHeader);
+  if (req.headers[headCheck] == headText){
+    io.emit('postLog', req.body);
+  }
+
   // newDbLog(req);
 })
 
@@ -180,7 +190,7 @@ io.on('connection', function(socket){
   })
 
   socket.on('disconnect', function(){
-    // console.log('user disconnected');
+    console.log('user disconnected');
   });
 });
 
@@ -195,7 +205,7 @@ io.on('connection', function(socket){
 //   });
 // }
 
-
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+portNo = 17040;
+http.listen(portNo, function(){
+  console.log('listening on *:' + portNo);
 });

@@ -15,3 +15,7 @@ server-dash/adminsdk-key.json
 server-dash/node_modules/*
 
 server-dash/npm-debug.log
+
+server-dash/vars.env
+
+server-dash/vk@cplsr.complexplay.org
