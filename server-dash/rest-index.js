@@ -10,6 +10,11 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const assert = require('assert');
 const url = require('url')
+// const MongoClient = require('mongodb').MongoClient;
+// const assert = require('assert');
+
+// const mongourl = 'mongodb://localhost:27017';
+// const dbName = process.env.DBNAME;
 
 app.use(express.static('public/'));
 const router = express.Router();
@@ -19,7 +24,7 @@ app.use(bodyParser.json());
 
 headCheck = process.env.HEADERTYPE;
 headText = process.env.HEADERCONTENT;
-
+portNo = process.env.OUTERPORT;
 
 // const db = require('./config/db');
 // var ObjectID = require('mongodb').ObjectID
@@ -134,11 +139,15 @@ app.get('/', function(req, res){
 });
 
 app.post('/logs/', function (req, res) {
-  console.log(req.headers[headCheck] == headText);
-
+  // console.log(req.headers[headCheck] == headText);
+  
   if (req.headers[headCheck] == headText){
       res.send('Successful POST');
       io.emit('postLog', req.body);
+      db.restLogs.insert(req.body);
+      // db.restLogs.insert(req.body);
+  } else {
+    io.emit('failed-log', req.body);
   }
 
   // newDbLog(req);
@@ -168,8 +177,18 @@ io.on('connection', function(socket){
         }
       }
      });
-
     setUsers();
+  
+  });
+
+  socket.on('rest-logs-join', function () {
+    restLogs = db.restLogs.find();
+    restLogs.toArray(function (err, res) {
+      if (err) {return err;}
+      else {
+        io.emit("all-db-logs", res);
+      }
+    });
     
   });
 
@@ -204,7 +223,7 @@ io.on('connection', function(socket){
 //   });
 // }
 
-portNo = 17040;
+
 http.listen(portNo, function(){
   console.log('listening on *:' + portNo);
 });
