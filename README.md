@@ -15,7 +15,7 @@ The game is a simple word game where you must select adjacent (including diagona
 
 ## Research
 
-This game is being used as part of an on-going research project at UW-Madison studying frictional design patterns and learning. Visit the [Complex Play Lab website](http://complexplay.org/) for more info.
+This game is being used as part of an on-going research project at UW-Madison studying frictional design patterns and its impact on Player Experience. Visit the [Complex Play Lab website](http://complexplay.org/) for more info.
 
 
 ## Building for Android
