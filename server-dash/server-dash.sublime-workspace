@@ -1,0 +1,459 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"timesta",
+				"timestampEpoch"
+			],
+			[
+				"pr",
+				"println"
+			],
+			[
+				"exec",
+				"executeDFS"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "index.js",
+			"settings":
+			{
+				"buffer_size": 6611,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/vishesh/Documents/blessed-contrib/examples/dashboard.js",
+			"settings":
+			{
+				"buffer_size": 8888,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "samplelogs.txt",
+			"settings":
+			{
+				"buffer_size": 15606,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "{ frequency: -1,\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: '' }\n{ frequency: -1,\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: '' }\n{ frequency: -1,\n  letters: [ { letter: 'S', x: 2, y: 6 } ],\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: 'S' }\n{ frequency: -1,\n  letters: [ { letter: 'E', x: 3, y: 6 } ],\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: 'E' }\n{ frequency: -1,\n  letters: [ { letter: 'E', x: 3, y: 5 } ],\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: 'E' }\n{ frequency: -1,\n  letters: [ { letter: 'A', x: 2, y: 5 } ],\n  scoreBase: -1,\n  scoreTotal: -1,\n  success: false,\n  word: 'A' }\n{ frequency: 0.07000000029802322,\n  letters: \n   [ { letter: 'S', x: 2, y: 6 },\n     { letter: 'E', x: 3, y: 5 },\n     { letter: 'E', x: 3, y: 6 } ],\n  scoreBase: 6,\n  scoreTotal: 8,\n  success: true,\n  word: 'SEE' }\n{ frequency: 0.11599999666213989,\n  letters: \n   [ { letter: 'R', x: 1, y: 7 },\n     { letter: 'O', x: 1, y: 8 },\n     { letter: 'E', x: 2, y: 8 } ],\n  scoreBase: 6,\n  scoreTotal: 27,\n  success: true,\n  word: 'ROE' }\n{ frequency: 0.12600000202655792,\n  letters: \n   [ { letter: 'T', x: 5, y: 4 },\n     { letter: 'E', x: 5, y: 5 },\n     { letter: 'E', x: 4, y: 5 } ],\n  scoreBase: 6,\n  scoreTotal: 28,\n  success: true,\n  word: 'TEE' }\n",
+			"settings":
+			{
+				"buffer_size": 1328,
+				"line_ending": "Unix",
+				"name": "{ frequency: -1,"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "project",
+		"selected_items":
+		[
+			[
+				"project",
+				"Project: Save As"
+			],
+			[
+				"list ",
+				"Package Control: List Packages"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 428.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/vishesh/Documents/ohno-wordflood/server-dash",
+		"/Users/vishesh/Documents/ohno-wordflood/server-dash/config"
+	],
+	"file_history":
+	[
+		"/Users/vishesh/Documents/ohno-wordflood/server-dash/samplelogs.txt",
+		"/Users/vishesh/Documents/blessed-contrib/index.js",
+		"/Users/vishesh/Documents/ohno-wordflood/server-dash/blessed-deps.js",
+		"/Users/vishesh/Documents/ohno-wordflood/server-dash/config/db.js",
+		"/Users/vishesh/Dropbox/fiddlybits/CTE2018_paper_69_review.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw2/Awari/setup.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw2/Awari/b2.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw2/Awari/b3.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw2/Awari/studentAI.java",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw2/Awari/b1.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw-1/aihw1/src/PriorityQ.java",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw-1/aihw1/src/KingsKnightmare.java",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw-1/SampleCasesAndOutput/SampleTest_astar2.txt",
+		"/Users/vishesh/Dropbox/Sem-6/intro-to-ai/hw-1/aihw1/src/PriorityQ.class",
+		"/Users/vishesh/Dropbox/fiddlybits/playlist.rb",
+		"/Users/vishesh/Dropbox/fiddlybits/keytrack2.py",
+		"/Users/vishesh/Dropbox/fiddlybits/not-ready1.py",
+		"/Users/vishesh/Dropbox/fiddlybits/gettingthere.py",
+		"/Users/vishesh/Dropbox/fiddlybits/sonicpi.py",
+		"/Users/vishesh/Dropbox/fiddlybits/peters happy bday.rb",
+		"/Users/vishesh/Documents/Situating_Big_Data/Telemetry-oct_15/fixingSuccess-round2.py",
+		"/Users/vishesh/Dropbox/711 MAP readings/discussion-notes.txt",
+		"/Users/vishesh/hist-scripts.r",
+		"/Users/vishesh/Documents/Situating_Big_Data/Telemetry-cscl/finding-speaks.py"
+	],
+	"find":
+	{
+		"height": 39.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"console.lo",
+			"totalscore",
+			"wf_submit",
+			"findone",
+			"find",
+			"findone",
+			"$and",
+			"findone",
+			"console.lo",
+			"distinct",
+			"allLo",
+			"userconn",
+			"table",
+			"console.",
+			"screen.ren",
+			"setint",
+			"refres",
+			"table",
+			"console",
+			"table",
+			"submitted",
+			"screen",
+			"console.lo",
+			"refres",
+			"length",
+			"userconnects",
+			"wf_acti",
+			"action",
+			"userconn",
+			"gamestat",
+			"scoretotal",
+			"table",
+			"total tran",
+			"table",
+			"log",
+			"_id",
+			"newpo",
+			"updateuserl",
+			"console",
+			"updateuserli",
+			"username",
+			"commands",
+			"log",
+			".length",
+			"userconn",
+			"userlist",
+			"cb",
+			"username",
+			"key",
+			"db",
+			"gamest",
+			"gamestar",
+			"fail"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "index.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6611,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5054,
+								5054
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "javascript"
+							},
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2488.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/Users/vishesh/Documents/blessed-contrib/examples/dashboard.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8888,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4082,
+								4087
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "javascript"
+							},
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1682.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "samplelogs.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15606,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5501,
+								5511
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 1068,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2857.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1328,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								70,
+								70
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 1,
+								"count": 157,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_name": "{ frequency: -1,",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 81.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 37.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "server-dash.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

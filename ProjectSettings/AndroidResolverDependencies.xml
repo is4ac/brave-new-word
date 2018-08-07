@@ -1,17 +1,11 @@
 <dependencies>
   <packages>
-    <package>com.google.android.gms:play-services-appinvite:12.0.1</package>
-    <package>com.google.android.gms:play-services-base:12.0.1</package>
-    <package>com.google.firebase:firebase-analytics:12.0.1</package>
-    <package>com.google.firebase:firebase-analytics-unity:4.5.2</package>
-    <package>com.google.firebase:firebase-app-unity:4.5.2</package>
-    <package>com.google.firebase:firebase-auth:12.0.1</package>
-    <package>com.google.firebase:firebase-auth-unity:4.5.2</package>
-    <package>com.google.firebase:firebase-common:12.0.1</package>
-    <package>com.google.firebase:firebase-core:12.0.1</package>
-    <package>com.google.firebase:firebase-dynamic-links-unity:4.5.2</package>
-    <package>com.google.firebase:firebase-storage:12.0.1</package>
-    <package>com.google.firebase:firebase-storage-unity:4.5.2</package>
+    <package>com.google.android.gms:play-services-base:15.0.1</package>
+    <package>com.google.firebase:firebase-app-unity:5.0.0</package>
+    <package>com.google.firebase:firebase-auth:16.0.1</package>
+    <package>com.google.firebase:firebase-auth-unity:5.0.0</package>
+    <package>com.google.firebase:firebase-common:16.0.0</package>
+    <package>com.google.firebase:firebase-core:16.0.0</package>
   </packages>
   <files>
     <file>Assets/Plugins/Android/android.arch.core.common-1.0.0.jar</file>
@@ -24,35 +18,24 @@
     <file>Assets/Plugins/Android/com.android.support.support-fragment-26.1.0.aar</file>
     <file>Assets/Plugins/Android/com.android.support.support-media-compat-26.1.0.aar</file>
     <file>Assets/Plugins/Android/com.android.support.support-v4-26.1.0.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-appinvite-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-appinvite-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-base-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-base-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-basement-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-basement-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-tasks-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.android.gms.play-services-tasks-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-impl-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-impl-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-unity-4.5.2</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-app-unity-4.5.2</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-unity-4.5.2</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-common-12.0.1</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-common-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-core-12.0.1</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-dynamic-links-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-dynamic-links-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-dynamic-links-unity-4.5.2</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-12.0.1</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-storage-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-storage-common-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-storage-common-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-storage-license-12.0.1.aar</file>
-    <file>Assets/Plugins/Android/com.google.firebase.firebase-storage-unity-4.5.2</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-ads-identifier-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-base-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-basement-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-flags-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-measurement-base-15.0.4.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-stats-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.android.gms.play-services-tasks-15.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-analytics-impl-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-app-unity-5.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-16.0.1.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-interop-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-auth-unity-5.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-common-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-core-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-iid-interop-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-16.0.0.aar</file>
+    <file>Assets/Plugins/Android/com.google.firebase.firebase-measurement-connector-impl-16.0.0.aar</file>
   </files>
 </dependencies>

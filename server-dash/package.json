@@ -1,0 +1,24 @@
+{
+  "name": "server-dash",
+  "version": "1.0.0",
+  "description": "making a node server for the word flood dashbaord",
+  "main": "index.js",
+  "dependencies": {
+    "assert": "^1.4.1",
+    "blessed": "^0.1.81",
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "firebase-admin": "^5.11.0",
+    "mongodb": "^3.1.1",
+    "mongojs": "^2.5.0",
+    "mongoose": "^5.0.17",
+    "socket.io": "^2.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "vishesh/complex play lab",
+  "license": "ISC"
+}

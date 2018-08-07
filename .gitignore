@@ -15,3 +15,11 @@ server-dash/adminsdk-key.json
 server-dash/node_modules/*
 google-services.json
 google-services.json.meta
+
+server-dash/npm-debug.log
+
+server-dash/vars.env
+
+server-dash/vk@cplsr.complexplay.org
+
+server-dash/.env
