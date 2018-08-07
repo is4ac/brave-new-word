@@ -7,21 +7,21 @@ public class SpawnBoxScript : MonoBehaviour {
 
 	public TextAsset dictionary;
 
-	[SerializeField]
-	public GameObject[] boxList;
+    public Transform boxPrefab;
+
 	[SerializeField]
 	public int myX;
 
-	static int width = 6;
-	static int height = 9;
+	//static int width = 6;
+	//static int height = 9;
 
 	static bool isInit = false;
 	bool init = true;
 	int initCount = 0;
 	bool wait = true;
 	List<int> letterFreq;
-	static char[,] initialBoard = new char[width, height];
-	static bool[,] flaggedBoard = new bool[width, height];
+	//static char[,] initialBoard = new char[width, height];
+	//static bool[,] flaggedBoard = new bool[width, height];
 
     public static int[] letterDistributions = new int[] {
         81,20,28,43,90,     // A B C D E
@@ -265,29 +265,22 @@ public class SpawnBoxScript : MonoBehaviour {
 	 * Creates a new spawnbox with a random letter at this location
 	 */
 	public void SpawnNewBox() {
+        // TODO: fix this!!!
 		int i = Random.Range (0, letterFreq.Count);
-		GameObject box = Instantiate (boxList [letterFreq[i]], transform.position, Quaternion.identity);
-
-		if (init) {
-			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
-		}
+        SpawnNewBox((char)('A' + letterFreq[i]));
 	}
 
 	/**
 	 * Creates a new spawnbox with the given letter (in caps, e.g. 'A', 'B', 'C', etc) at this location
 	 */
 	public void SpawnNewBox(char letter) {
-		int index = letter - 'A';
+        Transform box = Instantiate (boxPrefab, transform.position, Quaternion.identity);
 
-		// input validation/error checking
-		if (index < 0 || index >= 26) {
-			Debug.Log ("Error: SpawnNewBox(char) received a letter that is either not capitalized or is not a letter."); 
-		}
-
-		GameObject box = Instantiate (boxList [index], transform.position, Quaternion.identity);
+        BoxScript script = box.GetComponent<BoxScript>();
+        script.SetLetter(letter);
 
 		if (init) {
-			box.GetComponent<BoxScript> ().fallSpeed = 0.05f;
+			script.fallSpeed = 0.05f;
 		}
 	}
 

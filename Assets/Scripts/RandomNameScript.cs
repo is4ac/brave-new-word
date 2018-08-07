@@ -11,7 +11,6 @@ using Firebase.Unity.Editor;
 public class RandomNameScript : MonoBehaviour
 {
 
-	public TextAsset p12Asset;
 	public TextAsset usernamesText;
 
 	public static string username;
@@ -34,55 +33,9 @@ public class RandomNameScript : MonoBehaviour
 		// Generate a random username
 		InitializeUsernameList ();
 		RandomizeName ();
-
-		// Firebase database logistics for editor
-		FirebaseApp.DefaultInstance.SetEditorDatabaseUrl ("https://wordflood-bf7c4.firebaseio.com/");
-		FirebaseApp.DefaultInstance.SetEditorP12FileName (@"Assets/Firebase/WordFlood-66029aead4c6.p12.txt");
-		FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail ("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
-		FirebaseApp.DefaultInstance.SetEditorP12Password ("notasecret");
-
-
-		FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
-			Firebase.DependencyStatus dependencyStatus = task.Result;
-			if (dependencyStatus == DependencyStatus.Available) {
-				InitializeFirebase();
-			} else {
-				Debug.LogError(
-					"Could not resolve all Firebase dependencies: " + dependencyStatus);
-			}
-		});
-
 	}
 
-	// Initialize the Firebase database:
-	protected virtual void InitializeFirebase() {
-		FirebaseApp app = FirebaseApp.DefaultInstance;
-		// NOTE: You'll need to replace this url with your Firebase App's database
-		// path in order for the database connection to work correctly in editor
-
-		//This is needed only for the unity editor
-		//app.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
-		if (app.Options.DatabaseUrl != null) {
-			//app.SetEditorDatabaseUrl (app.Options.DatabaseUrl);
-		}
-		//--------------------------------------
-		/*
-		Firebase.Auth.FirebaseAuth auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
-		auth.SignInWithEmailAndPasswordAsync("isaacsung@gmail.com", "notasecret").ContinueWith(task => {
-			if (task.IsCanceled) {
-				Debug.LogError("SignInWithEmailAndPasswordAsync was canceled.");
-				return;
-			}
-			if (task.IsFaulted) {
-				Debug.LogError("SignInWithEmailAndPasswordAsync encountered an error: " + task.Exception);
-				return;
-			}
-			Firebase.Auth.FirebaseUser newUser = task.Result;
-			Debug.LogFormat("User signed in successfully: {0} ({1})",
-				newUser.DisplayName, newUser.UserId);
-		});
-		*/
-	}
+	
 
 	// Update is called once per frame
 	void Update ()

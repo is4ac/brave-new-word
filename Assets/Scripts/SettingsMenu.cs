@@ -5,27 +5,32 @@ using TMPro;
 public class SettingsMenu : MonoBehaviour {
     
     public GameObject settingsPanel;
-    public GameObject uiDropdownGameObj;
+    //public GameObject uiDropdownGameObj;
+    public GameObject highlightToggleObj;
+    public GameObject currentSelectedScoreToggleObj;
+    public GameObject buttonToggleObj;
 
-    private TMP_Dropdown uiDropdown;
-    private int myUIVersion;
-    private int myNewUIVersion;
-
-    private void Awake()
-    {
-        
-    }
+    //private TMP_Dropdown uiDropdown;
+    private Toggle highlightToggle;
+    private Toggle currentSelectedScoreToggle;
+    private Toggle buttonToggle;
 
     // Use this for initialization
     void Start () {
-        // initialize dropdown component
-        uiDropdown = uiDropdownGameObj.GetComponent<TMP_Dropdown>();
+        // initialize components
+        //uiDropdown = uiDropdownGameObj.GetComponent<TMP_Dropdown>();
+        highlightToggle = highlightToggleObj.GetComponent<Toggle>();
+        currentSelectedScoreToggle = currentSelectedScoreToggleObj.GetComponent<Toggle>();
+        buttonToggle = buttonToggleObj.GetComponent<Toggle>();
 
         // get current UI version and set the dropdown to equal that
-        myUIVersion = (int) GameManagerScript.currentVersion;
-        myNewUIVersion = myUIVersion;
-        uiDropdown.value = myUIVersion;
-	}
+        //uiDropdown.value = (int)GameManagerScript.currentVersion;
+
+        // set the toggles to be whatever options they currently are
+        highlightToggle.isOn = GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK;
+        currentSelectedScoreToggle.isOn = GameManagerScript.DISPLAY_SELECTED_SCORE;
+        buttonToggle.isOn = GameManagerScript.DISPLAY_BUTTON;
+    }
 
     public void OpenSettingsMenu()
     {
@@ -34,42 +39,42 @@ public class SettingsMenu : MonoBehaviour {
         // TODO: deactivate touch input for the rest of the game
         TouchInputHandler.touchEnabled = false;
 
+        // deselect all currently selected letters (just to make it easier for highlighting feature changes, etc
+        BoxScript.ClearAllSelectedTiles();
+
         // Open the settings panel
         settingsPanel.SetActive(true);
     }
 
-    public void CancelMenu() {
+    public void CloseSettingsMenu() {
         // TODO: Log this action
 
-        // TODO: reactivate touch input for rest of game
-        TouchInputHandler.touchEnabled = true;
-
-        // TODO: save old settings and reset it before closing the panel
-        myNewUIVersion = myUIVersion;
-        uiDropdown.value = myUIVersion;
-
-        // Close the settings panel without applying any of the changes (reset back)
-        settingsPanel.SetActive(false);
-    }
-
-    public void SaveMenu() {
-        // TODO: Log this action
-
-        // TODO: reactivate touch input for rest of game
-        TouchInputHandler.touchEnabled = true;
-
-        // TODO: Save the changes of the new options
-        GameManagerScript.currentVersion = (GameManagerScript.Versions) myNewUIVersion;
 
         // Close the settings panel
         settingsPanel.SetActive(false);
+
+        // reactivate touch input for rest of game
+        TouchInputHandler.touchEnabled = true;
     }
 
-    public void OnUIDropdownChange(int value) {
+    public void OnHighlightToggleChange(bool value) {
         // TODO: log this action
 
-        // store the changed value in a variable
-        myNewUIVersion = uiDropdown.value;
-        Debug.Log("Dropdown changed: " + myNewUIVersion);
+        GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = value;
+    }
+
+    public void OnCurrentSelectedScoreToggleChange(bool value) {
+        // TODO: log this action
+
+        GameManagerScript.DISPLAY_SELECTED_SCORE = value;
+    }
+
+    public void OnButtonToggleChange(bool value)
+    {
+        // TODO: log this action
+
+        GameManagerScript.DISPLAY_BUTTON = value;
+        GameManagerScript gameManager = GameObject.Find("GameManager").GetComponent<GameManagerScript>();
+        gameManager.SetButtonDisplay(value);
     }
 }

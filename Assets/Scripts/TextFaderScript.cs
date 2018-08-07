@@ -4,8 +4,8 @@ using UnityEngine.UI;
 using UnityEngine;
 
 public class TextFaderScript : MonoBehaviour {
-
-	public static Color normalColor = new Color32( 0x16, 0xE8, 0xE3, 0xFF );
+    
+    public static Color normalColor = new Color32( 0x34, 0x49, 0x5E, 0x8B );
 	public static Color errorColor = Color.black;
 
 

@@ -14,7 +14,9 @@ public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
 	
 	// Update is called once per frame
 	void Update () {
-		
+        if (!GameManagerScript.INSTRUCTIONS_PANEL) {
+            panel.SetActive(false);
+        }
 	}
 
 	// When this panel is clicked

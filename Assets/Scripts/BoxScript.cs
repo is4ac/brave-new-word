@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using Firebase;
 using Firebase.Database;
 using Firebase.Unity.Editor;
+using TMPro;
 
 public class BoxScript : MonoBehaviour {
 
@@ -28,8 +29,10 @@ public class BoxScript : MonoBehaviour {
 	public static int totalInteractions = 0;
 	public static int wordsPlayed = 0;
 	public static bool touchEnabled = false;
-
 	public static float MAX_SCORE = 1000f;
+
+    public GameObject _explodeParticleSystemPrefab;
+    public GameObject _bubblesLandingParticleSystemPrefab;
 
 	static BoxScript instance = null;
 
@@ -39,6 +42,7 @@ public class BoxScript : MonoBehaviour {
 	bool columnFalling = false;
 	int myX = 0;
 	int myY = 0;
+    bool needsToLand = true;
 
 	[NonSerialized]
 	public float fallSpeed = FALL_SPEED_CONST;
@@ -59,7 +63,12 @@ public class BoxScript : MonoBehaviour {
 		falling = true;
 		columnFalling = false;
 		fall = Time.time;
-		myLetter = GetLetterFromPrefab (this.gameObject.name);
+
+        // initialize letter
+        if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
+        {
+            myLetter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
+        }
 
 		if (scoreText == null) {
 			scoreText = GameObject.Find("Score").GetComponent<Text>();
@@ -89,6 +98,7 @@ public class BoxScript : MonoBehaviour {
 		// check to see if the column needs to go down, or if it needs to be refilled
 		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
 			if (!IsOtherBoxInColumnFalling ()) {
+                needsToLand = true;
 				ColumnDown ();
 				fall = Time.time;
 			}
@@ -98,6 +108,7 @@ public class BoxScript : MonoBehaviour {
 
 		// If a tile is falling down the screen...
 		if (falling && Time.time - fall >= fallSpeed) {
+            needsToLand = true;
 			transform.position += new Vector3(0, -1, 0);
 
 			if (IsValidPosition()) {
@@ -109,7 +120,22 @@ public class BoxScript : MonoBehaviour {
 			}
 			fall = Time.time;
 		}
+
+        // check to see if landing bubbles need to be activated
+        if (!falling && needsToLand && !columnFalling) {
+            CreateBubbleParticles();
+            needsToLand = false;
+        }
 	}
+
+    public void CreateBubbleParticles() {
+        PlayParticleSystem(_bubblesLandingParticleSystemPrefab);
+    }
+
+    public void SetLetter(char letter) {
+        myLetter = letter + "";
+        this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text = myLetter;
+    }
 
     // WF_LetterSelected or WF_LetterDeselected logging
     public static void LogAction(string key, Vector2 pos)
@@ -224,8 +250,6 @@ public class BoxScript : MonoBehaviour {
 			camShake.ShakeRed (1f);
 		}
 
-		Debug.Log ("BoxScript.PlayWord end");
-
 		CheckGameEnd ();
 	}
 		
@@ -239,15 +263,16 @@ public class BoxScript : MonoBehaviour {
 		if (IsValidWord (currentWord)) {
 			int submittedScore = GetScore (currentWord, payload);
 			score += submittedScore;
-			scoreText.text = "Points: " + score;
-			submittedWordText.text = currentWord;
-			submittedScoreText.text = submittedScore + " points";
+            if (scoreText != null) { scoreText.text = "Points: " + score; }
+            if (submittedWordText != null) { submittedWordText.text = currentWord; }
+            if (submittedScoreText != null) { submittedScoreText.text = submittedScore + " points"; }
 
 			payload.success = true;
 			payload.scoreTotal = submittedScore;
 
-			// Do something celebratory! highlight in green briefly before removing from screen
-			instance.StartCoroutine(instance.AnimateSelectedTiles (submittedScore));
+            // Do something celebratory! highlight in green briefly before removing from screen
+            // and also display a congratulatory message depending on how rare the word was
+            instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord)));
 
 			UpdateScoreProgressBar ();
 
@@ -309,25 +334,25 @@ public class BoxScript : MonoBehaviour {
 			return 9001; // over 9000
 		} else if (freq > 0.5) {
 			// PREMIUM ULTRA RARE
-			return 100;
+			return 60;
 		} else if (freq > 0.45) { 
 			// ULTRA RARE+
-			return 80;
+			return 50;
 		} else if (freq > 0.4) {
 			// ULTRA RARE
-			return 70;
+			return 45;
 		} else if (freq > 0.35) { 
 			// SUPER RARE
-			return 60;
+			return 40;
 		} else if (freq > 0.3) {
 			// RARE
-			return 50;
+			return 35;
 		} else if (freq > 0.24) {
 			// AVERAGE
-			return 40;
+			return 30;
 		} else if (freq > 0.2) {
 			// UNCOMMON
-			return 30;
+			return 25;
 		} else if (freq > 0.15) {
 			// COMMON
 			return 20;
@@ -378,8 +403,8 @@ public class BoxScript : MonoBehaviour {
         grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = Color.white;
         currentSelection.Remove(v);
 
-
         // log the last removed letter
+        // TODO: get firebase logging to work on Android
         LogAction("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
         // Remove the last letter
@@ -392,41 +417,47 @@ public class BoxScript : MonoBehaviour {
          * FEATURE: Highlighting color gradient based on frequency feature
          *****************************************************************/
         // Rehighlight the currently selected word with the correct color
-        Color highlightColor = GetHighlightColor(currentWord);
-        foreach (Vector2 vec in currentSelection)
+        if (GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK)
         {
-            grid[(int)vec.x, (int)vec.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+            Color highlightColor = GetHighlightColor(currentWord);
+            foreach (Vector2 vec in currentSelection)
+            {
+                grid[(int)vec.x, (int)vec.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+            }
         }
 
         /******************************************************************
          * FEATURE: Display currently selected score
          ******************************************************************/
-        // Calculate currently selected score and change the text on screen
-        if (currentWord.Length >= 3)
+        if (GameManagerScript.DISPLAY_SELECTED_SCORE)
         {
-            int currentScore = GetScore(currentWord, null);
-            if (currentScore == 0)
+            // Calculate currently selected score and change the text on screen
+            if (currentWord.Length >= 3)
             {
-                selectedScore.text = "";
+                int currentScore = GetScore(currentWord, null);
+                if (currentScore == 0)
+                {
+                    selectedScore.text = "";
+                }
+                else
+                {
+                    selectedScore.text = currentWord + ": " + currentScore + " pts";
+                }
             }
             else
             {
-                selectedScore.text = currentScore + " points";
+                selectedScore.text = "";
             }
-        } else {
-            selectedScore.text = "";
         }
     }
 
 	public bool IsInsideTile(Vector2 pos) {
 		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
-		float trueX = myX - gridWidthRadius;
-		int trueY = myY - gridHeightRadius;
-		float radius = 0.37f;
+        Vector2 myRealPos = new Vector2(myX - gridWidthRadius, myY - gridHeightRadius);
+		float radius = 0.4f;
 
-		// slight border around edge to make it easier to get diagonals
-		return (realPos.x > trueX - radius && realPos.x <= trueX + radius &&
-			realPos.y > trueY - radius && realPos.y <= trueY + radius);
+        // calculate distance between the two points and see if it's within the radius
+        return Vector2.Distance(realPos, myRealPos) <= radius;
 	}
 
 	bool IsNoBoxAboveMe() {
@@ -472,39 +503,64 @@ public class BoxScript : MonoBehaviour {
 		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
 	}
 
-	public IEnumerator AnimateSelectedTiles(int submittedScore) {
+	public IEnumerator AnimateSelectedTiles(float freq) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-		if (submittedScore >= 50) {
-			// PHENOMENAL!
-			textFader.FadeText (0.7f, "Phenomenal!");
-		} else if (submittedScore >= 40) {
-			// FANTASTIC!
-			textFader.FadeText (0.7f, "Fantastic!");
-		} else if (submittedScore >= 30) {
-			// GREAT!
-			textFader.FadeText (0.7f, "Great!");
-		} else if (submittedScore >= 20) {
-			// NICE!
-			textFader.FadeText (0.7f, "Nice!");
-		}
+
+        Debug.Log("freq: " + freq);
+
+        if (freq >= 0.38)
+        {
+            // PREMIUM ULTRA RARE
+            textFader.FadeText(0.7f, "Premium Ultra Rare!");
+        }
+        else if (freq >= 0.3)
+        {
+            // ULTRA RARE+
+            textFader.FadeText(0.7f, "Ultra Rare Plus!");
+        }
+        else if (freq >= 0.24)
+        {
+            // ULTRA RARE
+            textFader.FadeText(0.7f, "Ultra Rare!");
+        }
+        else if (freq >= 0.2)
+        {
+            // SUPER RARE
+            textFader.FadeText(0.7f, "Super Rare!");
+        }
+        else if (freq >= 0.15)
+        {
+            // RARE
+            textFader.FadeText(0.7f, "Rare!");
+        }
+        else if (freq >= 0.13)
+        {
+            // UNCOMMON
+            textFader.FadeText(0.7f, "Uncommon!");
+        }
+        else if (freq > 0.11)
+        {
+            // GOOD
+            textFader.FadeText(0.7f, "Good!");
+        }
 
 		// animate each selected tile
 		foreach (Vector2 v in currentSelection) {
-			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
+			GameObject _gameObject = grid [(int)v.x, (int)v.y].gameObject;
+			_gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
 		}
 
 		// brief pause for the color to change before removing them from screen
-		yield return new WaitForSeconds(0.17f);
+		yield return new WaitForSeconds(0.7f);
 		DeleteAllSelectedTiles ();
 	}
 
 	public static void DeleteAllSelectedTiles() {
+        Debug.Log("deleting all tiles");
 		// delete all tiles in list
 		foreach (Vector2 v in currentSelection) {
 			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
 			Destroy (gameObject);
 			grid [(int)v.x, (int)v.y] = null;
 		}
@@ -514,13 +570,46 @@ public class BoxScript : MonoBehaviour {
         /******************************************************************
          * FEATURE: Display currently selected score
          ******************************************************************/
-        selectedScore.text = "";
+        if (GameManagerScript.DISPLAY_SELECTED_SCORE)
+        {
+            selectedScore.text = "";
+        }
 	}
 
 	public void AnimateSuccess() {
 		// highlight in green briefly when successfully played
 		grid[myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.green;
+
+        // hide the sprite
+        gameObject.GetComponent<SpriteRenderer>().enabled = false;
+
+        // hide the textmesh pro
+        gameObject.GetComponentInChildren<TextMeshPro>().enabled = false;
+
+        Debug.Log("Trying to animate particle system");
+        // Play the particle system
+        PlaySuccessParticleSystem();
 	}
+
+    public void PlayParticleSystem(GameObject particleSystemPrefab) {
+        //Instantiate _particleSystemPrefab as new GameObject.
+        GameObject _particleSystemObj = Instantiate(particleSystemPrefab);
+
+        // Set new Particle System GameObject as a child of desired GO.
+        // Right now parent would be the same GO in which this script is attached
+        // You can also make it others child by ps.transform.parent = otherGO.transform.parent;
+        _particleSystemObj.transform.parent = transform;
+
+        // After setting this, replace the position of that GameObject as where the parent is located.
+        _particleSystemObj.transform.localPosition = Vector3.zero;
+
+        ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
+        _particleSystem.Play();
+    }
+
+    public void PlaySuccessParticleSystem() {
+        PlayParticleSystem(_explodeParticleSystemPrefab);
+    }
 
 	public void AnimateSelect() {
 		// TODO: little animation from each tile when it gets selected??
@@ -591,7 +680,6 @@ public class BoxScript : MonoBehaviour {
         g -= (gStart - gEnd) * input;
         b -= (bStart - bEnd) * input;
 
-        Debug.Log(r + " " + g + " " + b);
         return new Color(r / 255f, g / 255f, b / 255f, 1);
     }
 
@@ -624,71 +712,41 @@ public class BoxScript : MonoBehaviour {
         /*****************************************************************
          * FEATURE: Highlighting color gradient based on frequency feature
          *****************************************************************/
-        //grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
-        Color highlightColor = GetHighlightColor(currentWord);
-        foreach (Vector2 v in currentSelection)
+        if (GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK)
         {
-            grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
-        }
-
-        /******************************************************************
-         * FEATURE: Display currently selected score
-         ******************************************************************/
-        // Calculate currently selected score and change the text on screen
-        if (currentWord.Length >= 3)
-        {
-            int currentScore = GetScore(currentWord, null);
-            if (currentScore == 0)
+            Color highlightColor = GetHighlightColor(currentWord);
+            foreach (Vector2 v in currentSelection)
             {
-                selectedScore.text = "";
-            }
-            else
-            {
-                selectedScore.text = currentScore + " points";
-            }
-        }
-        else
-        {
-            selectedScore.text = "";
-        }
-    }
-
-    /**
-     * Highlight the tile when it is selected and add the selection to the list
-     */
-	void SelectThisTile() {
-		currentSelection.Add (new Vector2 (myX, myY));
-		currentWord += myLetter;
-
-        /*****************************************************************
-         * FEATURE: Highlighting color gradient based on frequency feature
-         *****************************************************************/
-		//grid [myX, myY].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
-        Color highlightColor = GetHighlightColor(currentWord);
-        foreach (Vector2 v in currentSelection)
-        {
-            grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
-        }
-
-        /******************************************************************
-         * FEATURE: Display currently selected score
-         ******************************************************************/
-        // Calculate currently selected score and change the text on screen
-        if (currentWord.Length >= 3)
-        {
-            int currentScore = GetScore(currentWord, null);
-            if (currentScore == 0)
-            {
-                selectedScore.text = "";
-            }
-            else
-            {
-                selectedScore.text = currentScore + " points";
+                grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
             }
         } else {
-            selectedScore.text = "";
+            grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
-	}
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        if (GameManagerScript.DISPLAY_SELECTED_SCORE)
+        {
+            // Calculate currently selected score and change the text on screen
+            if (currentWord.Length >= 3)
+            {
+                int currentScore = GetScore(currentWord, null);
+                if (currentScore == 0)
+                {
+                    selectedScore.text = "";
+                }
+                else
+                {
+                    selectedScore.text = currentWord + ": " + currentScore + " pts";
+                }
+            }
+            else
+            {
+                selectedScore.text = "";
+            }
+        }
+    }
 
     public static bool IsNextTo(Vector2 someLoc, Vector2 otherLoc) {
         int myX = (int)someLoc.x;
@@ -794,8 +852,11 @@ public class BoxScript : MonoBehaviour {
         /******************************************************************
          * FEATURE: Display currently selected score
          ******************************************************************/
-        // Calculate currently selected score and change the text on screen
-        selectedScore.text = "";
+        if (GameManagerScript.DISPLAY_SELECTED_SCORE)
+        {
+            // Calculate currently selected score and change the text on screen
+            selectedScore.text = "";
+        }
 	}
 
 	public static string GetLetterFromPrefab(string name) {

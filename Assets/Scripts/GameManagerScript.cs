@@ -12,31 +12,26 @@ using Firebase.Unity.Editor;
 public class GameManagerScript : MonoBehaviour {
     
 	// Set to true to log to Firebase database, false to turn off
-	public const bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_3_DEBUG";
-	//public const string LOGGING_VERSION = "WFLogs_DEBUG";
-	public const string APP_VERSION = "WF_1.0.3_DEBUG";
+	public static bool LOGGING = true;
+	public const string LOGGING_VERSION = "WFLogs_V1_0_5_DEBUG";
+	public const string APP_VERSION = "WF_1.0.5_DEBUG";
 
 	CamShakeSimpleScript camShake;
-	//private const int NUM_OF_PATHS = 6;
-	public enum Versions { SwipeUI, ButtonUI, ButtonTimeUI };
-	/*
-	private static Versions[][] allPaths = { 
-		new Versions[] { Versions.SwipeUI, Versions.ButtonUI, Versions.SwipeUI },
-		new Versions[] { Versions.ButtonUI, Versions.SwipeUI, Versions.ButtonUI },
-		new Versions[] { Versions.SwipeUI, Versions.SwipeUI, Versions.SwipeUI },
-		new Versions[] { Versions.ButtonUI, Versions.ButtonUI, Versions.ButtonUI },
-		new Versions[] { Versions.ButtonUI, Versions.ButtonUI, Versions.SwipeUI },
-		new Versions[] { Versions.SwipeUI, Versions.SwipeUI, Versions.ButtonUI } 
-	};
-	private static Versions[] currentPath;
-	private static int versionIndex;
-	*/
-	public static Versions currentVersion;
+	//public enum Versions { SwipeUI, ButtonUI };
+    //public static Versions currentVersion;
+
+    /*************************************
+     * Feature booleans - these keep track of what features are on/off for this current game
+     *************************************/
+    public static bool DISPLAY_BUTTON;          // users must click on button to submit word
+    public static bool DISPLAY_SELECTED_SCORE;  // show currently selected word score
+    public static bool DISPLAY_HIGHLIGHT_FEEDBACK;      // feedback during highlighting of words
+    public static bool DISPLAY_TUTORIAL;        // show the tutorial screen with instructions at beginning of game
+    /*********************************************/
+	
 	public GameObject playButton;
 	GameObject nextButton;
 	public static Text usernameText;
-	//Text timerText;
 	public static int GAME_ID;
 	public static string username;
 	public static int userID;
@@ -45,18 +40,12 @@ public class GameManagerScript : MonoBehaviour {
 	public static GameObject gameOverPanel = null;
 	static bool gameHasBegun = false;
 	static bool initialLog = true;
+    public static bool INSTRUCTIONS_PANEL = true;
 
 	/**********************************
 	 * Feature: Analyzing board state and immediate feedback of relative rarity of word using a trie
 	 **********************************/
 	public static Trie trie;
-
-	/**********************************
-	 * Feature: Timer in between words
-	 **********************************/
-	static float timer = 10; // 10 seconds to play a word
-	static bool timerEnded = false;
-	Text timerText;
 
 	void Awake() {
 		gameOverPanel = GameObject.Find ("GameOver");
@@ -73,7 +62,7 @@ public class GameManagerScript : MonoBehaviour {
 		Debug.Log ("Game id: " + GAME_ID);
 
 		BoxScript.camShake = gameObject.AddComponent<CamShakeSimpleScript> ();
-		playButton = GameObject.Find ("PlayButton");
+		//playButton = GameObject.Find ("PlayButton");
 		nextButton = GameObject.Find ("NextStageButton");
 		if (nextButton != null) {
 			nextButton.SetActive (false);
@@ -89,9 +78,11 @@ public class GameManagerScript : MonoBehaviour {
 		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
 		usernameText.text = username;
 
+        /*
         currentVersion = (Versions) Random.Range(0, 2);
 
 		Debug.Log ("Version: " + currentVersion);
+		*/
 
 		// do various logging for the start of the game
 		if (LOGGING) {
@@ -107,53 +98,36 @@ public class GameManagerScript : MonoBehaviour {
 			// insert new user entry into database
 			reference = FirebaseDatabase.DefaultInstance.GetReference ("users");
 			DatabaseReference child = reference.Child (username);
-			child.Child ("gameType").SetValueAsync ((int)currentVersion);
-			child.Child ("gameID").SetValueAsync (GAME_ID);
+			
+            // TODO: log the different versions of the game
+            //child.Child ("gameType").SetValueAsync ((int)currentVersion);
+			
+            child.Child ("gameID").SetValueAsync (GAME_ID);
 			child.Child ("userID").SetValueAsync (userID);
 			child.Child ("loggingVersion").SetValueAsync (LOGGING_VERSION);
 			child.Child ("appVersion").SetValueAsync (APP_VERSION);
 		}
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		/*********************************
-		 * Feature: Timer
-		 *********************************/
-		/*
-		// timer start
-		if (GameHasStarted() && !timerEnded) {
-			timer -= Time.deltaTime;
-
-			if (timer <= 0) {
-				timer = 0;
-				timerEnded = true;
-			}
-
-			DisplayTime ();
-		}
-
-		if (timerEnded) {
-			// do something here
-		}
-		*/
-		/********************************
-		 * End Feature: Timer
-		 ********************************/
 
         // check version and hide/show Play Word button depending on version
-        if (currentVersion == Versions.SwipeUI)
-        {
-            playButton.SetActive(false);
-        }
-        else
+        if (DISPLAY_BUTTON)
         {
             playButton.SetActive(true);
         }
+        else
+        {
+            playButton.SetActive(false);
+        }
+	}
 
+    public void SetButtonDisplay(bool value) {
+        playButton.SetActive(value);
+    }
+	
+	// Update is called once per frame
+	void Update () {
 		// if the enter key is pressed, then submit the word
 		// check against dictionary and give it points
-		if (currentVersion == Versions.ButtonUI && Input.GetKeyDown (KeyCode.Return)) {
+        if (DISPLAY_BUTTON && Input.GetKeyDown (KeyCode.Return)) {
 			PlayWord ();
 		}
 
@@ -184,24 +158,6 @@ public class GameManagerScript : MonoBehaviour {
 		if (BoxScript.score >= BoxScript.MAX_SCORE) {
 			// TODO: game over
 		}
-
-		/*
-		// timer start
-		if (SpawnBoxScript.isInitialized() && !timerEnded) {
-			timer -= Time.deltaTime;
-
-			if (timer <= 0) {
-				timer = 0;
-				timerEnded = true;
-			}
-
-			DisplayTime ();
-		}
-
-		if (timerEnded) {
-			nextButton.SetActive (true);
-		}
-		*/
 	}
 
 	static bool checkIfBoxesAreFalling() {
@@ -215,13 +171,6 @@ public class GameManagerScript : MonoBehaviour {
 		}
 
 		return falling;
-	}
-
-	void DisplayTime() {
-		int minutes = Mathf.FloorToInt(timer / 60F);
-		int seconds = Mathf.FloorToInt(timer - minutes * 60);
-		string niceTime = string.Format("{0:0}:{1:00}", minutes, seconds);
-		timerText.text = niceTime;
 	}
 
 	// Play word!

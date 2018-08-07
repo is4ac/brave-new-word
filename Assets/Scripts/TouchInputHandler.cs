@@ -2,49 +2,68 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TouchInputHandler : MonoBehaviour {
-    
+public class TouchInputHandler : MonoBehaviour
+{
+
     public static bool touchEnabled = false;
     private GameManagerScript gameManager;
 
-	// Use this for initialization
-	void Start () {
+    private void Awake()
+    {
         gameManager = GetComponent<GameManagerScript>();
-	}
+    }
 
     /**
      * Returns the tile's coordinates that matches the touch input's pixel coordinates
      * 
      * returns Vector2(-1, -1) if no candidate tile is found
      */
-    private Vector2 GetTilePositionFromTouchInput(Vector2 touchPos) {
-        for (int i = 0; i < BoxScript.grid.GetLength(0); ++i) {
-            for (int j = 0; j < BoxScript.grid.GetLength(1); ++j) {
-                BoxScript boxObj = BoxScript.grid[i, j].gameObject.GetComponent<BoxScript>();
+    private Vector2 GetTilePositionFromTouchInput(Vector2 touchPos)
+    {
+        for (int i = 0; i < BoxScript.grid.GetLength(0); ++i)
+        {
+            for (int j = 0; j < BoxScript.grid.GetLength(1); ++j)
+            {
+                if (BoxScript.grid[i, j] != null)
+                {
+                    BoxScript boxObj = BoxScript.grid[i, j].gameObject.GetComponent<BoxScript>();
 
-                if (boxObj.IsInsideTile(touchPos)) {
-                    return new Vector2(i, j);
+                    if (boxObj.IsInsideTile(touchPos))
+                    {
+                        return new Vector2(i, j);
+                    }
                 }
             }
         }
 
         return new Vector2(-1, -1);
     }
-	
-	// Update is called once per frame
-	void Update () {
-        if (touchEnabled)
+
+    private bool IsInsideGameBoard(Vector2 touchPos)
+    {
+        Vector2 realPos = Camera.main.ScreenToWorldPoint(touchPos);
+        if (realPos.y < 5 && realPos.y > -4.5)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (touchEnabled && Input.touchCount > 0)
         {
             // ButtonUI touch inputs
-            if (GameManagerScript.currentVersion == GameManagerScript.Versions.ButtonUI &&
-                Input.touchCount > 0)
+            if (GameManagerScript.DISPLAY_BUTTON)
             {
                 // convert pixel position to tile coordinate
                 Vector2 myPos = GetTilePositionFromTouchInput(Input.GetTouch(0).position);
 
-                if (myPos.x >= 0)
+                if (Input.GetTouch(0).phase == TouchPhase.Began)
                 {
-                    if (Input.GetTouch(0).phase == TouchPhase.Began)
+                    if (myPos.x >= 0)
                     {
                         // there is no previously clicked box
                         if (BoxScript.currentSelection.Count == 0)
@@ -59,15 +78,47 @@ public class TouchInputHandler : MonoBehaviour {
                             BoxScript.SelectTile(myPos);
                             BoxScript.LogAction("WF_LetterSelected", myPos);
                         }
+                        // deselect previous letters if clicking on already highlighted letters
+                        else if (BoxScript.currentSelection.Contains(myPos))
+                        {
+                            // deselect if this is the most recently selected letter
+                            if (BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
+                            {
+                                BoxScript.RemoveLastSelection();
+                            }
+                            // go through backwards and remove all letters in selection until the letter that was tapped
+                            else 
+                            {
+                                for (int i = BoxScript.currentSelection.Count - 1; i > 0; --i)
+                                {
+                                    if (BoxScript.currentSelection[i] != myPos)
+                                    {
+                                        BoxScript.RemoveLastSelection();
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         else
                         {
                             // de-select what has already been selected
                             BoxScript.ClearAllSelectedTiles();
                             BoxScript.LogAction("WF_DeselectAll");
                         }
-
                     }
-                    else if (Input.GetTouch(0).phase == TouchPhase.Moved)
+                    else if (IsInsideGameBoard(Input.GetTouch(0).position))
+                    {
+                        // remove all selected letters, unless clicking outside game area
+                        BoxScript.ClearAllSelectedTiles();
+                    }
+
+                }
+                else if (Input.GetTouch(0).phase == TouchPhase.Moved)
+                {
+                    if (myPos.x >= 0)
                     {
                         // selected tile and it isn't already selected)
                         if (BoxScript.currentSelection.Count > 0 &&
@@ -78,7 +129,8 @@ public class TouchInputHandler : MonoBehaviour {
                             BoxScript.LogAction("WF_LetterSelected", myPos);
                         }
                         // do nothing if you moved within the most recently selected tile
-                        else if (BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
+                        else if (BoxScript.currentSelection.Count > 0 
+                                 && BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
                         {
                             // do nothing
                         }
@@ -102,14 +154,14 @@ public class TouchInputHandler : MonoBehaviour {
             }
 
             // SwipeUI touch input
-            else if (GameManagerScript.currentVersion == GameManagerScript.Versions.SwipeUI &&
-                     Input.touchCount > 0)
+            else
             {
                 // convert pixel position to tile coordinate
                 Vector2 myPos = GetTilePositionFromTouchInput(Input.GetTouch(0).position);
 
                 // If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
-                if (Input.GetTouch(0).phase == TouchPhase.Ended)
+                if (Input.GetTouch(0).phase == TouchPhase.Ended
+                    && BoxScript.currentSelection.Count > 0)
                 {
                     gameManager.PlayWord();
                 }
@@ -170,5 +222,5 @@ public class TouchInputHandler : MonoBehaviour {
                 }
             }
         }
-	}
+    }
 }

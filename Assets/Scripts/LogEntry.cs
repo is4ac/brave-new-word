@@ -39,7 +39,7 @@ public class LogEntry {
 	public string timestamp; // the date and time that it was played
 	public double timestampEpoch;
 	public int gameID;
-	public int gameType;
+	//public int gameType;
 	public string deviceModel;
 	public string location;
 
@@ -53,7 +53,7 @@ public class LogEntry {
 		userID = GameManagerScript.userID;
 		username = GameManagerScript.username;
 		gameID = GameManagerScript.GAME_ID;
-		gameType = (int) GameManagerScript.currentVersion;
+        //gameType = (int) GameManagerScript.currentVersion;
 		deviceModel = GameManagerScript.deviceModel;
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
