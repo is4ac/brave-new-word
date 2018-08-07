@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class SettingsMenu : MonoBehaviour {
     
@@ -76,5 +77,23 @@ public class SettingsMenu : MonoBehaviour {
         GameManagerScript.DISPLAY_BUTTON = value;
         GameManagerScript gameManager = GameObject.Find("GameManager").GetComponent<GameManagerScript>();
         gameManager.SetButtonDisplay(value);
+    }
+
+    public void GoToTutorial() {
+        StartCoroutine(LoadDelayed(2));
+    }
+
+    public IEnumerator LoadDelayed(int scene)
+    {
+        Debug.Log("Loading next scene");
+
+        //Load the selected scene in the background, by scene index number in build settings
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(scene);
+
+        // Wait until the asynchronous scene fully loads
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
     }
 }
