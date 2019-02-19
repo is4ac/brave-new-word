@@ -13,8 +13,10 @@ builds/
 builds-*
 server-dash/adminsdk-key.json
 server-dash/node_modules/*
-google-services.json
-google-services.json.meta
+google-services*.json
+google-services*.json.meta
+google-services.xml
+google-services.xml.meta
 *.plist
 
 server-dash/npm-debug.log
