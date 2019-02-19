@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -10,15 +12,17 @@ using Firebase.Database;
 using Firebase.Unity.Editor;
 
 public class GameManagerScript : MonoBehaviour {
-    
+
+    // singleton instance
+    public static GameManagerScript gameManager;
+
 	// Set to true to log to Firebase database, false to turn off
-	public static bool LOGGING = true;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_5_DEBUG";
-	public const string APP_VERSION = "WF_1.0.5_DEBUG";
+	public static bool LOGGING = false;
+	public const string LOGGING_VERSION = "WFLogs_V1_0_1_debug";
+	public const string APP_VERSION = "WF_1.0.1_debug";
+    public const string DATA_PATH = "/playerData.dat";
 
 	CamShakeSimpleScript camShake;
-	//public enum Versions { SwipeUI, ButtonUI };
-    //public static Versions currentVersion;
 
     /*************************************
      * Feature booleans - these keep track of what features are on/off for this current game
@@ -26,7 +30,7 @@ public class GameManagerScript : MonoBehaviour {
     public static bool DISPLAY_BUTTON;          // users must click on button to submit word
     public static bool DISPLAY_SELECTED_SCORE;  // show currently selected word score
     public static bool DISPLAY_HIGHLIGHT_FEEDBACK;      // feedback during highlighting of words
-    public static bool DISPLAY_TUTORIAL;        // show the tutorial screen with instructions at beginning of game
+    public static bool DISPLAY_TUTORIAL;        // OUTDATED // show the tutorial screen with instructions at beginning of game
     /*********************************************/
 	
 	public GameObject playButton;
@@ -37,7 +41,7 @@ public class GameManagerScript : MonoBehaviour {
 	public static int userID;
 	public static string deviceModel;
 	static bool areBoxesFalling = true;
-	public static GameObject gameOverPanel = null;
+	public GameObject gameOverPanel = null;
 	static bool gameHasBegun = false;
 	static bool initialLog = true;
     public static bool INSTRUCTIONS_PANEL = true;
@@ -48,8 +52,13 @@ public class GameManagerScript : MonoBehaviour {
 	public static Trie trie;
 
 	void Awake() {
-		gameOverPanel = GameObject.Find ("GameOver");
-		gameOverPanel.SetActive (false);
+        // singleton pattern-esque?
+        if (gameManager == null) {
+            gameManager = this;
+            gameOverPanel.SetActive(false);
+        } else if (gameManager != null) {
+            Destroy(gameObject);
+        }
 	}
 
 	// Use this for initialization
@@ -70,7 +79,7 @@ public class GameManagerScript : MonoBehaviour {
 		username = PlayerPrefs.GetString ("username");
 
 		// randomize userID
-		userID = Random.Range (0, int.MaxValue);
+		userID = UnityEngine.Random.Range (0, int.MaxValue);
 
 		// TODO: check to see that userID is unique
 
@@ -78,35 +87,8 @@ public class GameManagerScript : MonoBehaviour {
 		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
 		usernameText.text = username;
 
-        /*
-        currentVersion = (Versions) Random.Range(0, 2);
-
-		Debug.Log ("Version: " + currentVersion);
-		*/
-
 		// do various logging for the start of the game
-		if (LOGGING) {
-			Debug.Log ("Logging beginning of game");
-			// Log beginning of game
-			MetaLogEntry entry = new MetaLogEntry ();
-			entry.setValues ("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("start"));
-			string json = JsonUtility.ToJson (entry);
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-			reference.Push ().SetRawJsonValueAsync (json);
-
-			Debug.Log ("logging user info");
-			// insert new user entry into database
-			reference = FirebaseDatabase.DefaultInstance.GetReference ("users");
-			DatabaseReference child = reference.Child (username);
-			
-            // TODO: log the different versions of the game
-            //child.Child ("gameType").SetValueAsync ((int)currentVersion);
-			
-            child.Child ("gameID").SetValueAsync (GAME_ID);
-			child.Child ("userID").SetValueAsync (userID);
-			child.Child ("loggingVersion").SetValueAsync (LOGGING_VERSION);
-			child.Child ("appVersion").SetValueAsync (APP_VERSION);
-		}
+        LogStartOfGame();
 
         // check version and hide/show Play Word button depending on version
         if (DISPLAY_BUTTON)
@@ -118,6 +100,115 @@ public class GameManagerScript : MonoBehaviour {
             playButton.SetActive(false);
         }
 	}
+
+    /**
+     * Load frictional pattern, or randomize it whenever the game starts
+     */
+    void OnEnable()
+    {
+        if (File.Exists(Application.persistentDataPath + DATA_PATH))
+        {
+            // Read the file to load the frictional pattern data
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + DATA_PATH, FileMode.Open);
+
+            PlayerData data = (PlayerData) bf.Deserialize(file);
+            file.Close();
+
+            //// set the local variables to the data from the file
+            //DISPLAY_BUTTON = data.displayButton;
+            //DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
+            //DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
+            //DISPLAY_TUTORIAL = false;
+
+            // TODO: DEBUG ONLY change back before release
+            DISPLAY_BUTTON = true;
+            DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
+            DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
+            DISPLAY_TUTORIAL = false;
+
+            //// If file doesn't exist yet, randomize and initialize variables
+            //DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            //DISPLAY_TUTORIAL = false;
+            //DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            //DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        }
+        else 
+        {
+            // If file doesn't exist yet, randomize and initialize variables
+            DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            DISPLAY_TUTORIAL = false;
+            DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        }
+
+        Debug.Log("Button: " + DISPLAY_BUTTON);
+        Debug.Log("Selected Score: " + DISPLAY_SELECTED_SCORE);
+        Debug.Log("Highlight: " + DISPLAY_HIGHLIGHT_FEEDBACK);
+    }
+
+    /**
+     * Save frictional pattern to device whenever the game quits
+     */
+    void OnDisable()
+    {
+        // Open the file to write the data
+        BinaryFormatter bf = new BinaryFormatter();
+        FileStream file = File.Create(Application.persistentDataPath + DATA_PATH);
+
+        PlayerData data = new PlayerData(DISPLAY_BUTTON, DISPLAY_SELECTED_SCORE, DISPLAY_HIGHLIGHT_FEEDBACK, username);
+
+        // serialize and write to file
+        bf.Serialize(file, data);
+        file.Close();
+    }
+
+    public static void LogInstructionsClick(Vector2 pos) {
+        if (LOGGING)
+        {
+            // log the location of the click
+            ClickLogEntry entry = new ClickLogEntry();
+            ClickLogEntry.ClickPayload payload = new ClickLogEntry.ClickPayload
+            {
+                screenX = pos.x,
+                screenY = pos.y
+            };
+
+            entry.setValues("WF_InstructionsClosed", "WF_Action", payload);
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            reference.Push().SetRawJsonValueAsync(json);
+        }
+    }
+
+    public void LogStartOfGame() {
+        if (LOGGING)
+        {
+            Debug.Log("Logging beginning of game");
+            // Log beginning of game
+            MetaLogEntry entry = new MetaLogEntry();
+            entry.setValues("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("start"));
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            reference.Push().SetRawJsonValueAsync(json);
+
+            Debug.Log("logging game info");
+            // insert new game entry into database
+            reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION + "_games");
+            DatabaseReference child = reference.Child(GAME_ID + "");
+
+            // Log the game details and type of game
+            child.Child("displayButton").SetValueAsync(DISPLAY_BUTTON);
+            child.Child("displayTutorial").SetValueAsync(DISPLAY_TUTORIAL);
+            child.Child("displayHighlightFeedback").SetValueAsync(DISPLAY_HIGHLIGHT_FEEDBACK);
+            child.Child("displaySelectedScore").SetValueAsync(DISPLAY_SELECTED_SCORE);
+            child.Child("username").SetValueAsync(username);
+            child.Child("gameID").SetValueAsync(GAME_ID);
+            child.Child("userID").SetValueAsync(userID);
+            child.Child("loggingVersion").SetValueAsync(LOGGING_VERSION);
+            child.Child("appVersion").SetValueAsync(APP_VERSION);
+        }
+    }
 
     public void SetButtonDisplay(bool value) {
         playButton.SetActive(value);
@@ -141,7 +232,7 @@ public class GameManagerScript : MonoBehaviour {
 				areBoxesFalling = false;
 
 				if (!initialLog) {
-					LogKeyFrame ("postSubmit");
+					LogKeyFrame ("post");
 				} else {
 					LogKeyFrame ("gameStart");
 					initialLog = false;
@@ -152,11 +243,6 @@ public class GameManagerScript : MonoBehaviour {
 			if (checkIfBoxesAreFalling ()) {
 				areBoxesFalling = true;
 			}
-		}
-
-		// check to see if the game is over (aka, MAX_SCORE is reached)
-		if (BoxScript.score >= BoxScript.MAX_SCORE) {
-			// TODO: game over
 		}
 	}
 
@@ -202,278 +288,92 @@ public class GameManagerScript : MonoBehaviour {
 
 		BoxScript.Reset ();
 
+        gameOverPanel.SetActive(false);
+
 		int scene = SceneManager.GetActiveScene().buildIndex;
 		SceneManager.LoadScene(scene); // eventually delete the key "currentPath"
 		// PlayerPrefs.DeleteKey("currentPath");
 	}
 
 	public static void LogKeyFrame(string state) {
-		Debug.Log ("Logging full game state");
+        if (LOGGING)
+        {
+            Debug.Log("Logging full game state");
 
-		// log the current full game state
-		KeyFrameLogEntry entry = new KeyFrameLogEntry ();
-		KeyFrameLogEntry.KeyFramePayload payload = new KeyFrameLogEntry.KeyFramePayload ();
+            // log the current full game state
+            KeyFrameLogEntry entry = new KeyFrameLogEntry();
+            KeyFrameLogEntry.KeyFramePayload payload = new KeyFrameLogEntry.KeyFramePayload();
 
-		payload.board = BoxScript.GetBoardPayload();
-		payload.totalScore = BoxScript.score;
-		payload.timeElapsed = Time.time;
-		payload.totalInteractions = BoxScript.totalInteractions;
-		payload.wordsPlayed = BoxScript.wordsPlayed;
-		payload.state = state;
+            payload.board = BoxScript.GetBoardPayload();
+            payload.totalScore = BoxScript.score;
+            payload.timeElapsed = Time.time;
+            payload.totalInteractions = BoxScript.totalInteractions;
+            payload.wordsPlayed = BoxScript.wordsPlayed;
+            payload.state = state;
 
-		entry.setValues ("WF_GameState", "WF_KeyFrame", payload);
-		string json = JsonUtility.ToJson (entry);
-		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-		reference.Push ().SetRawJsonValueAsync (json);
+            entry.setValues("WF_GameState", "WF_KeyFrame", payload);
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            reference.Push().SetRawJsonValueAsync(json);
+        }
 	}
 
 	public static void LogEndOfGame() {
-		Debug.Log ("Logging end of game");
+        if (LOGGING)
+        {
+            Debug.Log("Logging end of game");
 
-		// log the end game state when the player finished the round
-		LogKeyFrame("gameEnd");
+            // log the end game state when the player finished the round
+            LogKeyFrame("gameEnd");
 
-		// log the end of the game
-		MetaLogEntry metaEntry = new MetaLogEntry ();
-		metaEntry.setValues ("WF_GameEnd", "WF_Meta", new MetaLogEntry.MetaPayload ("end"));
-		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-		string json = JsonUtility.ToJson (metaEntry);
-		reference.Push ().SetRawJsonValueAsync (json);
+            // log the end of the game
+            MetaLogEntry metaEntry = new MetaLogEntry();
+            metaEntry.setValues("WF_GameEnd", "WF_Meta", new MetaLogEntry.MetaPayload("end"));
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            string json = JsonUtility.ToJson(metaEntry);
+            reference.Push().SetRawJsonValueAsync(json);
+        }
 	}
 
 	/**
 	 * User or the OS force quits the application
 	 */
 	public static void LogGamePause() {
-		Debug.Log("Application pausing after " + Time.time + " seconds");
+        if (LOGGING)
+        {
+            Debug.Log("Application pausing after " + Time.time + " seconds");
 
-		// log the game state before game pauses
-		LogKeyFrame("gamePause");
+            // log the game state before game pauses
+            LogKeyFrame("gamePause");
 
-		// log the pause
-		MetaLogEntry metaEntry = new MetaLogEntry ();
-		metaEntry.setValues ("WF_GamePaused", "WF_Meta", new MetaLogEntry.MetaPayload ("pause"));
-		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-		string json = JsonUtility.ToJson (metaEntry);
-		reference.Push ().SetRawJsonValueAsync (json);
+            // log the pause
+            MetaLogEntry metaEntry = new MetaLogEntry();
+            metaEntry.setValues("WF_GamePaused", "WF_Meta", new MetaLogEntry.MetaPayload("pause"));
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            string json = JsonUtility.ToJson(metaEntry);
+            reference.Push().SetRawJsonValueAsync(json);
+        }
 	}
 
 	public static void LogGameUnpause() {
-		// log the unpause
-		MetaLogEntry metaEntry = new MetaLogEntry ();
-		metaEntry.setValues ("WF_GameUnpaused", "WF_Meta", new MetaLogEntry.MetaPayload ("unpause"));
-		DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (LOGGING_VERSION);
-		string json = JsonUtility.ToJson (metaEntry);
-		reference.Push ().SetRawJsonValueAsync (json);
+        if (LOGGING)
+        {
+            // log the unpause
+            MetaLogEntry metaEntry = new MetaLogEntry();
+            metaEntry.setValues("WF_GameUnpaused", "WF_Meta", new MetaLogEntry.MetaPayload("unpause"));
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
+            string json = JsonUtility.ToJson(metaEntry);
+            reference.Push().SetRawJsonValueAsync(json);
+        }
 	}
 
 	void OnApplicationPause(bool pauseStatus)
 	{
 		if (pauseStatus) {
-			GameManagerScript.LogGamePause ();
+			LogGamePause ();
 		} else {
-			GameManagerScript.LogGameUnpause ();
+			LogGameUnpause ();
 		}
-	}
-
-
-
-	/**
-	 * TODO: This part should be done post-hoc, after gathering log data, and maybe convert this process into
-	 * a tree data structure to make it more efficient??
-	 */
-    /**
-     * Build a Trie!
-     */
-    public static void LoadTrie()
-    {
-        trie = new Trie();
-
-        foreach (string word in BoxScript.freqDictionary.Keys)
-        {
-            trie.Insert(word);
-        }
-
-        Debug.Log("Finished loading Trie");
-        //Debug.Log ("Checking if cat is in Trie: " + trie.Search ("cAt"));
-    }
-
-    /**
-	 * Analyze the game board and generate statistics for the potential game values
-	 * Returns a dictionary of statistics, value pairs:
-	 * <"max", float> // max possible score from a word
-	 * <"min", float> // min possible score from a word
-	 * <"median", float> // median score
-	 * <"mean", float> // mean score
-	 * <"count", int> // number of possible words
-	 */
-	public static Dictionary<string, float> AnalyzeGameBoard() {
-		Dictionary<string, float> results = new Dictionary<string, float>();
-
-		char[,] letters = BoxScript.GetBoardLetters();
-
-		// generate all possible words from the board state
-		List<string> allWords = AllPossibleWords(letters);
-
-		// calculate max possible score and min possible score
-		foreach (string word in allWords) {
-			Debug.Log (word);
-		}
-
-		return results;
-	}
-
-	public static List<string> AllPossibleWords(char[,] letters) {
-		List<string>[,] results = new List<string>[letters.GetLength (0), letters.GetLength (1)];
-		List<string> words = new List<string> ();
-
-		// TODO: Parallelize this section
-		for (int i = 0; i < letters.GetLength (0); ++i) {
-			for (int j = 0; j < letters.GetLength (1); ++j) {
-				results[i, j] = AllPossibleWordsHelper (letters, i, j);
-			}
-		}
-
-		// combine all results into one List
-		for (int i = 0; i < letters.GetLength (0); ++i) {
-			for (int j = 0; j < letters.GetLength (1); ++j) {
-				words = words.Union (results [i, j]).ToList ();
-			}
-		}
-
-		return words;
-	}
-
-	public static int[] ConvertSingleIndexToDoubleIndex(int index, int maxJ) {
-		int[] result = new int[2];
-		result [0] = index / maxJ;
-		result [1] = index % maxJ;
-
-		return result;
-	}
-
-	public static int ConvertDoubleIndexToSingleIndex(int i, int j, int maxJ) {
-		return i * maxJ + j;
-	}
-
-	public static List<string> AllPossibleWordsHelper(char[,] letters, int i, int j) {
-		List<string> words = new List<string> ();
-		List<int> indexes = new List<int> ();
-		int startIndex = ConvertDoubleIndexToSingleIndex(i, j, letters.GetLength (1));
-		indexes.Add (startIndex);
-		char[] flattenedLetters = FlattenArray (letters);
-
-		// use recursion to check all neighbors
-		CheckNeighbors(words, trie._root, indexes, flattenedLetters, startIndex, letters.GetLength(0), letters.GetLength(1));
-
-		return words;
-	}
-
-	public static void CheckNeighbors(List<string> words, Node currentNode, List<int> indexes, char[] letters, int index, int maxI, int maxJ) {
-		List<int> neighbors = GetNeighbors (maxI, maxJ, index);
-
-		foreach (int neighbor in neighbors) {
-			List<int> newIndexes = new List<int> (indexes);
-			Node nextNode = currentNode.FindChildNode(letters[neighbor]);
-
-			// neighboring letter does not exist in trie
-			if (nextNode == null) {
-				continue;
-			} else {
-				// check to see if neighbor already exists in newIndexes
-				if (newIndexes.Contains (neighbor)) {
-					continue;
-				}
-
-				newIndexes.Add (neighbor);
-
-				// this current word is a valid word in the dictionary
-				if (nextNode.FindChildNode ('$') != null) {
-					words.Add (StringFromIndexes(newIndexes, letters));
-				}
-
-				// end this search if nextNode is a leaf node
-				if (nextNode.IsLeaf ()) {
-					continue;
-				}
-
-				CheckNeighbors (words, nextNode, newIndexes, letters, neighbor, maxI, maxJ);
-			}
-			
-		}
-	}
-
-	public static string StringFromIndexes(List<int> indexes, char[] letters) {
-		string word = "";
-
-		foreach (int index in indexes) {
-			word += letters [index];
-		}
-
-		return word;
-	}
-
-	public static List<int> GetNeighbors(int maxI, int maxJ, int index) {
-		List<int> neighbors = new List<int> ();
-		int[] ij = ConvertSingleIndexToDoubleIndex (index, maxJ);
-		int i = ij [0];
-		int j = ij [1];
-
-		// check left
-		if (i - 1 >= 0) {
-			neighbors.Add (ConvertDoubleIndexToSingleIndex (i - 1, j, maxJ));
-
-			// check upper left
-			if (j + 1 < maxJ) {
-				neighbors.Add(ConvertDoubleIndexToSingleIndex (i - 1, j + 1, maxJ));
-			}
-
-			// check lower left
-			if (j - 1 >= 0) {
-				neighbors.Add(ConvertDoubleIndexToSingleIndex (i - 1, j - 1, maxJ));
-			}
-		}
-
-		// check right
-		if (i + 1 < maxI) {
-			neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j, maxJ));
-
-			// check upper right
-			if (j + 1 < maxJ) {
-				neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j + 1, maxJ));
-			}
-
-			// check lower right
-			if (j - 1 >= 0) {
-				neighbors.Add(ConvertDoubleIndexToSingleIndex (i + 1, j - 1, maxJ));
-			}
-		}
-
-		// check up
-		if (j + 1 < maxJ) {
-			neighbors.Add (ConvertDoubleIndexToSingleIndex (i, j + 1, maxJ));
-		}
-
-		// check down
-		if (j - 1 >= 0) {
-			neighbors.Add(ConvertDoubleIndexToSingleIndex (i, j - 1, maxJ));
-		}
-
-		return neighbors;
-	}
-
-	public static char[] FlattenArray(char[,] array) {
-		char[] result = new char[array.GetLength (0) * array.GetLength (1)];
-		int index = 0;
-
-		for (int i = 0; i < array.GetLength (0); ++i) {
-			for (int j = 0; j < array.GetLength (1); ++j) {
-				result [index] = array [i, j];
-				++index;
-			}
-		}
-
-		return result;
 	}
 
 	/***************************************************
@@ -606,4 +506,19 @@ public class GameManagerScript : MonoBehaviour {
 		}
 	}
 	*/
+}
+
+[Serializable]
+class PlayerData {
+    public bool displayButton;          // users must click on button to submit word
+    public bool displaySelectedScore;  // show currently selected word score
+    public bool displayHighlightFeedback;      // feedback during highlighting of words
+    public string username;
+
+    public PlayerData(bool button, bool score, bool highlight, string username) {
+        displayButton = button;
+        displaySelectedScore = score;
+        displayHighlightFeedback = highlight;
+        this.username = username;
+    }
 }

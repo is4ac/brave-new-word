@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,15 +33,25 @@ public class RandomNameScript : MonoBehaviour
 
 		// Generate a random username
 		InitializeUsernameList ();
-		RandomizeName ();
-	}
 
-	
+        // Check for saved file
+        if (File.Exists(Application.persistentDataPath + GameManagerScript.DATA_PATH))
+        {
+            // Read the file to load the frictional pattern data
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + GameManagerScript.DATA_PATH, FileMode.Open);
 
-	// Update is called once per frame
-	void Update ()
-	{
-		
+            PlayerData data = (PlayerData)bf.Deserialize(file);
+            file.Close();
+
+            username = data.username;
+            DisplayUsername();
+        }
+        else
+        {
+            // If file doesn't exist yet, randomize and initialize variables
+            RandomizeName();
+        }
 	}
 
 	void InitializeUsernameList ()

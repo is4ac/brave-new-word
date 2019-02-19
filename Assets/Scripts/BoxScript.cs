@@ -28,8 +28,7 @@ public class BoxScript : MonoBehaviour {
 	public static CamShakeSimpleScript camShake = null;
 	public static int totalInteractions = 0;
 	public static int wordsPlayed = 0;
-	public static bool touchEnabled = false;
-	public static float MAX_SCORE = 1000f;
+    public static int turnsLeft = 10;
 
     public GameObject _explodeParticleSystemPrefab;
     public GameObject _bubblesLandingParticleSystemPrefab;
@@ -51,6 +50,33 @@ public class BoxScript : MonoBehaviour {
 		if (instance == null) {
 			instance = this;
 		}
+
+        // initialize objects
+        if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
+        {
+            myLetter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
+        }
+
+        if (scoreText == null)
+        {
+            scoreText = GameObject.Find("Score").GetComponent<Text>();
+        }
+
+        if (submittedWordText == null)
+        {
+            submittedWordText = GameObject.Find("SubmittedWord").GetComponent<Text>();
+        }
+
+        if (submittedScoreText == null)
+        {
+            submittedScoreText = GameObject.Find("SubmittedScore").GetComponent<Text>();
+        }
+
+        if (selectedScore == null)
+        {
+            selectedScore = GameObject.Find("SelectedScore").GetComponent<Text>();
+
+        }
 	}
 
 	// Use this for initialization
@@ -63,29 +89,6 @@ public class BoxScript : MonoBehaviour {
 		falling = true;
 		columnFalling = false;
 		fall = Time.time;
-
-        // initialize letter
-        if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
-        {
-            myLetter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
-        }
-
-		if (scoreText == null) {
-			scoreText = GameObject.Find("Score").GetComponent<Text>();
-		}
-
-		if (submittedWordText == null) {
-			submittedWordText = GameObject.Find ("SubmittedWord").GetComponent<Text> ();
-		}
-
-		if (submittedScoreText == null) {
-			submittedScoreText = GameObject.Find ("SubmittedScore").GetComponent<Text> ();
-		}
-
-        if (selectedScore == null) {
-            selectedScore = GameObject.Find("SelectedScore").GetComponent<Text>();
-
-        }
 
 		if (!IsValidPosition ()) {
 			//SceneManager.LoadScene (0);
@@ -129,7 +132,7 @@ public class BoxScript : MonoBehaviour {
 	}
 
     public void CreateBubbleParticles() {
-        PlayParticleSystem(_bubblesLandingParticleSystemPrefab);
+        //PlayParticleSystem(_bubblesLandingParticleSystemPrefab);
     }
 
     public void SetLetter(char letter) {
@@ -246,6 +249,7 @@ public class BoxScript : MonoBehaviour {
 		if (valid) {
 			// keep track of how many words have been successfully played
 			++wordsPlayed;
+            --turnsLeft;
 		} else {
 			camShake.ShakeRed (1f);
 		}
@@ -272,7 +276,7 @@ public class BoxScript : MonoBehaviour {
 
             // Do something celebratory! highlight in green briefly before removing from screen
             // and also display a congratulatory message depending on how rare the word was
-            instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord)));
+            instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord), submittedScore));
 
 			UpdateScoreProgressBar ();
 
@@ -315,9 +319,9 @@ public class BoxScript : MonoBehaviour {
 
 		// freq multiplier to reward rarer words
 		float freqMultiplied = wordFreq;
-		for (float freq = 0.1f; freq < 0.65f; freq += 0.05f) {
+		for (float freq = 0.1f; freq < 0.65f; freq += 0.075f) {
 			if (wordFreq > freq) {
-				freqMultiplied *= 1.25f;
+				freqMultiplied *= 1.2f;
 			}
 		}
 
@@ -329,35 +333,26 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	static int GetBonus(float freq) {
-		if (freq > 0.6) {
-			// MEGA PREMIUM ULTRA RARE (probably impossible to get in game)
-			return 9001; // over 9000
-		} else if (freq > 0.5) {
+		if (freq >= 0.38) {
+			// PREMIUM ULTRA RARE
+			return 75; // over 9000
+		} else if (freq >= 0.3) {
 			// PREMIUM ULTRA RARE
 			return 60;
-		} else if (freq > 0.45) { 
+		} else if (freq >= 0.24) { 
 			// ULTRA RARE+
 			return 50;
-		} else if (freq > 0.4) {
+		} else if (freq >= 0.2) {
 			// ULTRA RARE
-			return 45;
-		} else if (freq > 0.35) { 
-			// SUPER RARE
 			return 40;
-		} else if (freq > 0.3) {
-			// RARE
-			return 35;
-		} else if (freq > 0.24) {
-			// AVERAGE
+		} else if (freq >= 0.15) { 
+			// SUPER RARE
 			return 30;
-		} else if (freq > 0.2) {
-			// UNCOMMON
-			return 25;
-		} else if (freq > 0.15) {
-			// COMMON
+		} else if (freq >= 0.13) {
+			// RARE
 			return 20;
-		} else if (freq > 0.1) {
-			// VERY COMMON
+		} else if (freq >= 0.11) {
+			// AVERAGE
 			return 10;
 		}
 
@@ -385,11 +380,31 @@ public class BoxScript : MonoBehaviour {
 	 * 
 	 */
 	public static void CheckGameEnd() {
-		if (score >= MAX_SCORE) {
-			GameManagerScript.gameOverPanel.SetActive (true);
+		if (turnsLeft <= 0) {
+			GameManagerScript.gameManager.gameOverPanel.SetActive (true);
+            Text gameOverMessage = GameObject.Find("GameOverText").GetComponent<Text>();
+            Text gameOverScoreText = GameObject.Find("GameOverScoreText").GetComponent<Text>();
+            Text highScoreText = GameObject.Find("HighScoreText").GetComponent<Text>();
+
+            // TODO: after adding high score
+            /*
+             * if (score > highScore) {
+             *    // TODO: update high score in database
+                  highScore = score;
+
+                  // update game over text
+                  gameOverMessage.text = "Game over! New high score! Congratulations!";
+             * }
+             */
+
+            gameOverScoreText.text = "Score: " + score;
+            highScoreText.text = "High Score: "; // TODO add High score variable
 
 			// disable touch events
-			touchEnabled = false;
+			TouchInputHandler.touchEnabled = false;
+
+            // disable button press
+            GameManagerScript.gameManager.playButton.GetComponent<Button>().interactable = false;
 
 			// Log the final state of the game
 			GameManagerScript.LogEndOfGame();
@@ -409,9 +424,6 @@ public class BoxScript : MonoBehaviour {
 
         // Remove the last letter
         currentWord = currentWord.Substring(0, currentWord.Length - 1);
-
-        // select the most recent one
-        v = currentSelection[currentSelection.Count - 1];
 
         /*****************************************************************
          * FEATURE: Highlighting color gradient based on frequency feature
@@ -494,7 +506,7 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static void UpdateScoreProgressBar() {
-		float scale = score * 1.0f / MAX_SCORE;
+        float scale = 0;
 
 		if (scale > 1) {
 			scale = 1.0f;
@@ -503,21 +515,22 @@ public class BoxScript : MonoBehaviour {
 		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
 	}
 
-	public IEnumerator AnimateSelectedTiles(float freq) {
+	public IEnumerator AnimateSelectedTiles(float freq, int score) {
 		// animate different congratulatory messages based on score
 		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
+        TextFaderScript scoreTextFader = GameObject.Find("SuccessScorePanel").GetComponent<TextFaderScript>();
 
         Debug.Log("freq: " + freq);
 
         if (freq >= 0.38)
         {
-            // PREMIUM ULTRA RARE
-            textFader.FadeText(0.7f, "Premium Ultra Rare!");
+            // Unbelievable
+            textFader.FadeText(0.7f, "Unbelievable!");
         }
         else if (freq >= 0.3)
         {
-            // ULTRA RARE+
-            textFader.FadeText(0.7f, "Ultra Rare Plus!");
+            // Mega Rare
+            textFader.FadeText(0.7f, "Mega Rare!");
         }
         else if (freq >= 0.24)
         {
@@ -536,14 +549,17 @@ public class BoxScript : MonoBehaviour {
         }
         else if (freq >= 0.13)
         {
-            // UNCOMMON
-            textFader.FadeText(0.7f, "Uncommon!");
+            // Great
+            textFader.FadeText(0.7f, "Great!");
         }
         else if (freq > 0.11)
         {
             // GOOD
             textFader.FadeText(0.7f, "Good!");
         }
+
+        // Animate the obtained score
+        scoreTextFader.FadeText(0.7f, "+" + score + " points");
 
 		// animate each selected tile
 		foreach (Vector2 v in currentSelection) {
@@ -754,6 +770,8 @@ public class BoxScript : MonoBehaviour {
         int otherX = (int)otherLoc.x;
         int otherY = (int)otherLoc.y;
 
+        // TODO: refactor and use an array of dx[] dy[] to shorten the code
+
         // check to the right
         if (myX + 1 == otherX && myY == otherY)
         {
@@ -802,6 +820,8 @@ public class BoxScript : MonoBehaviour {
 	public bool IsNextTo(Vector2 otherLoc) {
 		int otherX = (int)otherLoc.x;
 		int otherY = (int)otherLoc.y;
+
+        // TODO: refactor and use an array of dx[] dy[] to shorten the code
 
 		// check to the right
 		if (myX + 1 == otherX && myY == otherY) {
@@ -923,8 +943,14 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static void Reset() {
+        // make button interactive again
+        GameManagerScript.gameManager.playButton.GetComponent<Button>().interactable = true;
+
 		foreach (Transform transform in grid) {
-			Destroy (transform.gameObject);
+            if (transform != null && transform.gameObject != null)
+            {
+                Destroy(transform.gameObject);
+            }
 		}
 
 		grid = new Transform[gridWidth, gridHeight];

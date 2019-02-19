@@ -25,9 +25,8 @@ public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
 		if (panel.activeSelf) {
 			GameManagerScript.BeginGame ();
 
-			/*************************************
-			 * TODO: Do some logging actions here
-			 *************************************/
+            // Log the click
+            GameManagerScript.LogInstructionsClick(eventData.position);
 
 			panel.SetActive (false);
 		}

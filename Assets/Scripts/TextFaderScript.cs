@@ -46,7 +46,7 @@ public class TextFaderScript : MonoBehaviour {
 		while (myText.color.a < 1.0f)
 		{
 			myText.color = new Color(myText.color.r, myText.color.g, myText.color.b, myText.color.a + (Time.deltaTime / t));
-			myPanel.color = new Color(myPanel.color.r, myPanel.color.g, myPanel.color.b, myPanel.color.a + (Time.deltaTime / t) * 0.9f);
+			myPanel.color = new Color(myPanel.color.r, myPanel.color.g, myPanel.color.b, myPanel.color.a + (Time.deltaTime / t) * 0.65f);
 			yield return null;
 		}
 
@@ -64,7 +64,7 @@ public class TextFaderScript : MonoBehaviour {
 		while (myText.color.a > 0.0f)
 		{
 			myText.color = new Color(myText.color.r, myText.color.g, myText.color.b, myText.color.a - (Time.deltaTime / t));
-			myPanel.color = new Color(myPanel.color.r, myPanel.color.g, myPanel.color.b, myPanel.color.a - (Time.deltaTime / t) * 0.9f);
+			myPanel.color = new Color(myPanel.color.r, myPanel.color.g, myPanel.color.b, myPanel.color.a - (Time.deltaTime / t) * 0.65f);
 			yield return null;
 		}
 	}

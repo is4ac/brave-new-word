@@ -10,9 +10,6 @@ public class TutorialVideoPlayer : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        // Turn off the instructions panel in the next scene
-        GameManagerScript.INSTRUCTIONS_PANEL = false;
-
         StartCoroutine(PlayVideo());
 	}
 

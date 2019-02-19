@@ -7,7 +7,7 @@ public class StartOptions : MonoBehaviour {
 
 
     public MenuSettings menuSettingsData;
-	public int sceneToStart = 1;										//Index number in build settings of scene to load if changeScenes is true
+	public int sceneToStart = 2;										//Index number in build settings of scene to load if changeScenes is true
     public CanvasGroup fadeOutImageCanvasGroup;                         //Canvas group used to fade alpha of image which fades in before changing scenes
     public Image fadeImage;                                             //Reference to image used to fade out before changing scenes
 
@@ -33,20 +33,10 @@ public class StartOptions : MonoBehaviour {
 		PlayerPrefs.SetString("username", RandomNameScript.username);
 
 		//If changeScenes is true, start fading and change scenes halfway through animation when screen is blocked by FadeImage
-		if (menuSettingsData.nextSceneIndex != 0) 
-		{
-			//Use invoke to delay calling of LoadDelayed by half the length of fadeColorAnimationClip
-			Invoke ("LoadDelayed", menuSettingsData.menuFadeTime);
+		//Use invoke to delay calling of LoadDelayed by half the length of fadeColorAnimationClip
+		Invoke ("LoadDelayed", menuSettingsData.menuFadeTime);
 
-            StartCoroutine(FadeCanvasGroupAlpha(0f, 1f, fadeOutImageCanvasGroup));
-        } 
-
-		//If changeScenes is false, call StartGameInScene
-		else 
-		{
-			//Call the StartGameInScene function to start game without loading a new scene.
-		}
-
+        StartCoroutine(FadeCanvasGroupAlpha(0f, 1f, fadeOutImageCanvasGroup));
 	}
 
 	public void SelectName() {

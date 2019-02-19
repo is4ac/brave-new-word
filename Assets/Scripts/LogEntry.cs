@@ -39,9 +39,12 @@ public class LogEntry {
 	public string timestamp; // the date and time that it was played
 	public double timestampEpoch;
 	public int gameID;
-	//public int gameType;
+	public bool displayButton;
+    public bool displayTutorial;
+    public bool displayHighlightFeedback;
+    public bool displaySelectedScore;
 	public string deviceModel;
-	public string location;
+	//public string location;
 
 	// attributes that must be assigned
 	public string key; // "WD_LetterSelected", "WD_LetterDeselected", "WD_DeselectAll", "WD_Submit"
@@ -53,14 +56,17 @@ public class LogEntry {
 		userID = GameManagerScript.userID;
 		username = GameManagerScript.username;
 		gameID = GameManagerScript.GAME_ID;
-        //gameType = (int) GameManagerScript.currentVersion;
+        displayButton = GameManagerScript.DISPLAY_BUTTON;
+        displayTutorial = GameManagerScript.DISPLAY_TUTORIAL;
+        displayHighlightFeedback = GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK;
+        displaySelectedScore = GameManagerScript.DISPLAY_SELECTED_SCORE;
 		deviceModel = GameManagerScript.deviceModel;
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
 		timestampEpoch = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds); // epoch time in milliseconds
 
 		// TODO:
-		location = "";
+		//location = "";
 	}
 
 	public void setValues(string key, string parentKey) {
@@ -142,7 +148,7 @@ public class KeyFrameLogEntry : LogEntry {
 		public int totalScore;
 		public int wordsPlayed;
 		public int totalInteractions;
-		public string state; // pre, post (submit word), gameStart, or gameEnd
+		public string state; // pre, post, gameStart, gamePause, or gameEnd
 	}
 
 	public KeyFramePayload payload;
@@ -151,4 +157,20 @@ public class KeyFrameLogEntry : LogEntry {
 		base.setValues (key, parentKey);
 		this.payload = payload;
 	}
+}
+
+[System.Serializable]
+public class ClickLogEntry : LogEntry {
+    [System.Serializable]
+    public class ClickPayload : Payload {
+        public float screenX;
+        public float screenY;
+    }
+
+    public ClickPayload payload;
+
+    public void setValues(string key, string parentKey, ClickPayload payload) {
+        base.setValues(key, parentKey);
+        this.payload = payload;
+    }
 }
