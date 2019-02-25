@@ -4,11 +4,20 @@ using UnityEngine;
 using Firebase;
 using Firebase.Database;
 using Firebase.Unity.Editor;
+using System.Runtime.Serialization.Formatters.Binary;
+using System;
+using System.IO;
 
 public class StartGameScript : MonoBehaviour {
 
+    public const string DATA_PATH = "/playerData.dat";
+
+    // use for initialization
     void Awake()
     {
+        // Set screen orientation mode to portrait only
+        Screen.orientation = ScreenOrientation.Portrait;
+
         // set input method based on if touch input is supported or not
         if (Input.touchSupported) 
         {
@@ -21,11 +30,6 @@ public class StartGameScript : MonoBehaviour {
             TouchInputHandler.touchSupported = false;
         }
 
-
-    }
-
-    // Use this for initialization
-    void Start () {
         // Firebase database logistics for editor
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
         FirebaseApp.DefaultInstance.SetEditorP12FileName(@"Assets/WordFlood-66029aead4c6.p12");
@@ -48,15 +52,62 @@ public class StartGameScript : MonoBehaviour {
 
         // Randomize the various frictional features of the game
         //RandomizeFeatures();
-	}
+
+        // Load from file
+        LoadFile();
+    }
+
+    public void LoadFile()
+    {
+        if (File.Exists(Application.persistentDataPath + DATA_PATH))
+        {
+            // Read the file to load the frictional pattern data
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + DATA_PATH, FileMode.Open);
+
+            PlayerData data = (PlayerData)bf.Deserialize(file);
+            file.Close();
+
+            //// set the local variables to the data from the file
+            GameManagerScript.DISPLAY_BUTTON = data.displayButton;
+            GameManagerScript.DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
+            GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
+            GameManagerScript.DISPLAY_TUTORIAL = false;
+            GameManagerScript.INSTRUCTIONS_PANEL = data.instructions;
+            GameManagerScript.userID = data.userID;
+            GameManagerScript.myHighScore = data.myHighScore;
+
+            // TODO: DEBUG ONLY change back before release
+            //userID = Guid.NewGuid().ToString();
+            //DISPLAY_BUTTON = true;
+            //DISPLAY_SELECTED_SCORE = true;
+            //DISPLAY_HIGHLIGHT_FEEDBACK = true;
+            //DISPLAY_TUTORIAL = false;
+        }
+        else
+        {
+            // If file doesn't exist yet, randomize and initialize variables
+            GameManagerScript.DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            GameManagerScript.DISPLAY_TUTORIAL = false;
+            GameManagerScript.DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+            GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+
+            // randomize userID using a GUID (UUID) 
+            GameManagerScript.userID = Guid.NewGuid().ToString();
+        }
+
+        Debug.Log("Button: " + GameManagerScript.DISPLAY_BUTTON);
+        Debug.Log("Selected Score: " + GameManagerScript.DISPLAY_SELECTED_SCORE);
+        Debug.Log("Highlight: " + GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK);
+    }
 
     public void RandomizeFeatures() 
     {
-        GameManagerScript.DISPLAY_BUTTON = Random.Range(0, int.MaxValue) % 2 == 0;
+        GameManagerScript.DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
         //GameManagerScript.DISPLAY_TUTORIAL = Random.Range(0, int.MaxValue) % 2 == 0;
         GameManagerScript.DISPLAY_TUTORIAL = false;
-        GameManagerScript.DISPLAY_SELECTED_SCORE = Random.Range(0, int.MaxValue) % 2 == 0;
-        GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = Random.Range(0, int.MaxValue) % 2 == 0;
+        GameManagerScript.DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
 
         Debug.Log("Button: " + GameManagerScript.DISPLAY_BUTTON);
         Debug.Log("Tutorial: " + GameManagerScript.DISPLAY_TUTORIAL);
@@ -75,6 +126,16 @@ public class StartGameScript : MonoBehaviour {
         //{
         //    startOptions.sceneToStart = 2;
         //}
+    }
+
+    public void OpenTermsOfService() 
+    {
+        Application.OpenURL("http://is4ac.github.io/brave-new-word-site/terms");
+    }
+
+    public void OpenPrivacyPolicy()
+    {
+        Application.OpenURL("http://is4ac.github.io/brave-new-word-site/privacy");
     }
 
     // Initialize the Firebase database:

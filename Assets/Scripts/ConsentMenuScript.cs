@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 public class ConsentMenuScript : MonoBehaviour {
 
     public int sceneToStart;                // the scene index to transition to after this scene
-    public MenuSettings menuSettingsData;
     public GameObject loadingPanel;
     public GameObject loadingBar;
 

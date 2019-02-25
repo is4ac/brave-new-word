@@ -34,11 +34,11 @@ public class LogEntry {
 	// attributes handled internally
 	public string logVersion;
 	public string appVersion;
-	public int userID;
+	public string userID;
 	public string username; // e.g. Tranquil Red Panda
 	public string timestamp; // the date and time that it was played
 	public double timestampEpoch;
-	public int gameID;
+	public string gameID;
 	public bool displayButton;
     public bool displayTutorial;
     public bool displayHighlightFeedback;
@@ -124,8 +124,8 @@ public class SubmitWordLogEntry : LogEntry {
 	[System.Serializable]
 	public class SubmitWordPayload : Payload {
 		public string word;
-		public int scoreTotal;
-		public int scoreBase;
+		public long scoreTotal;
+		public long scoreBase;
 		public bool success;
 		public float frequency;
 		public LetterPayload[] letters;
@@ -145,7 +145,7 @@ public class KeyFrameLogEntry : LogEntry {
 	public class KeyFramePayload : Payload {
 		public string board;
 		public float timeElapsed;
-		public int totalScore;
+		public long totalScore;
 		public int wordsPlayed;
 		public int totalInteractions;
 		public string state; // pre, post, gameStart, gamePause, or gameEnd

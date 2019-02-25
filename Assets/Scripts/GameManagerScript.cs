@@ -17,11 +17,12 @@ public class GameManagerScript : MonoBehaviour {
     public static GameManagerScript gameManager;
 
 	// Set to true to log to Firebase database, false to turn off
-	public static bool LOGGING = false;
-	public const string LOGGING_VERSION = "WFLogs_V1_0_1_debug";
-	public const string APP_VERSION = "WF_1.0.1_debug";
-    public const string DATA_PATH = "/playerData.dat";
+	public static bool LOGGING = true;
+	public const string LOGGING_VERSION = "BNWLogs_V1_1_0_debug";
+	public const string APP_VERSION = "BNW_1.1.0_debug";
+    public static string usersDbName = "users" + DBManager.scoresVersionNumber;
 
+    public DatabaseReference dbUsers;
 	CamShakeSimpleScript camShake;
 
     /*************************************
@@ -34,29 +35,26 @@ public class GameManagerScript : MonoBehaviour {
     /*********************************************/
 	
 	public GameObject playButton;
-	GameObject nextButton;
-	public static Text usernameText;
-	public static int GAME_ID;
+    public GameObject instructionsPanel;
+	public static string GAME_ID;
 	public static string username;
-	public static int userID;
+	public static string userID;
 	public static string deviceModel;
 	static bool areBoxesFalling = true;
 	public GameObject gameOverPanel = null;
 	static bool gameHasBegun = false;
-	static bool initialLog = true;
+	static bool initialLog = true; // keeps track of whether or not the initial logging should be done
     public static bool INSTRUCTIONS_PANEL = true;
-
-	/**********************************
-	 * Feature: Analyzing board state and immediate feedback of relative rarity of word using a trie
-	 **********************************/
-	public static Trie trie;
+    public static long myHighScore = 0;
+    public static bool myHighScoreUpdated = false;
+    public static bool globalHighScoreUpdated = false;
 
 	void Awake() {
-        // singleton pattern-esque?
+        // singleton pattern-esque
         if (gameManager == null) {
             gameManager = this;
             gameOverPanel.SetActive(false);
-        } else if (gameManager != null) {
+        } else {
             Destroy(gameObject);
         }
 	}
@@ -65,30 +63,15 @@ public class GameManagerScript : MonoBehaviour {
 	void Start () {
 		deviceModel = SystemInfo.deviceModel;
 
-		// Using time since epoch date as unique game ID
-		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
-		GAME_ID = (int)(System.DateTime.UtcNow - epochStart).TotalSeconds;
+        dbUsers = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
+
+		// Generate a new GAME_ID using the Guid class
+        GAME_ID = Guid.NewGuid().ToString();
 		Debug.Log ("Game id: " + GAME_ID);
 
 		BoxScript.camShake = gameObject.AddComponent<CamShakeSimpleScript> ();
-		//playButton = GameObject.Find ("PlayButton");
-		nextButton = GameObject.Find ("NextStageButton");
-		if (nextButton != null) {
-			nextButton.SetActive (false);
-		}
-		username = PlayerPrefs.GetString ("username");
 
-		// randomize userID
-		userID = UnityEngine.Random.Range (0, int.MaxValue);
-
-		// TODO: check to see that userID is unique
-
-		// display the username on the screen
-		usernameText = GameObject.Find("UsernameText").GetComponent<Text>();
-		usernameText.text = username;
-
-		// do various logging for the start of the game
-        LogStartOfGame();
+        username = PlayerPrefs.GetString("username");
 
         // check version and hide/show Play Word button depending on version
         if (DISPLAY_BUTTON)
@@ -99,53 +82,16 @@ public class GameManagerScript : MonoBehaviour {
         {
             playButton.SetActive(false);
         }
+
+        // Hide the instructions panel if it shouldn't be displayed
+        if (!INSTRUCTIONS_PANEL)
+        {
+            instructionsPanel.SetActive(false);
+        }
+
+        // do various logging for the start of the game
+        LogStartOfGame();
 	}
-
-    /**
-     * Load frictional pattern, or randomize it whenever the game starts
-     */
-    void OnEnable()
-    {
-        if (File.Exists(Application.persistentDataPath + DATA_PATH))
-        {
-            // Read the file to load the frictional pattern data
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(Application.persistentDataPath + DATA_PATH, FileMode.Open);
-
-            PlayerData data = (PlayerData) bf.Deserialize(file);
-            file.Close();
-
-            //// set the local variables to the data from the file
-            //DISPLAY_BUTTON = data.displayButton;
-            //DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
-            //DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
-            //DISPLAY_TUTORIAL = false;
-
-            // TODO: DEBUG ONLY change back before release
-            DISPLAY_BUTTON = true;
-            DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
-            DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
-            DISPLAY_TUTORIAL = false;
-
-            //// If file doesn't exist yet, randomize and initialize variables
-            //DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            //DISPLAY_TUTORIAL = false;
-            //DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            //DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        }
-        else 
-        {
-            // If file doesn't exist yet, randomize and initialize variables
-            DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            DISPLAY_TUTORIAL = false;
-            DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        }
-
-        Debug.Log("Button: " + DISPLAY_BUTTON);
-        Debug.Log("Selected Score: " + DISPLAY_SELECTED_SCORE);
-        Debug.Log("Highlight: " + DISPLAY_HIGHLIGHT_FEEDBACK);
-    }
 
     /**
      * Save frictional pattern to device whenever the game quits
@@ -154,10 +100,16 @@ public class GameManagerScript : MonoBehaviour {
     {
         // Open the file to write the data
         BinaryFormatter bf = new BinaryFormatter();
-        FileStream file = File.Create(Application.persistentDataPath + DATA_PATH);
+        FileStream file = File.Create(Application.persistentDataPath + StartGameScript.DATA_PATH);
 
-        PlayerData data = new PlayerData(DISPLAY_BUTTON, DISPLAY_SELECTED_SCORE, DISPLAY_HIGHLIGHT_FEEDBACK, username);
-
+        PlayerData data = new PlayerData(DISPLAY_BUTTON, 
+                                         DISPLAY_SELECTED_SCORE, 
+                                         DISPLAY_HIGHLIGHT_FEEDBACK, 
+                                         username, 
+                                         false,
+                                         userID,
+                                         myHighScore);
+        
         // serialize and write to file
         bf.Serialize(file, data);
         file.Close();
@@ -185,6 +137,7 @@ public class GameManagerScript : MonoBehaviour {
         if (LOGGING)
         {
             Debug.Log("Logging beginning of game");
+
             // Log beginning of game
             MetaLogEntry entry = new MetaLogEntry();
             entry.setValues("WF_GameStart", "WF_Meta", new MetaLogEntry.MetaPayload("start"));
@@ -193,6 +146,7 @@ public class GameManagerScript : MonoBehaviour {
             reference.Push().SetRawJsonValueAsync(json);
 
             Debug.Log("logging game info");
+
             // insert new game entry into database
             reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION + "_games");
             DatabaseReference child = reference.Child(GAME_ID + "");
@@ -207,6 +161,25 @@ public class GameManagerScript : MonoBehaviour {
             child.Child("userID").SetValueAsync(userID);
             child.Child("loggingVersion").SetValueAsync(LOGGING_VERSION);
             child.Child("appVersion").SetValueAsync(APP_VERSION);
+
+            // Log username into users database if it doesn't already exist or if the username has changed
+            dbUsers.GetValueAsync().ContinueWith(task => {
+                if (task.IsFaulted)
+                {
+                    // ERROR HANDLER
+                    Debug.Log("Error in logging user into users database of GameManagerScript");
+                }
+                else if (task.IsCompleted)
+                {
+                    Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
+
+                    // set the value of userID's username if it doesn't exist or if it changed
+                    if (results == null || !results.ContainsKey(userID) || !results[userID].Equals(username))
+                    {
+                        dbUsers.Child(userID).SetValueAsync(username);
+                    }
+                }
+            });
         }
     }
 
@@ -263,6 +236,9 @@ public class GameManagerScript : MonoBehaviour {
 	public void PlayWord() {
 		BoxScript.PlayWord ();
 		Debug.Log ("Play word pressed.");
+
+        // display the high score?
+        Debug.Log("Top score: " + DBManager.instance.topScore);
 	}
 
 	public static void BeginGame() {
@@ -375,150 +351,27 @@ public class GameManagerScript : MonoBehaviour {
 			LogGameUnpause ();
 		}
 	}
-
-	/***************************************************
-	 * Functions for checking for combos, initializing the main board, etc
-	 ***************************************************/
-
-	/*
-	bool CheckValidWord(int startX, int startY, int endX, int endY) {
-		string word = "";
-
-		// check to see if word is in column or row
-		if (startX == endX) {
-			// column
-			if (startY < endY) {
-				// forward
-				for (int y = startY; y <= endY; ++y) {
-					word += initialBoard [startX, y];			
-				}
-			} else {
-				// reverse
-				for (int y = startY; y >= endY; --y) {
-					word += initialBoard [startX, y];
-				}
-			}
-		} else if (startY == endY) {
-			// row
-			if (startX < endX) {
-				//forward
-				for (int x = startX; x <= endX; ++x) {
-					word += initialBoard [x, startY];
-				}
-			} else {
-				// reverse
-				for (int x = startX; x >= endX; --x) {
-					word += initialBoard [x, startY];
-				}
-			}
-		} else {
-			Debug.Log ("Error: CheckValidWord only checks rows or columns");
-			return false;
-		}
-
-		return BoxScript.IsValidWord (word);
-	}
-
-	void MarkFlaggedBoard(int startX, int startY, int endX, int endY) {
-		if (startX < endX) {
-			for (int x = startX; x <= endX; ++x) {
-				flaggedBoard [x, startY] = true;
-			}
-		} else {
-			for (int y = startY; y <= endY; ++y) {
-				flaggedBoard [startX, y] = true;
-			}
-		}
-	}
-
-	bool ContainsNoValidWords(char[,] board) {
-		// check all Ngrams to see if they contain valid words
-		bool flag = true;
-		int rLength = board.GetLength (0);
-		int cLength = board.GetLength (1);
-
-		// check rows
-		for (int row = 0; row < board.GetLength (1); ++row) {
-			for (int n = 0; n < rLength; ++n) {
-				for (int len = 3; (n+len) <= rLength; ++len) {
-					// TODO: check to see if any of the letters are flagged
-
-					// check forwards and backwards
-					if (CheckValidWord (n, row, n + len - 1, row) 
-						|| CheckValidWord (n + len - 1, row, n, row)) {
-						flag = false;
-
-						MarkFlaggedBoard (n, row, n + len - 1, row);
-					}
-				}
-			}
-		}
-
-		// check columns
-		for (int col = 0; col < board.GetLength (0); ++col) {
-			for (int n = 0; n < cLength; ++n) {
-				for (int len = 3; (n+len) <= cLength; ++len) {
-					// TODO: check to see if any of the letters are flagged
-
-					// check forwards and backwards
-					if (CheckValidWord (col, n, col, n + len - 1) 
-						|| CheckValidWord (col, n + len - 1, col, n)) {
-						flag = false;
-
-						MarkFlaggedBoard (col, n, col, n + len - 1);
-					}
-				}
-			}
-		}
-
-		return flag;
-	}
-
-	void RerollLetters() {
-		// randomize all letters that are marked "true" in flaggedBoard
-		for (int x = 0; x < flaggedBoard.GetLength (0); ++x) {
-			for (int y = 0; y < flaggedBoard.GetLength (1); ++y) {
-				if (flaggedBoard [x, y]) {
-					int i = Random.Range (0, letterFreq.Count);
-					initialBoard [x, y] = (char)(letterFreq [i] + 'A');
-				}
-			}
-		}
-	}
-
-	void ResetFlaggedBoard() {
-		for (int x = 0; x < flaggedBoard.GetLength (0); ++x) {
-			for (int y = 0; y < flaggedBoard.GetLength (1); ++y) {
-				flaggedBoard [x, y] = false;
-			}
-		}
-	}
-
-	// DEBUGGING PURPOSES ONLY
-	void PrintInitialBoard() {
-		for (int row = 0; row < initialBoard.GetLength (1); ++row) {
-			string rowStr = "";
-			for (int col = 0; col < initialBoard.GetLength (0); ++col) {
-				rowStr += initialBoard [col, row];
-			}
-
-			Debug.Log (rowStr);
-		}
-	}
-	*/
 }
 
 [Serializable]
 class PlayerData {
-    public bool displayButton;          // users must click on button to submit word
-    public bool displaySelectedScore;  // show currently selected word score
-    public bool displayHighlightFeedback;      // feedback during highlighting of words
-    public string username;
+    public bool displayButton;                  // users must click on button to submit word
+    public bool displaySelectedScore;           // show currently selected word score
+    public bool displayHighlightFeedback;       // feedback during highlighting of words
+    public string username;                     // the public username to display
+    public bool instructions;                   // whether or not to show the instructions
+    public string userID;
+    public long myHighScore;
 
-    public PlayerData(bool button, bool score, bool highlight, string username) {
+    public PlayerData(bool button, bool score, bool highlight, 
+                      string username, bool instructions, string userID,
+                     long myHighScore) {
         displayButton = button;
         displaySelectedScore = score;
         displayHighlightFeedback = highlight;
         this.username = username;
+        this.instructions = instructions;
+        this.userID = userID;
+        this.myHighScore = myHighScore;
     }
 }

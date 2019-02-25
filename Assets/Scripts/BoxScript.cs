@@ -21,14 +21,15 @@ public class BoxScript : MonoBehaviour {
 	public static Text submittedWordText = null;
 	public static Text submittedScoreText = null;
     public static Text selectedScore = null;
-	public static int score = 0;
+	public static long score = 0;
 	private const float FALL_SPEED_CONST = 0.15f;
 	public static string currentWord = "";
     public static Dictionary<string,float> freqDictionary = null;
 	public static CamShakeSimpleScript camShake = null;
 	public static int totalInteractions = 0;
 	public static int wordsPlayed = 0;
-    public static int turnsLeft = 10;
+    public const int MAX_TURNS = 10;
+    public static int turnsLeft = MAX_TURNS;
 
     public GameObject _explodeParticleSystemPrefab;
     public GameObject _bubblesLandingParticleSystemPrefab;
@@ -89,6 +90,9 @@ public class BoxScript : MonoBehaviour {
 		falling = true;
 		columnFalling = false;
 		fall = Time.time;
+
+        // update the progress bar to fill in how many turns are left
+        UpdateScoreProgressBar();
 
 		if (!IsValidPosition ()) {
 			//SceneManager.LoadScene (0);
@@ -174,7 +178,6 @@ public class BoxScript : MonoBehaviour {
 			child.SetRawJsonValueAsync (json);
 
 			++totalInteractions;
-			//Debug.Log (json);
 		}
 	}
 
@@ -205,27 +208,6 @@ public class BoxScript : MonoBehaviour {
 
 		return toRet;
 	}
-		
-	// Click on blocks to select them
-	/*
-	void OnMouseDown() {
-		// regular left mouse click
-		if (false && GameManagerScript.currentVersion != GameManagerScript.Versions.SwipeUI && Input.GetMouseButton (0)) {
-			// there is no previously clicked box OR
-			// this box is selectable (it is adjacent to the previously 
-			// selected tile and it isn't already selected)
-			if (currentSelection.Count == 0 || IsNextTo (currentSelection [currentSelection.Count - 1]) &&
-			           !currentSelection.Contains (new Vector2 (myX, myY))) {
-				SelectThisTile();
-				LogAction ("WF_LetterSelected", myLetter, myX, myY);
-			} else {
-				// de-select what has already been selected
-				ClearAllSelectedTiles();
-				LogAction ("WF_LetterDeselected", myLetter, myX, myY);
-			}
-		}
-	}
-	*/
 
 	public static void PlayWord() {
 		SubmitWordLogEntry dbEntry = new SubmitWordLogEntry ();
@@ -265,7 +247,7 @@ public class BoxScript : MonoBehaviour {
 		dbEntry.payload = payload;
 
 		if (IsValidWord (currentWord)) {
-			int submittedScore = GetScore (currentWord, payload);
+			long submittedScore = GetScore (currentWord, payload);
 			score += submittedScore;
             if (scoreText != null) { scoreText.text = "Points: " + score; }
             if (submittedWordText != null) { submittedWordText.text = currentWord; }
@@ -279,6 +261,9 @@ public class BoxScript : MonoBehaviour {
             instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord), submittedScore));
 
 			UpdateScoreProgressBar ();
+
+            // Update the high score, if applicable
+            DBManager.instance.LogScore(score);
 
 			return true;
 		} else {
@@ -294,7 +279,7 @@ public class BoxScript : MonoBehaviour {
 		}
 	}
 
-	public static int GetScore(string word, SubmitWordLogEntry.SubmitWordPayload payload) {
+	public static long GetScore(string word, SubmitWordLogEntry.SubmitWordPayload payload) {
 		// scoring function based on freq of word + freq of letters
 		// TODO: do more balance testing of scoring function to make sure it is balanced?
 		float wordFreq = GetWordFreq (word);
@@ -307,7 +292,7 @@ public class BoxScript : MonoBehaviour {
 		Debug.Log(currentWord + ": " + wordFreq);
 
 		// base score is based on length of word (if word is 3 letters long, base is 1 + 2 + 3 points, etc)
-		int baseScore = CalculateBaseScore(word.Length);
+		long baseScore = CalculateBaseScore(word.Length);
 
 		Debug.Log ("baseScore: " + baseScore);
 
@@ -329,7 +314,7 @@ public class BoxScript : MonoBehaviour {
 		// give the user a fixed bonus points amount and display an animation
 		int bonus = GetBonus(wordFreq);
 
-		return (int)(baseScore * (freqMultiplied * 20)) + bonus;
+		return (long)(baseScore * (freqMultiplied * 20)) + bonus;
 	}
 
 	static int GetBonus(float freq) {
@@ -339,19 +324,19 @@ public class BoxScript : MonoBehaviour {
 		} else if (freq >= 0.3) {
 			// PREMIUM ULTRA RARE
 			return 60;
-		} else if (freq >= 0.24) { 
+		} else if (freq >= 0.26) { 
 			// ULTRA RARE+
 			return 50;
-		} else if (freq >= 0.2) {
+		} else if (freq >= 0.23) {
 			// ULTRA RARE
 			return 40;
-		} else if (freq >= 0.15) { 
+		} else if (freq >= 0.2) { 
 			// SUPER RARE
 			return 30;
-		} else if (freq >= 0.13) {
+		} else if (freq >= 0.17) {
 			// RARE
 			return 20;
-		} else if (freq >= 0.11) {
+		} else if (freq >= 0.14) {
 			// AVERAGE
 			return 10;
 		}
@@ -359,7 +344,66 @@ public class BoxScript : MonoBehaviour {
 		return 0;
 	}
 
-	static int CalculateBaseScore(int length) {
+    public IEnumerator AnimateSelectedTiles(float freq, long score)
+    {
+        // animate different congratulatory messages based on score
+        TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
+        TextFaderScript scoreTextFader = GameObject.Find("SuccessScorePanel").GetComponent<TextFaderScript>();
+
+        Debug.Log("freq: " + freq);
+
+        if (freq >= 0.38)
+        {
+            // Unbelievable
+            textFader.FadeText(0.7f, "Unbelievable!");
+        }
+        else if (freq >= 0.3)
+        {
+            // Mega Rare
+            textFader.FadeText(0.7f, "Mega Rare!");
+        }
+        else if (freq >= 0.24)
+        {
+            // ULTRA RARE
+            textFader.FadeText(0.7f, "Ultra Rare!");
+        }
+        else if (freq >= 0.2)
+        {
+            // SUPER RARE
+            textFader.FadeText(0.7f, "Super Rare!");
+        }
+        else if (freq >= 0.15)
+        {
+            // RARE
+            textFader.FadeText(0.7f, "Rare!");
+        }
+        else if (freq >= 0.13)
+        {
+            // Great
+            textFader.FadeText(0.7f, "Great!");
+        }
+        else if (freq > 0.11)
+        {
+            // GOOD
+            textFader.FadeText(0.7f, "Good!");
+        }
+
+        // Animate the obtained score
+        scoreTextFader.FadeText(0.7f, "+" + score + " points");
+
+        // animate each selected tile
+        foreach (Vector2 v in currentSelection)
+        {
+            GameObject _gameObject = grid[(int)v.x, (int)v.y].gameObject;
+            _gameObject.GetComponent<BoxScript>().AnimateSuccess();
+        }
+
+        // brief pause for the color to change before removing them from screen
+        yield return new WaitForSeconds(0.7f);
+        DeleteAllSelectedTiles();
+    }
+
+	static long CalculateBaseScore(int length) {
 		if (length == 0) {
 			return 0;
 		}
@@ -367,7 +411,7 @@ public class BoxScript : MonoBehaviour {
 		return LengthScoreFunction (length) + CalculateBaseScore (length - 1);
 	}
 
-	static int LengthScoreFunction(int length) {
+	static long LengthScoreFunction(int length) {
 		if (length == 1) {
 			return 1;
 		}
@@ -380,25 +424,35 @@ public class BoxScript : MonoBehaviour {
 	 * 
 	 */
 	public static void CheckGameEnd() {
-		if (turnsLeft <= 0) {
+		if (turnsLeft <= 0) 
+        {
 			GameManagerScript.gameManager.gameOverPanel.SetActive (true);
             Text gameOverMessage = GameObject.Find("GameOverText").GetComponent<Text>();
             Text gameOverScoreText = GameObject.Find("GameOverScoreText").GetComponent<Text>();
             Text highScoreText = GameObject.Find("HighScoreText").GetComponent<Text>();
 
-            // TODO: after adding high score
-            /*
-             * if (score > highScore) {
-             *    // TODO: update high score in database
-                  highScore = score;
+            highScoreText.text = "Your High Score: " + GameManagerScript.myHighScore;
 
-                  // update game over text
-                  gameOverMessage.text = "Game over! New high score! Congratulations!";
-             * }
-             */
+            // Check if new local high score was reached
+            if (GameManagerScript.myHighScoreUpdated) 
+            {
+                // update game over text
+                gameOverMessage.text = "Congratulations! You've set a new personal high score!";
+
+                // TODO: animate particles
+            }
+
+            // Check if new global high score was reached
+            if (GameManagerScript.globalHighScoreUpdated)
+            {
+                // update game over text
+                gameOverMessage.text = "Congratulations! You've set a new global high score!";
+                highScoreText.text = "New High Score: " + score;
+
+                // TODO: animate particles
+            }
 
             gameOverScoreText.text = "Score: " + score;
-            highScoreText.text = "High Score: "; // TODO add High score variable
 
 			// disable touch events
 			TouchInputHandler.touchEnabled = false;
@@ -431,11 +485,7 @@ public class BoxScript : MonoBehaviour {
         // Rehighlight the currently selected word with the correct color
         if (GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK)
         {
-            Color highlightColor = GetHighlightColor(currentWord);
-            foreach (Vector2 vec in currentSelection)
-            {
-                grid[(int)vec.x, (int)vec.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
-            }
+            DisplayHighlightFeedback();
         }
 
         /******************************************************************
@@ -443,23 +493,7 @@ public class BoxScript : MonoBehaviour {
          ******************************************************************/
         if (GameManagerScript.DISPLAY_SELECTED_SCORE)
         {
-            // Calculate currently selected score and change the text on screen
-            if (currentWord.Length >= 3)
-            {
-                int currentScore = GetScore(currentWord, null);
-                if (currentScore == 0)
-                {
-                    selectedScore.text = "";
-                }
-                else
-                {
-                    selectedScore.text = currentWord + ": " + currentScore + " pts";
-                }
-            }
-            else
-            {
-                selectedScore.text = "";
-            }
+            DisplaySelectedScore();
         }
     }
 
@@ -506,70 +540,13 @@ public class BoxScript : MonoBehaviour {
 	}
 
 	public static void UpdateScoreProgressBar() {
-        float scale = 0;
+        float scale = turnsLeft*1.0f / MAX_TURNS;
 
 		if (scale > 1) {
 			scale = 1.0f;
 		}
 
 		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
-	}
-
-	public IEnumerator AnimateSelectedTiles(float freq, int score) {
-		// animate different congratulatory messages based on score
-		TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-        TextFaderScript scoreTextFader = GameObject.Find("SuccessScorePanel").GetComponent<TextFaderScript>();
-
-        Debug.Log("freq: " + freq);
-
-        if (freq >= 0.38)
-        {
-            // Unbelievable
-            textFader.FadeText(0.7f, "Unbelievable!");
-        }
-        else if (freq >= 0.3)
-        {
-            // Mega Rare
-            textFader.FadeText(0.7f, "Mega Rare!");
-        }
-        else if (freq >= 0.24)
-        {
-            // ULTRA RARE
-            textFader.FadeText(0.7f, "Ultra Rare!");
-        }
-        else if (freq >= 0.2)
-        {
-            // SUPER RARE
-            textFader.FadeText(0.7f, "Super Rare!");
-        }
-        else if (freq >= 0.15)
-        {
-            // RARE
-            textFader.FadeText(0.7f, "Rare!");
-        }
-        else if (freq >= 0.13)
-        {
-            // Great
-            textFader.FadeText(0.7f, "Great!");
-        }
-        else if (freq > 0.11)
-        {
-            // GOOD
-            textFader.FadeText(0.7f, "Good!");
-        }
-
-        // Animate the obtained score
-        scoreTextFader.FadeText(0.7f, "+" + score + " points");
-
-		// animate each selected tile
-		foreach (Vector2 v in currentSelection) {
-			GameObject _gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			_gameObject.GetComponent<BoxScript> ().AnimateSuccess ();
-		}
-
-		// brief pause for the color to change before removing them from screen
-		yield return new WaitForSeconds(0.7f);
-		DeleteAllSelectedTiles ();
 	}
 
 	public static void DeleteAllSelectedTiles() {
@@ -730,11 +707,7 @@ public class BoxScript : MonoBehaviour {
          *****************************************************************/
         if (GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK)
         {
-            Color highlightColor = GetHighlightColor(currentWord);
-            foreach (Vector2 v in currentSelection)
-            {
-                grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
-            }
+            DisplayHighlightFeedback();
         } else {
             grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
@@ -744,23 +717,37 @@ public class BoxScript : MonoBehaviour {
          ******************************************************************/
         if (GameManagerScript.DISPLAY_SELECTED_SCORE)
         {
-            // Calculate currently selected score and change the text on screen
-            if (currentWord.Length >= 3)
-            {
-                int currentScore = GetScore(currentWord, null);
-                if (currentScore == 0)
-                {
-                    selectedScore.text = "";
-                }
-                else
-                {
-                    selectedScore.text = currentWord + ": " + currentScore + " pts";
-                }
-            }
-            else
+            DisplaySelectedScore();
+        }
+    }
+
+    public static void DisplayHighlightFeedback()
+    {
+        Color highlightColor = GetHighlightColor(currentWord);
+        foreach (Vector2 v in currentSelection)
+        {
+            grid[(int)v.x, (int)v.y].gameObject.GetComponent<SpriteRenderer>().color = highlightColor;
+        }
+    }
+
+    public static void DisplaySelectedScore()
+    {
+        // Calculate currently selected score and change the text on screen
+        if (currentWord.Length >= 3)
+        {
+            long currentScore = GetScore(currentWord, null);
+            if (currentScore == 0)
             {
                 selectedScore.text = "";
             }
+            else
+            {
+                selectedScore.text = currentWord + ": " + currentScore + " pts";
+            }
+        }
+        else
+        {
+            selectedScore.text = "";
         }
     }
 
@@ -959,6 +946,7 @@ public class BoxScript : MonoBehaviour {
 		scoreText.text = "Points: " + score;
 		submittedScoreText.text = "";
 		submittedWordText.text = "";
+        turnsLeft = MAX_TURNS;
 	}
 
 	public static string GetBoardPayload() {

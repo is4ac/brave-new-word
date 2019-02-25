@@ -35,11 +35,11 @@ public class RandomNameScript : MonoBehaviour
 		InitializeUsernameList ();
 
         // Check for saved file
-        if (File.Exists(Application.persistentDataPath + GameManagerScript.DATA_PATH))
+        if (File.Exists(Application.persistentDataPath + StartGameScript.DATA_PATH))
         {
             // Read the file to load the frictional pattern data
             BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(Application.persistentDataPath + GameManagerScript.DATA_PATH, FileMode.Open);
+            FileStream file = File.Open(Application.persistentDataPath + StartGameScript.DATA_PATH, FileMode.Open);
 
             PlayerData data = (PlayerData)bf.Deserialize(file);
             file.Close();
