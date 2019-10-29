@@ -37,12 +37,12 @@ public class LogEntry {
 	public string userID;
 	public string username; // e.g. Tranquil Red Panda
 	public string timestamp; // the date and time that it was played
-	public double timestampEpoch;
+	public double timestampEpoch; // epoch time in milliseconds
 	public string gameID;
-	public bool displayButton;
-    public bool displayTutorial;
-    public bool displayHighlightFeedback;
-    public bool displaySelectedScore;
+    public bool obstructionProductive;
+    public bool obstructionUnproductive;
+    public bool juiceProductive;
+    public bool juiceUnproductive;
 	public string deviceModel;
 	//public string location;
 
@@ -56,17 +56,13 @@ public class LogEntry {
 		userID = GameManagerScript.userID;
 		username = GameManagerScript.username;
 		gameID = GameManagerScript.GAME_ID;
-        displayButton = GameManagerScript.DISPLAY_BUTTON;
-        displayTutorial = GameManagerScript.DISPLAY_TUTORIAL;
-        displayHighlightFeedback = GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK;
-        displaySelectedScore = GameManagerScript.DISPLAY_SELECTED_SCORE;
+        obstructionProductive = GameManagerScript.OBSTRUCTION_PRODUCTIVE;
+        obstructionUnproductive = GameManagerScript.OBSTRUCTION_UNPRODUCTIVE;
+        juiceProductive = GameManagerScript.JUICE_PRODUCTIVE;
+        juiceUnproductive = GameManagerScript.JUICE_UNPRODUCTIVE;
 		deviceModel = GameManagerScript.deviceModel;
 		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
-		timestampEpoch = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds); // epoch time in milliseconds
-
-		// TODO:
-		//location = "";
+		timestampEpoch = ((System.DateTime.UtcNow - GameManagerScript.epochStart).TotalMilliseconds); // epoch time in milliseconds
 	}
 
 	public void setValues(string key, string parentKey) {
@@ -132,6 +128,13 @@ public class SubmitWordLogEntry : LogEntry {
 	}
 
 	public SubmitWordPayload payload;
+    public double timeTakenInMilliseconds;
+
+    public SubmitWordLogEntry() {
+        // set the time taken since previous word submission
+        timeTakenInMilliseconds = base.timestampEpoch - GameManagerScript.previousSubmissionTime;
+        GameManagerScript.previousSubmissionTime = base.timestampEpoch;
+    }
 
 	public void setValues(string key, string parentKey, SubmitWordPayload payload) {
 		base.setValues (key, parentKey);
