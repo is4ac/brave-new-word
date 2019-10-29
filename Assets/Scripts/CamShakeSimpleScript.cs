@@ -16,7 +16,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 	void Start() {
 		mainCamera = Camera.main;
 		originalCameraPosition = mainCamera.transform.position;
-		originalColor = GameObject.FindGameObjectWithTag ("Walls").GetComponent<Image> ().color;
+		//originalColor = GameObject.FindGameObjectWithTag ("Walls").GetComponent<Image> ().color;
 	}
 
 	public void Shake(float amount) {
@@ -26,7 +26,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 	// Shake the camera and make the walls red!
 	public void ShakeRed(float amount) {
 		shakeAmt = amount;
-		ColorWalls (Color.red);
+		//ColorWalls (Color.red);
 	}
 
 	void ColorWalls(Color changeColor) {
@@ -48,7 +48,7 @@ public class CamShakeSimpleScript : MonoBehaviour {
 			if (shakeAmt <= 0.0f) {
 				shakeAmt = 0.0f;
 				mainCamera.transform.position = originalCameraPosition;
-				ColorWalls (originalColor);
+				//ColorWalls (originalColor);
 			}
 		}
 	}

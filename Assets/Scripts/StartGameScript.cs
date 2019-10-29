@@ -69,63 +69,52 @@ public class StartGameScript : MonoBehaviour {
             file.Close();
 
             //// set the local variables to the data from the file
-            GameManagerScript.DISPLAY_BUTTON = data.displayButton;
-            GameManagerScript.DISPLAY_SELECTED_SCORE = data.displaySelectedScore;
-            GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = data.displayHighlightFeedback;
+            // TODO: uncomment this before deploy
+            /*
+            GameManagerScript.OBSTRUCTION_PRODUCTIVE = data.obstructionProductive;
+            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = data.obstructionUnproductive;
+            GameManagerScript.JUICE_PRODUCTIVE = data.juiceProductive;
+            GameManagerScript.JUICE_UNPRODUCTIVE = data.juiceUnproductive;
+            */
             GameManagerScript.DISPLAY_TUTORIAL = false;
             GameManagerScript.INSTRUCTIONS_PANEL = data.instructions;
             GameManagerScript.userID = data.userID;
             GameManagerScript.myHighScore = data.myHighScore;
 
+
             // TODO: DEBUG ONLY change back before release
-            //userID = Guid.NewGuid().ToString();
-            //DISPLAY_BUTTON = true;
-            //DISPLAY_SELECTED_SCORE = true;
-            //DISPLAY_HIGHLIGHT_FEEDBACK = true;
-            //DISPLAY_TUTORIAL = false;
+            GameManagerScript.myHighScore = 0;
+            GameManagerScript.userID = Guid.NewGuid().ToString();
+            GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
+            GameManagerScript.JUICE_PRODUCTIVE = false;
+            GameManagerScript.JUICE_UNPRODUCTIVE = true;
         }
         else
         {
             // If file doesn't exist yet, randomize and initialize variables
-            GameManagerScript.DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            GameManagerScript.DISPLAY_TUTORIAL = false;
-            GameManagerScript.DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-            GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-
-            // randomize userID using a GUID (UUID) 
-            GameManagerScript.userID = Guid.NewGuid().ToString();
+            RandomizeFeatures();
         }
 
-        Debug.Log("Button: " + GameManagerScript.DISPLAY_BUTTON);
-        Debug.Log("Selected Score: " + GameManagerScript.DISPLAY_SELECTED_SCORE);
-        Debug.Log("Highlight: " + GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK);
+        Debug.Log("Obstruction Prod.: " + GameManagerScript.OBSTRUCTION_PRODUCTIVE);
+        Debug.Log("Obstruction Unprod.: " + GameManagerScript.OBSTRUCTION_UNPRODUCTIVE);
+        Debug.Log("Juice Prod.: " + GameManagerScript.JUICE_PRODUCTIVE);
+        Debug.Log("Juice Unprod.: " + GameManagerScript.JUICE_UNPRODUCTIVE);
     }
 
     public void RandomizeFeatures() 
     {
-        GameManagerScript.DISPLAY_BUTTON = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        //GameManagerScript.DISPLAY_TUTORIAL = Random.Range(0, int.MaxValue) % 2 == 0;
-        GameManagerScript.DISPLAY_TUTORIAL = false;
-        GameManagerScript.DISPLAY_SELECTED_SCORE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        // TODO: make this more uniform!
+        // If file doesn't exist yet, randomize and initialize variables
+        GameManagerScript.OBSTRUCTION_PRODUCTIVE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = !GameManagerScript.OBSTRUCTION_PRODUCTIVE;
+        GameManagerScript.JUICE_PRODUCTIVE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
+        // Only productive/productive and unproductive/unproductive combinations are allowed
+        GameManagerScript.JUICE_UNPRODUCTIVE = !GameManagerScript.JUICE_PRODUCTIVE && GameManagerScript.OBSTRUCTION_UNPRODUCTIVE;
+        GameManagerScript.JUICE_PRODUCTIVE = GameManagerScript.JUICE_PRODUCTIVE && GameManagerScript.OBSTRUCTION_PRODUCTIVE;
 
-        Debug.Log("Button: " + GameManagerScript.DISPLAY_BUTTON);
-        Debug.Log("Tutorial: " + GameManagerScript.DISPLAY_TUTORIAL);
-        Debug.Log("Selected Score: " + GameManagerScript.DISPLAY_SELECTED_SCORE);
-        Debug.Log("Highlight: " + GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK);
-
-        // Change the scene to start (show tutorial or not) depending on DISPLAY_TUTORIAL
-        StartOptions startOptions = gameObject.GetComponent<StartOptions>();
-        startOptions.sceneToStart = 2;
-
-        //if (GameManagerScript.DISPLAY_TUTORIAL)
-        //{
-        //    startOptions.sceneToStart = 1;
-        //}
-        //else
-        //{
-        //    startOptions.sceneToStart = 2;
-        //}
+        // randomize userID using a GUID (UUID) 
+        GameManagerScript.userID = Guid.NewGuid().ToString();
     }
 
     public void OpenTermsOfService() 

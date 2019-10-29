@@ -1,13 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
-using Firebase;
-using Firebase.Database;
-using Firebase.Unity.Editor;
+using TMPro;
 
 public class RandomNameScript : MonoBehaviour
 {
@@ -15,7 +11,7 @@ public class RandomNameScript : MonoBehaviour
 	public TextAsset usernamesText;
 
 	public static string username;
-	public static Text welcomeText = null;
+	public TextMeshProUGUI welcomeText;
 	private static List<string> attributes = null;
 	private static List<string> colors = null;
 	private static List<string> animals = null;
@@ -25,12 +21,6 @@ public class RandomNameScript : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		Screen.orientation = ScreenOrientation.Portrait;
-
-		if (welcomeText == null) {
-			welcomeText = GameObject.Find ("WelcomeText").GetComponent<Text> ();
-		}
-
 		// Generate a random username
 		InitializeUsernameList ();
 
