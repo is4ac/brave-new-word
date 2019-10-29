@@ -17,10 +17,11 @@ public class GameManagerScript : MonoBehaviour {
     public static GameManagerScript gameManager;
 
 	// Set to true to log to Firebase database, false to turn off
-	public static bool LOGGING = true;
-	public const string LOGGING_VERSION = "BNWLogs_V1_1_0_debug";
-	public const string APP_VERSION = "BNW_1.1.0_debug";
-    public static string usersDbName = "users" + DBManager.scoresVersionNumber;
+    // TODO: set LOGGING to true before deploy!
+	public static bool LOGGING = false;
+	public const string LOGGING_VERSION = "BNWLogs_V1_1_1_debug";
+	public const string APP_VERSION = "BNW_1.1.1_debug";
+    public static string usersDbName = "users" + DBManager.versionNumber;
 
     public DatabaseReference dbUsers;
 	CamShakeSimpleScript camShake;
@@ -28,14 +29,21 @@ public class GameManagerScript : MonoBehaviour {
     /*************************************
      * Feature booleans - these keep track of what features are on/off for this current game
      *************************************/
-    public static bool DISPLAY_BUTTON;          // users must click on button to submit word
-    public static bool DISPLAY_SELECTED_SCORE;  // show currently selected word score
-    public static bool DISPLAY_HIGHLIGHT_FEEDBACK;      // feedback during highlighting of words
-    public static bool DISPLAY_TUTORIAL;        // OUTDATED // show the tutorial screen with instructions at beginning of game
+    public static bool OBSTRUCTION_PRODUCTIVE;      // users must click on button and see stats before submitting word
+    public static bool OBSTRUCTION_UNPRODUCTIVE;    // users must tap to select each letter individually
+    public static bool JUICE_PRODUCTIVE;            // juiciness is distracting but matches game state
+    public static bool JUICE_UNPRODUCTIVE;          // juiciness is distracting and doesn't match game state
+    public static bool DISPLAY_TUTORIAL;            // OUTDATED // show the tutorial screen with instructions at beginning of game
     /*********************************************/
 	
 	public GameObject playButton;
     public GameObject instructionsPanel;
+    public GameObject gameOverMessageObject;
+    public GameObject gameOverScoreTextObject;
+    public GameObject highScoreTextObject;
+    public GameObject highestScoringWordObject;
+    public GameObject rarestWordObject;
+    public GameObject progressBarFG; // the progress bar that shows the timer
 	public static string GAME_ID;
 	public static string username;
 	public static string userID;
@@ -48,12 +56,26 @@ public class GameManagerScript : MonoBehaviour {
     public static long myHighScore = 0;
     public static bool myHighScoreUpdated = false;
     public static bool globalHighScoreUpdated = false;
+    public static double previousSubmissionTime = 0;
+    public static double pauseTime = 0;
+    public static string myHighestScoringWord = "";
+    public static int myHighestScoringWordScore = 0;
+    public static string myRarestWord = "";
+    public static float myRarestWordRarity = 0.0f;
+    public static DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+
+    private static float timer = 0.0f;
+    private static float waitTime = 0.2f;
+    private static float maxTime = 10.0f; // 3 minutes? for now.
+    private static float remainingTime = maxTime;
+    private static bool isBombAudioPlaying = false;
 
 	void Awake() {
         // singleton pattern-esque
         if (gameManager == null) {
             gameManager = this;
             gameOverPanel.SetActive(false);
+            instructionsPanel.SetActive(false);
         } else {
             Destroy(gameObject);
         }
@@ -63,7 +85,7 @@ public class GameManagerScript : MonoBehaviour {
 	void Start () {
 		deviceModel = SystemInfo.deviceModel;
 
-        dbUsers = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
+        if (LOGGING) dbUsers = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
 
 		// Generate a new GAME_ID using the Guid class
         GAME_ID = Guid.NewGuid().ToString();
@@ -71,10 +93,14 @@ public class GameManagerScript : MonoBehaviour {
 
 		BoxScript.camShake = gameObject.AddComponent<CamShakeSimpleScript> ();
 
+        // retrieve the player's username
         username = PlayerPrefs.GetString("username");
 
+        // set the initial submission epoch time
+        previousSubmissionTime = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds);
+
         // check version and hide/show Play Word button depending on version
-        if (DISPLAY_BUTTON)
+        if (OBSTRUCTION_PRODUCTIVE || OBSTRUCTION_UNPRODUCTIVE)
         {
             playButton.SetActive(true);
         }
@@ -86,8 +112,14 @@ public class GameManagerScript : MonoBehaviour {
         // Hide the instructions panel if it shouldn't be displayed
         if (!INSTRUCTIONS_PANEL)
         {
-            instructionsPanel.SetActive(false);
+            // change the text of the instructions panel
+            Transform textPanel = instructionsPanel.transform.Find("InstructionsTextPanel");
+            textPanel.Find("InstructionsLabel").GetComponent<Text>().text = "READY?";
+            textPanel.Find("InstructionsText").GetComponent<Text>().text = "Press anywhere on the screen to begin!";
+            //instructionsPanel.SetActive(false);
+            //BeginGame();
         }
+
 
         // do various logging for the start of the game
         LogStartOfGame();
@@ -102,9 +134,10 @@ public class GameManagerScript : MonoBehaviour {
         BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Create(Application.persistentDataPath + StartGameScript.DATA_PATH);
 
-        PlayerData data = new PlayerData(DISPLAY_BUTTON, 
-                                         DISPLAY_SELECTED_SCORE, 
-                                         DISPLAY_HIGHLIGHT_FEEDBACK, 
+        PlayerData data = new PlayerData(OBSTRUCTION_PRODUCTIVE, 
+                                         OBSTRUCTION_UNPRODUCTIVE, 
+                                         JUICE_PRODUCTIVE,
+                                         JUICE_UNPRODUCTIVE,
                                          username, 
                                          false,
                                          userID,
@@ -149,13 +182,13 @@ public class GameManagerScript : MonoBehaviour {
 
             // insert new game entry into database
             reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION + "_games");
-            DatabaseReference child = reference.Child(GAME_ID + "");
+            DatabaseReference child = reference.Child(GAME_ID);
 
             // Log the game details and type of game
-            child.Child("displayButton").SetValueAsync(DISPLAY_BUTTON);
-            child.Child("displayTutorial").SetValueAsync(DISPLAY_TUTORIAL);
-            child.Child("displayHighlightFeedback").SetValueAsync(DISPLAY_HIGHLIGHT_FEEDBACK);
-            child.Child("displaySelectedScore").SetValueAsync(DISPLAY_SELECTED_SCORE);
+            child.Child("obstructionProductive").SetValueAsync(OBSTRUCTION_PRODUCTIVE);
+            child.Child("obstructionUnproductive").SetValueAsync(OBSTRUCTION_UNPRODUCTIVE);
+            child.Child("juiceProductive").SetValueAsync(JUICE_PRODUCTIVE);
+            child.Child("juiceUnproductive").SetValueAsync(JUICE_UNPRODUCTIVE);
             child.Child("username").SetValueAsync(username);
             child.Child("gameID").SetValueAsync(GAME_ID);
             child.Child("userID").SetValueAsync(userID);
@@ -186,18 +219,49 @@ public class GameManagerScript : MonoBehaviour {
     public void SetButtonDisplay(bool value) {
         playButton.SetActive(value);
     }
+
+    public static void ResetTimer() {
+        timer = 0.0f;
+        remainingTime = maxTime;
+    }
 	
 	// Update is called once per frame
 	void Update () {
-		// if the enter key is pressed, then submit the word
-		// check against dictionary and give it points
-        if (DISPLAY_BUTTON && Input.GetKeyDown (KeyCode.Return)) {
-			PlayWord ();
-		}
-
+        // TODO: Only let users go back to the main menu
+        // if they go to a settings menu and click exit
+        /*
 		if (Input.GetKeyDown(KeyCode.Escape)) { 
+            // TODO: finish this feature
 			SceneManager.LoadScene(0);
 		}
+		*/
+
+        // Every 1/5 of a second, update the timer progress bar
+        if (gameHasBegun) timer += Time.deltaTime;
+
+        if (timer >= waitTime) {
+            // adjust remaining time
+            remainingTime -= timer;
+
+            float scale = remainingTime / maxTime;
+
+            // update progress bar
+            progressBarFG.transform.localScale = new Vector3(scale, 1.0f, 1.0f);
+
+            // reset timer
+            timer -= waitTime;
+
+            // check to see if it's time to start playing the timer bomb audio
+            if (remainingTime <= 5.275f && !isBombAudioPlaying) {
+                isBombAudioPlaying = true;
+                AudioManager.instance.Play("TimeBomb");
+            }
+
+            // check if game is over
+            if (remainingTime <= 0.0f) {
+                GameOver();
+            }
+        }
 
 		// Log the keyframe (game state) after all the boxes have stopped falling
 		if (areBoxesFalling) {
@@ -208,8 +272,11 @@ public class GameManagerScript : MonoBehaviour {
 					LogKeyFrame ("post");
 				} else {
 					LogKeyFrame ("gameStart");
+
+                    // display the instructions/start game panel
+                    instructionsPanel.SetActive(true);
+
 					initialLog = false;
-					//AnalyzeGameBoard ();
 				}
 			}
 		} else {
@@ -242,19 +309,71 @@ public class GameManagerScript : MonoBehaviour {
 	}
 
 	public static void BeginGame() {
+        TouchInputHandler.inputEnabled = true;
         TouchInputHandler.touchEnabled = true;
-		gameHasBegun = true;
+        gameHasBegun = true;
 	}
+
+    public void GameOver() {
+        gameOverPanel.SetActive(true);
+        Text gameOverMessage = gameOverMessageObject.GetComponent<Text>();
+        Text gameOverScoreText = gameOverScoreTextObject.GetComponent<Text>();
+        Text highScoreText = highScoreTextObject.GetComponent<Text>();
+        Text highestScoringWordText = highestScoringWordObject.GetComponent<Text>();
+        Text rarestWordText = rarestWordObject.GetComponent<Text>();
+
+        highScoreText.text = "Your High Score: " + GameManagerScript.myHighScore;
+
+        // Check if new local high score was reached
+        if (myHighScoreUpdated)
+        {
+            // update game over text
+            gameOverMessage.text = "Congratulations! You've set a new personal high score!";
+
+            // TODO: animate particles
+        }
+
+        // Check if new global high score was reached
+        if (globalHighScoreUpdated)
+        {
+            // update game over text
+            gameOverMessage.text = "Congratulations! You've set a new global high score!";
+            highScoreText.text = "New High Score: " + BoxScript.score;
+
+            // TODO: animate particles
+        }
+
+        gameOverScoreText.text = "Score: " + BoxScript.score;
+
+        // update highest scoring word text
+        highestScoringWordText.text = "Highest Scoring Word:\n"
+            + myHighestScoringWord + "\n"
+            + myHighestScoringWordScore + " points";
+
+        // update rarest word text
+        rarestWordText.text = "Rarest Word:\n"
+            + myRarestWord + "\n"
+            + (BoxScript.GetWordRank(myRarestWord) * 100) + "%";
+
+        // disable touch events
+        TouchInputHandler.touchEnabled = false;
+        TouchInputHandler.inputEnabled = false;
+
+        // disable button press
+        playButton.GetComponent<Button>().interactable = false;
+
+        // Log the final state of the game
+        LogEndOfGame();
+    }
 
 	public static bool GameHasStarted() {
 		return gameHasBegun;
 	}
 
 	public void Reset() {
-		/*
-		timer = 10; // 5 minutes in seconds
-		timerEnded = false;
-		*/
+        initialLog = true;
+        gameHasBegun = false;
+        isBombAudioPlaying = false;
 
 		GameObject boxes = GameObject.Find ("SpawnBoxes");
 
@@ -346,29 +465,39 @@ public class GameManagerScript : MonoBehaviour {
 	void OnApplicationPause(bool pauseStatus)
 	{
 		if (pauseStatus) {
+            // on pause, pause the timings for logging word submits
 			LogGamePause ();
+
+            pauseTime = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds);
 		} else {
+            // on unpauses, resume the timer for logging word submits
 			LogGameUnpause ();
+
+            previousSubmissionTime =
+                ((System.DateTime.UtcNow - epochStart).TotalMilliseconds) - pauseTime
+                    + previousSubmissionTime;
 		}
 	}
 }
 
 [Serializable]
 class PlayerData {
-    public bool displayButton;                  // users must click on button to submit word
-    public bool displaySelectedScore;           // show currently selected word score
-    public bool displayHighlightFeedback;       // feedback during highlighting of words
+    public bool obstructionProductive;                  // users must click on button to submit word
+    public bool obstructionUnproductive;           // show currently selected word score
+    public bool juiceProductive;       // feedback during highlighting of words
+    public bool juiceUnproductive;                  // word score is based on word rarity, not frequency?
     public string username;                     // the public username to display
     public bool instructions;                   // whether or not to show the instructions
-    public string userID;
-    public long myHighScore;
+    public string userID;                       // the unique user ID
+    public long myHighScore;                    // the local high score of the player
 
-    public PlayerData(bool button, bool score, bool highlight, 
+    public PlayerData(bool obP, bool obU, bool juiceP, bool juiceU, 
                       string username, bool instructions, string userID,
                      long myHighScore) {
-        displayButton = button;
-        displaySelectedScore = score;
-        displayHighlightFeedback = highlight;
+        obstructionProductive = obP;
+        obstructionUnproductive = obU;
+        juiceProductive = juiceP;
+        juiceUnproductive = juiceU;
         this.username = username;
         this.instructions = instructions;
         this.userID = userID;

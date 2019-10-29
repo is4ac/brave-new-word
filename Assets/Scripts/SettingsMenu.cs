@@ -20,17 +20,19 @@ public class SettingsMenu : MonoBehaviour {
     void Start () {
         // initialize components
         //uiDropdown = uiDropdownGameObj.GetComponent<TMP_Dropdown>();
-        highlightToggle = highlightToggleObj.GetComponent<Toggle>();
-        currentSelectedScoreToggle = currentSelectedScoreToggleObj.GetComponent<Toggle>();
-        buttonToggle = buttonToggleObj.GetComponent<Toggle>();
+        //highlightToggle = highlightToggleObj.GetComponent<Toggle>();
+        //currentSelectedScoreToggle = currentSelectedScoreToggleObj.GetComponent<Toggle>();
+        //buttonToggle = buttonToggleObj.GetComponent<Toggle>();
 
         // get current UI version and set the dropdown to equal that
         //uiDropdown.value = (int)GameManagerScript.currentVersion;
 
         // set the toggles to be whatever options they currently are
+        /*
         highlightToggle.isOn = GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK;
         currentSelectedScoreToggle.isOn = GameManagerScript.DISPLAY_SELECTED_SCORE;
         buttonToggle.isOn = GameManagerScript.DISPLAY_BUTTON;
+        */
     }
 
     public void OpenSettingsMenu()
@@ -61,20 +63,20 @@ public class SettingsMenu : MonoBehaviour {
     public void OnHighlightToggleChange(bool value) {
         // TODO: log this action
 
-        GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = value;
+        //GameManagerScript.DISPLAY_HIGHLIGHT_FEEDBACK = value;
     }
 
     public void OnCurrentSelectedScoreToggleChange(bool value) {
         // TODO: log this action
 
-        GameManagerScript.DISPLAY_SELECTED_SCORE = value;
+        //GameManagerScript.DISPLAY_SELECTED_SCORE = value;
     }
 
     public void OnButtonToggleChange(bool value)
     {
         // TODO: log this action
 
-        GameManagerScript.DISPLAY_BUTTON = value;
+        //GameManagerScript.DISPLAY_BUTTON = value;
         GameManagerScript gameManager = GameObject.Find("GameManager").GetComponent<GameManagerScript>();
         gameManager.SetButtonDisplay(value);
     }

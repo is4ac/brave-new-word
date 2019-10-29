@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TouchInputHandler : MonoBehaviour
 {
-
+    public static bool inputEnabled = false;
     public static bool touchEnabled = false;
     public static bool touchSupported = false;
     private GameManagerScript gameManager;
@@ -54,7 +54,9 @@ public class TouchInputHandler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // if input is disabled (pop up window, etc) then skip
+        if (!inputEnabled) return;
+
         bool touch = touchSupported && touchEnabled && Input.touchCount > 0;
 
         Vector2 myPos = new Vector2();
@@ -79,8 +81,9 @@ public class TouchInputHandler : MonoBehaviour
         // convert pixel position to tile coordinate
         myPos = GetTilePositionFromTouchInput(myPosPixel);
 
-        // ButtonUI touch inputs
-        if (GameManagerScript.DISPLAY_BUTTON)
+        //=================Productive/Unproductive Button touch=================
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || 
+            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
         {
             if ((touch && Input.GetTouch(0).phase == TouchPhase.Began) ||
                 Input.GetMouseButtonDown(0))
@@ -138,8 +141,13 @@ public class TouchInputHandler : MonoBehaviour
                 }
 
             }
-            else if ((touch && Input.GetTouch(0).phase == TouchPhase.Moved) ||
-                     (!touchSupported && !Input.GetMouseButtonDown(0) && !Input.GetMouseButtonUp(0) && Input.GetMouseButton(0)))
+            //=====Only for PRODUCTIVE versions of button, not unproductive=====
+            else if (GameManagerScript.OBSTRUCTION_PRODUCTIVE &&
+                     ((touch && Input.GetTouch(0).phase == TouchPhase.Moved) ||
+                      (!touchSupported && 
+                       !Input.GetMouseButtonDown(0) && 
+                       !Input.GetMouseButtonUp(0) && 
+                       Input.GetMouseButton(0))))
             {
                 if (myPos.x >= 0)
                 {
@@ -176,7 +184,7 @@ public class TouchInputHandler : MonoBehaviour
             }
         }
 
-        // SwipeUI touch input
+        //=========================SwipeUI touch input==========================
         else
         {
             // If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's

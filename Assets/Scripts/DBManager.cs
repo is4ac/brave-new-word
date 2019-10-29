@@ -9,8 +9,8 @@ public class DBManager : MonoBehaviour
 
     // edit this to a new version whenever the game has changed 
     // so much that it needs a new high score list
-    public static string scoresVersionNumber = "_0_1";
-    private static string scoresDbName = "scores" + scoresVersionNumber;
+    public static string versionNumber = "_0_1";
+    public static string scoresDbName = "scores" + versionNumber;
 
     private DatabaseReference dbScores;
 
@@ -39,18 +39,21 @@ public class DBManager : MonoBehaviour
 
     void Start()
     {
-        // reference database from the appropriate scores entry
-        dbScores = FirebaseDatabase.DefaultInstance.GetReference(scoresDbName);
+        if (GameManagerScript.LOGGING)
+        {
+            // reference database from the appropriate scores entry
+            dbScores = FirebaseDatabase.DefaultInstance.GetReference(scoresDbName);
 
-        userToScore = new Dictionary<string, long>();
-        userIDToUsernames = new Dictionary<string, string>();
+            userToScore = new Dictionary<string, long>();
+            userIDToUsernames = new Dictionary<string, string>();
 
-        // Get top score, listen for changes.
-        GetTopScore();
-        dbScores.ValueChanged += HandleTopScoreChange;
+            // Get top score, listen for changes.
+            GetTopScore();
+            dbScores.ValueChanged += HandleTopScoreChange;
 
-        // Load high scores
-        RetrieveTopScores();
+            // Load high scores
+            RetrieveTopScores();
+        }
     }
 
     private void GetTopScore() 
@@ -69,6 +72,7 @@ public class DBManager : MonoBehaviour
 				if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser")) 
                 {
                     dbScores.Child("topUser").SetValueAsync("");
+                    dbScores.Child("topScore").SetValueAsync(0);
                     LogScore(curScore);
 				}
                 else 
@@ -91,7 +95,7 @@ public class DBManager : MonoBehaviour
                     }
                     else
                     {
-                        LogScore(GameManagerScript.myHighScore);
+                        dbScores.Child(GameManagerScript.userID).SetValueAsync(GameManagerScript.myHighScore);
                     }
                 }
             }
