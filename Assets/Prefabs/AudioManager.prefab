@@ -84,7 +84,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: TimeBomb
     clip: {fileID: 8300000, guid: 2bad9e2d5b3e24f96bde62c870af8599, type: 3}
-    volume: 1
+    volume: 0.703
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
@@ -93,7 +93,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: Explosion
     clip: {fileID: 8300000, guid: a65f1ac7fbbdd4217a1f04eec4046c6c, type: 3}
-    volume: 0.648
+    volume: 0.296
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
@@ -102,7 +102,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: Error
     clip: {fileID: 8300000, guid: f704c19aafe094fb593bba0b1be819dc, type: 3}
-    volume: 1
+    volume: 0.68
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
@@ -111,7 +111,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: Woosh
     clip: {fileID: 8300000, guid: 96f89174e2db6454aabf07dfa0e6c309, type: 3}
-    volume: 1
+    volume: 0.438
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
@@ -129,7 +129,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: WaterSwirl
     clip: {fileID: 8300000, guid: 6aa9591c87c2b4b8588a77224585fff6, type: 3}
-    volume: 0.35
+    volume: 0.303
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
