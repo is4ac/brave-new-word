@@ -88,7 +88,7 @@ public class StartGameScript : MonoBehaviour {
             GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
             GameManagerScript.JUICE_PRODUCTIVE = false;
-            GameManagerScript.JUICE_UNPRODUCTIVE = true;
+            GameManagerScript.JUICE_UNPRODUCTIVE = false;
         }
         else
         {

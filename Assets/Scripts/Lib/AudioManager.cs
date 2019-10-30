@@ -43,6 +43,10 @@ public class AudioManager : MonoBehaviour
         {
             Play("DubstepTheme");
         }
+        else
+        {
+            Play("CalmTheme");
+        }
     }
 
     public void Play(string sound)

@@ -75,7 +75,7 @@ MonoBehaviour:
     source: {fileID: 0}
   - name: DubstepTheme
     clip: {fileID: 8300000, guid: 8440dc53bd5fc4d8cb87d3fcbc54e22d, type: 3}
-    volume: 0.5
+    volume: 0.35
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
@@ -112,6 +112,24 @@ MonoBehaviour:
   - name: Woosh
     clip: {fileID: 8300000, guid: 96f89174e2db6454aabf07dfa0e6c309, type: 3}
     volume: 1
+    volumeVariance: 0
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    mixerGroup: 1
+    source: {fileID: 0}
+  - name: CalmTheme
+    clip: {fileID: 8300000, guid: 7531827b021554ccda8f25e9310d085b, type: 3}
+    volume: 0.35
+    volumeVariance: 0
+    pitch: 1
+    pitchVariance: 0
+    loop: 1
+    mixerGroup: 0
+    source: {fileID: 0}
+  - name: WaterSwirl
+    clip: {fileID: 8300000, guid: 6aa9591c87c2b4b8588a77224585fff6, type: 3}
+    volume: 0.35
     volumeVariance: 0
     pitch: 1
     pitchVariance: 0
