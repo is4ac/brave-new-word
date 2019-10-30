@@ -264,7 +264,11 @@ public class BoxScript : MonoBehaviour
 
                 AudioManager.instance.Play("Explosion");
             }
-		} else {
+            else
+            {
+                AudioManager.instance.Play("WaterSwirl");
+            }
+        } else {
             // Error sound
             AudioManager.instance.Play("Error");
 		}
@@ -474,9 +478,10 @@ public class BoxScript : MonoBehaviour
         }
 
         // brief pause for the color to change before removing them from screen
-        DeleteAllSelectedTiles();
+        yield return new WaitForSeconds(.4f);
 
-        yield return null;
+        // Delete all tiles
+        DeleteAllSelectedTiles();
     }
 
 	static long CalculateBaseScore(int length) {
@@ -508,7 +513,6 @@ public class BoxScript : MonoBehaviour
         currentSelection.Remove(v);
 
         // log the last removed letter
-        // TODO: get firebase logging to work on Android
         LogAction("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
         // Remove the last letter
@@ -530,8 +534,11 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: If juiciness is on, play particles when deselecting!
          ******************************************************************/
-        Vector2 last = currentSelection[currentSelection.Count - 1];
-        grid[(int)last.x, (int)last.y].gameObject.GetComponent<BoxScript>().PlayShinySelectParticles();
+        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+        {
+            Vector2 last = currentSelection[currentSelection.Count - 1];
+            grid[(int)last.x, (int)last.y].gameObject.GetComponent<BoxScript>().PlayShinySelectParticles();
+        }
     }
 
 	public bool IsInsideTile(Vector2 pos) {
@@ -606,6 +613,11 @@ public class BoxScript : MonoBehaviour
 	}
 
 	public void AnimateSuccess() {
+        Debug.Log("Animating success...");
+
+        // Play the particle system
+        PlaySuccessParticleSystem();
+
         // hide ALL the sprites
         foreach (Transform child in gameObject.transform) {
             SpriteRenderer sp = child.GetComponent<SpriteRenderer>();
@@ -613,13 +625,11 @@ public class BoxScript : MonoBehaviour
                 sp.enabled = false;
             }
         }
+
         gameObject.GetComponent<SpriteRenderer>().enabled = false;
 
         // hide the textmesh pro
         gameObject.GetComponentInChildren<TextMeshPro>().enabled = false;
-
-        // Play the particle system
-        PlaySuccessParticleSystem();
 	}
 
     public void PlayParticleSystem(GameObject particleSystemPrefab) {
@@ -629,10 +639,9 @@ public class BoxScript : MonoBehaviour
         // Set new Particle System GameObject as a child of desired GO.
         // Right now parent would be the same GO in which this script is attached
         // You can also make it others child by ps.transform.parent = otherGO.transform.parent;
-        _particleSystemObj.transform.parent = transform;
 
         // After setting this, replace the position of that GameObject as where the parent is located.
-        _particleSystemObj.transform.localPosition = Vector3.zero;
+        _particleSystemObj.transform.position = transform.position;
 
         ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
         _particleSystem.Play();

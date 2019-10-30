@@ -66,7 +66,7 @@ public class GameManagerScript : MonoBehaviour {
 
     private static float timer = 0.0f;
     private static float waitTime = 0.2f;
-    private static float maxTime = 10.0f; // 3 minutes? for now.
+    private static float maxTime = 180.0f; // 3 minutes? for now.
     private static float remainingTime = maxTime;
     private static bool isBombAudioPlaying = false;
 
@@ -252,7 +252,10 @@ public class GameManagerScript : MonoBehaviour {
             timer -= waitTime;
 
             // check to see if it's time to start playing the timer bomb audio
-            if (remainingTime <= 5.275f && !isBombAudioPlaying) {
+            // FEATURE: ONLY IF JUICINESS IS ON
+            if ((JUICE_PRODUCTIVE || JUICE_UNPRODUCTIVE)
+                && remainingTime <= 5.275f 
+                && !isBombAudioPlaying) {
                 isBombAudioPlaying = true;
                 AudioManager.instance.Play("TimeBomb");
             }
