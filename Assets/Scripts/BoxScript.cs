@@ -257,7 +257,7 @@ public class BoxScript : MonoBehaviour
 			// keep track of how many words have been successfully played
 			++wordsPlayed;
 
-            // ANIMATE SUCCESS AND SOUNDS!!
+            // ANIMATE JUICY SUCCESS AND SOUNDS!!
             if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE) {
                 ParticleSystem _particleSystem = celebrationParticleSystem.GetComponent<ParticleSystem>();
                 _particleSystem.Play();
@@ -266,12 +266,19 @@ public class BoxScript : MonoBehaviour
             }
             else
             {
+                // default sound effect
                 AudioManager.instance.Play("WaterSwirl");
             }
         } else {
             // Error sound
             AudioManager.instance.Play("Error");
-		}
+
+            // JUICY SOUND FX
+            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            {
+                AudioManager.instance.Play("Explosion");
+            }
+        }
 	}
 
     public static void UpdateTurnsLeft(string word) {

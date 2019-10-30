@@ -122,6 +122,9 @@ public class SpawnBoxScript : MonoBehaviour {
         // TODO: fix this!!!
 		int i = UnityEngine.Random.Range (0, letterFreq.Count);
         SpawnNewBox((char)('A' + letterFreq[i]));
+
+        // Make a "woosh" sound effect when spawning
+        AudioManager.instance.Play("Woosh");
 	}
 
 	/**

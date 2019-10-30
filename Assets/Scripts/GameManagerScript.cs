@@ -66,7 +66,7 @@ public class GameManagerScript : MonoBehaviour {
 
     private static float timer = 0.0f;
     private static float waitTime = 0.2f;
-    private static float maxTime = 180.0f; // 3 minutes? for now.
+    private static float maxTime = 120.0f; // 2 minutes? for now.
     private static float remainingTime = maxTime;
     private static bool isBombAudioPlaying = false;
 

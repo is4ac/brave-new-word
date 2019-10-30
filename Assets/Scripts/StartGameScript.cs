@@ -89,6 +89,9 @@ public class StartGameScript : MonoBehaviour {
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
             GameManagerScript.JUICE_PRODUCTIVE = false;
             GameManagerScript.JUICE_UNPRODUCTIVE = false;
+
+            // TODO: Remove this line. DEBUG testing only!!
+            //RandomizeFeatures();
         }
         else
         {
@@ -104,14 +107,39 @@ public class StartGameScript : MonoBehaviour {
 
     public void RandomizeFeatures() 
     {
-        // TODO: make this more uniform!
         // If file doesn't exist yet, randomize and initialize variables
-        GameManagerScript.OBSTRUCTION_PRODUCTIVE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = !GameManagerScript.OBSTRUCTION_PRODUCTIVE;
-        GameManagerScript.JUICE_PRODUCTIVE = UnityEngine.Random.Range(0, int.MaxValue) % 2 == 0;
-        // Only productive/productive and unproductive/unproductive combinations are allowed
-        GameManagerScript.JUICE_UNPRODUCTIVE = !GameManagerScript.JUICE_PRODUCTIVE && GameManagerScript.OBSTRUCTION_UNPRODUCTIVE;
-        GameManagerScript.JUICE_PRODUCTIVE = GameManagerScript.JUICE_PRODUCTIVE && GameManagerScript.OBSTRUCTION_PRODUCTIVE;
+        // default to false
+        GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
+        GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
+        GameManagerScript.JUICE_PRODUCTIVE = false;
+        GameManagerScript.JUICE_UNPRODUCTIVE = false;
+
+        // randomize the version
+        int version = UnityEngine.Random.Range(0, 6);
+        switch (version)
+        {
+            case 0:
+                // everything remains off
+                break;
+            case 1:
+                GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+                goto case 2;
+            case 2:
+                GameManagerScript.JUICE_PRODUCTIVE = true;
+                break;
+            case 3:
+                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                goto case 4;
+            case 4:
+                GameManagerScript.JUICE_UNPRODUCTIVE = true;
+                break;
+            case 5:
+                GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+                break;
+            case 6:
+                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                break;
+        }
 
         // randomize userID using a GUID (UUID) 
         GameManagerScript.userID = Guid.NewGuid().ToString();
