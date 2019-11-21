@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TouchInputHandler : MonoBehaviour
 {
     public static bool inputEnabled = false;
     public static bool touchEnabled = false;
     public static bool touchSupported = false;
+    public GameObject particleSystemPrefab;
     private GameManagerScript gameManager;
 
     private void Awake()
@@ -51,6 +50,22 @@ public class TouchInputHandler : MonoBehaviour
         return false;
     }
 
+    private void PlayParticleSystem(Vector3 pos)
+    {
+        //Instantiate _particleSystemPrefab as new GameObject.
+        GameObject _particleSystemObj = Instantiate(particleSystemPrefab);
+
+        // Set new Particle System GameObject as a child of desired GO.
+        // Right now parent would be the same GO in which this script is attached
+        // You can also make it others child by ps.transform.parent = otherGO.transform.parent;
+
+        // After setting this, replace the position of that GameObject as where the parent is located.
+        _particleSystemObj.transform.position = pos;
+
+        ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
+        _particleSystem.Play();
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -58,6 +73,7 @@ public class TouchInputHandler : MonoBehaviour
         if (!inputEnabled) return;
 
         bool touch = touchSupported && touchEnabled && Input.touchCount > 0;
+        bool hasTouchHappened = false;
 
         Vector2 myPos = new Vector2();
         Vector2 myPosPixel = new Vector2();
@@ -66,11 +82,13 @@ public class TouchInputHandler : MonoBehaviour
         if (touch)
         {
             myPosPixel = Input.GetTouch(0).position;
+            hasTouchHappened = true;
         }
         // mouse input
         else if (!touchSupported && (Input.GetMouseButton(0) || Input.GetMouseButtonDown(0)))
         {
             myPosPixel = Input.mousePosition;
+            hasTouchHappened = true;
         }
         //else
         //{
@@ -78,10 +96,18 @@ public class TouchInputHandler : MonoBehaviour
         //    return;
         //}
 
+        //=====FEATURE: UNPRODUCTIVE JUICY PARTICLES============================
+        // Only if the position is NOT the default 0,0
+        //=====================================================================
+        if (GameManagerScript.JUICE_UNPRODUCTIVE && hasTouchHappened)
+        {
+            PlayParticleSystem(Camera.main.ScreenToWorldPoint(myPosPixel));
+        }
+
         // convert pixel position to tile coordinate
         myPos = GetTilePositionFromTouchInput(myPosPixel);
 
-        //=================Productive/Unproductive Button touch=================
+        //=================Productive/Unproductive Obstruction touch=================
         if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || 
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
         {
@@ -94,14 +120,14 @@ public class TouchInputHandler : MonoBehaviour
                     if (BoxScript.currentSelection.Count == 0)
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("WF_LetterSelected", myPos);
+                        BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
                     else if (BoxScript.IsNextTo(myPos, BoxScript.currentSelection[BoxScript.currentSelection.Count - 1]) &&
                              !BoxScript.currentSelection.Contains(myPos))
                     {
                         // add on to the current selection 
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("WF_LetterSelected", myPos);
+                        BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
                     // deselect previous letters if clicking on already highlighted letters
                     else if (BoxScript.currentSelection.Contains(myPos))
@@ -131,7 +157,7 @@ public class TouchInputHandler : MonoBehaviour
                     {
                         // de-select what has already been selected
                         BoxScript.ClearAllSelectedTiles();
-                        BoxScript.LogAction("WF_DeselectAll");
+                        BoxScript.LogAction("BNW_DeselectAll");
                     }
                 }
                 else if (IsInsideGameBoard(myPosPixel))
@@ -157,7 +183,7 @@ public class TouchInputHandler : MonoBehaviour
                         !BoxScript.currentSelection.Contains(myPos))
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("WF_LetterSelected", myPos);
+                        BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
                     // do nothing if you moved within the most recently selected tile
                     else if (BoxScript.currentSelection.Count > 0 
@@ -184,10 +210,10 @@ public class TouchInputHandler : MonoBehaviour
             }
         }
 
-        //=========================SwipeUI touch input==========================
+        //=========================Control version touch input==========================
         else
         {
-            // If SwipeUI, automatically play word when lifting the finger, and cancel if canceled for all UI's
+            // If Control, automatically play word when lifting the finger, and cancel if canceled for all UI's
             if (((touch && Input.GetTouch(0).phase == TouchPhase.Ended) || 
                  !touchSupported && Input.GetMouseButtonUp(0))
                 && BoxScript.currentSelection.Count > 2)
@@ -200,7 +226,7 @@ public class TouchInputHandler : MonoBehaviour
                     && BoxScript.currentSelection.Count < 3))
             {
                 BoxScript.ClearAllSelectedTiles();
-                BoxScript.LogAction("WF_DeselectAll");
+                BoxScript.LogAction("BNW_DeselectAll");
             }
 
             if (myPos.x >= 0)
@@ -212,13 +238,13 @@ public class TouchInputHandler : MonoBehaviour
                     if (BoxScript.currentSelection.Count == 0)
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("WF_LetterSelected", myPos);
+                        BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
                     else
                     {
                         // de-select what has already been selected
                         BoxScript.ClearAllSelectedTiles();
-                        BoxScript.LogAction("WF_DeselectAll");
+                        BoxScript.LogAction("BNW_DeselectAll");
                     }
                 }
                 else if ((touch && Input.GetTouch(0).phase == TouchPhase.Moved) ||
@@ -230,7 +256,7 @@ public class TouchInputHandler : MonoBehaviour
                         !BoxScript.currentSelection.Contains(myPos))
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("WF_LetterSelected", myPos);
+                        BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
                     // most recently selected tile (then do nothing, since you just selected it)
                     else if (BoxScript.currentSelection.Count > 0 && 

@@ -121,7 +121,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 21752475813015464, guid: 18379d8ac3554482ba491eef635bd259, type: 2}
+  - {fileID: 21100046776967650, guid: 5fd85d89481a94f769a47837ed67bf92, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -194,8 +194,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: A
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 18379d8ac3554482ba491eef635bd259, type: 2}
-  m_sharedMaterial: {fileID: 21752475813015464, guid: 18379d8ac3554482ba491eef635bd259,
+  m_fontAsset: {fileID: 11400000, guid: 5fd85d89481a94f769a47837ed67bf92, type: 2}
+  m_sharedMaterial: {fileID: 21100046776967650, guid: 5fd85d89481a94f769a47837ed67bf92,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -238,7 +238,7 @@ MonoBehaviour:
   m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
-  m_firstOverflowCharacterIndex: 0
+  m_firstOverflowCharacterIndex: -1
   m_linkedTextComponent: {fileID: 0}
   m_isLinkedTextComponent: 0
   m_isTextTruncated: 0
@@ -304,6 +304,8 @@ MonoBehaviour:
     type: 2}
   _shinyParticleSystemPrefab: {fileID: 1610446382262044, guid: c41664c77b219402688fb4d1a8a8ec36,
     type: 2}
+  successScore: {fileID: 0}
+  successMessage: {fileID: 0}
 --- !u!212 &212330037996570202
 SpriteRenderer:
   m_ObjectHideFlags: 1

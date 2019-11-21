@@ -1,19 +1,15 @@
 ﻿using System;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Firebase;
 using Firebase.Database;
-using Firebase.Unity.Editor;
 using TMPro;
-using UnityEditor;
 using EZCameraShake;
 
 public class BoxScript : MonoBehaviour
 {
-    static BoxScript instance = null;   // static reference to itself
+    static BoxScript instance;   // static reference to itself
 
     public static float gridWidthRadius = 2.5f;
     public static int gridHeightRadius = 4;
@@ -21,15 +17,14 @@ public class BoxScript : MonoBehaviour
     public static int gridHeight = gridHeightRadius * 2 + 1; // -4 to 4
     public static Transform[,] grid = new Transform[gridWidth, gridHeight];
     public static List<Vector2> currentSelection = new List<Vector2>();
-    public static Text scoreText = null;
-    public static Text selectedScore = null;
-    public static long score = 0;
+    public static Text scoreText;
+    public static Text selectedScore;
+    public static long score;
     private const float FALL_SPEED_CONST = 0.15f;
     public static string currentWord = "";
-    public static Dictionary<string, Vector2> freqDictionary = null;
-    public static CamShakeSimpleScript camShake = null;
-    public static int totalInteractions = 0;
-    public static int wordsPlayed = 0;
+    public static Dictionary<string, Vector2> freqDictionary;
+    public static int totalInteractions;
+    public static int wordsPlayed;
     //public const int MAX_TURNS = 1;
     //public static int turnsLeft = MAX_TURNS;
     //public const float FREQUENCY_THRESHOLD_MIN = 0.17f;
@@ -37,13 +32,13 @@ public class BoxScript : MonoBehaviour
     public GameObject _explodeParticleSystemPrefab;
     public GameObject _bubblesLandingParticleSystemPrefab;
     public GameObject _shinyParticleSystemPrefab;
-    public static GameObject celebrationParticleSystem = null;
+    public static GameObject celebrationParticleSystem;
     public static Color originalBlockColor;
 
     static float[] freqCutoffs = {
-            .4f, .3f, 
-            .24f, .22f, 
-            .2f, .15f, 
+            .4f, .3f,
+            .24f, .22f,
+            .2f, .15f,
             .1f
         };
     static int[] letterScores = {  // scores of each individual letter
@@ -53,21 +48,24 @@ public class BoxScript : MonoBehaviour
         4,10,2,1,2,     // P Q R S T
         2,5,5,10,5,10    // U V W X Y Z
     };
-	string myLetter;
-	float fall = 0f;
-	bool falling = true;
-	bool columnFalling = false;
-	int myX = 0;
-	int myY = 0;
+    string myLetter;
+    float fall;
+    bool falling = true;
+    bool columnFalling;
+    int myX;
+    int myY;
     bool needsToLand = true;
+    bool isSelected;
 
-	[NonSerialized]
-	public float fallSpeed = FALL_SPEED_CONST;
+    [NonSerialized]
+    public float fallSpeed = FALL_SPEED_CONST;
 
-	void Awake() {
-		if (instance == null) {
-			instance = this;
-		}
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
 
         // initialize objects
         if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
@@ -85,84 +83,145 @@ public class BoxScript : MonoBehaviour
             selectedScore = GameObject.Find("SelectedScore").GetComponent<Text>();
         }
 
-        if (celebrationParticleSystem == null) {
+        if (celebrationParticleSystem == null)
+        {
             celebrationParticleSystem = GameObject.Find("CelebrationParticles");
         }
 
         originalBlockColor = new Color(9f / 255f, 132f / 255f, 227f / 255f, 202f / 255f);
-	}
+    }
 
-	// Use this for initialization
-	void Start () {
-		// Add the location of the block to the grid
-		Vector2 v = transform.position;
-		myX = (int)(v.x + gridWidthRadius);
-		myY = (int)v.y + gridHeightRadius;
-		grid[myX, myY] = transform;
-		falling = true;
-		columnFalling = false;
-		fall = Time.time;
+    // Use this for initialization
+    void Start()
+    {
+        // Add the location of the block to the grid
+        Vector2 v = transform.position;
+        myX = (int)(v.x + gridWidthRadius);
+        myY = (int)v.y + gridHeightRadius;
+        grid[myX, myY] = transform;
+        falling = true;
+        columnFalling = false;
+        fall = Time.time;
 
         // update the progress bar to fill in how many turns are left
         //UpdateScoreProgressBar();
 
-		if (!IsValidPosition ()) {
-			//SceneManager.LoadScene (0);
-			Destroy (gameObject);
-		}
-	}
+        if (!IsValidPosition())
+        {
+            //SceneManager.LoadScene (0);
+            Destroy(gameObject);
+        }
+    }
 
-	// Update is called once per frame
-	void Update () {	
-		// check to see if the column needs to go down, or if it needs to be refilled
-		if (!falling && myY > 0 && grid [myX, myY - 1] == null && Time.time - fall >= fallSpeed) {
-			if (!IsOtherBoxInColumnFalling ()) {
+    // Update is called once per frame
+    void Update()
+    {
+        // check to see if the column needs to go down, or if it needs to be refilled
+        if (!falling && myY > 0 && grid[myX, myY - 1] == null && Time.time - fall >= fallSpeed)
+        {
+            if (!IsOtherBoxInColumnFalling())
+            {
                 needsToLand = true;
-				ColumnDown ();
-				fall = Time.time;
-			}
-		} else if (columnFalling && ((myY > 0 && grid [myX, myY - 1] != null) || myY == 0)) {
-			columnFalling = false;
-		}
+                ColumnDown();
+                fall = Time.time;
+            }
+        }
+        else if (columnFalling && ((myY > 0 && grid[myX, myY - 1] != null) || myY == 0))
+        {
+            columnFalling = false;
+        }
 
-		// If a tile is falling down the screen...
-		if (falling && Time.time - fall >= fallSpeed) {
+        // If a tile is falling down the screen...
+        if (falling && Time.time - fall >= fallSpeed)
+        {
             needsToLand = true;
-			transform.position += new Vector3(0, -1, 0);
+            transform.position += new Vector3(0, -1, 0);
 
-			if (IsValidPosition()) {
-				GridUpdate();
-			} else {
-				transform.position += new Vector3 (0, 1, 0);
-				falling = false;
-				fallSpeed = FALL_SPEED_CONST;
-			}
-			fall = Time.time;
-		}
+            if (IsValidPosition())
+            {
+                GridUpdate();
+            }
+            else
+            {
+                transform.position += new Vector3(0, 1, 0);
+                falling = false;
+                fallSpeed = FALL_SPEED_CONST;
+            }
+            fall = Time.time;
+        }
 
         // check to see if landing bubbles need to be activated
-        if (!falling && needsToLand && !columnFalling) {
+        if (!falling && needsToLand && !columnFalling)
+        {
             OnLand();
             needsToLand = false;
         }
-	}
+    }
+
+    public IEnumerator AnimateBouncingTile()
+    {
+        float z = 0f;
+        int direction = 1;
+        float maxRotation = 10f;
+        while (isSelected)
+        {
+            z += UnityEngine.Random.Range(1f, 5f) * direction;
+
+            // flip direction if it reaches max
+            if (maxRotation < Mathf.Abs(z))
+            {
+                z = maxRotation * direction;
+                direction *= -1;
+            }
+
+            transform.rotation = Quaternion.Euler(0, 0, z);
+            yield return new WaitForSeconds(0.001f);
+        }
+
+        // reset tile to original rotation
+        transform.rotation = Quaternion.Euler(0, 0, 0);
+
+        // end animation
+        yield return null;
+    }
 
     // things that happen when the box lands
-    public void OnLand() {
-        CreateBubbleParticles();
+    public void OnLand()
+    {
+        // ======FEATURE:  Juice, extra landing animation======
+        if (GameManagerScript.JUICE_UNPRODUCTIVE || GameManagerScript.JUICE_PRODUCTIVE)
+        {
+            CreateBubbleParticles();
+        }
+
         AudioManager.instance.Play("Select");
     }
 
-    public void CreateBubbleParticles() {
-        //PlayParticleSystem(_bubblesLandingParticleSystemPrefab);
+    public void CreateBubbleParticles()
+    {
+        //Instantiate _particleSystemPrefab as new GameObject.
+        GameObject _particleSystemObj = Instantiate(_bubblesLandingParticleSystemPrefab);
+
+        // Set new Particle System GameObject as a child of desired GO.
+        // Right now parent would be the same GO in which this script is attached
+        // You can also make it others child by ps.transform.parent = otherGO.transform.parent;
+
+        // After setting this, replace the position of that GameObject as where the parent is located.
+        Vector3 pos = transform.position;
+        pos.y -= .25f;
+        _particleSystemObj.transform.position = pos;
+
+        ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
+        _particleSystem.Play();
     }
 
-    public void SetLetter(char letter) {
+    public void SetLetter(char letter)
+    {
         myLetter = letter + "";
         this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text = myLetter;
     }
 
-    // WF_LetterSelected or WF_LetterDeselected logging
+    // BNW_LetterSelected or BNW_LetterDeselected logging
     public static void LogAction(string key, Vector2 pos)
     {
         if (GameManagerScript.LOGGING)
@@ -172,7 +231,7 @@ public class BoxScript : MonoBehaviour
             LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
             payload.setValues(letter, (int)pos.x, (int)pos.y);
             LetterLogEntry entry = new LetterLogEntry();
-            entry.setValues(key, "WF_Action", payload);
+            entry.setValues(key, "BNW_Action", payload);
             string json = JsonUtility.ToJson(entry);
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
             DatabaseReference child = reference.Push();
@@ -182,83 +241,94 @@ public class BoxScript : MonoBehaviour
         }
     }
 
-	// WF_LetterSelected or WF_LetterDeselected logging
-	public static void LogAction(string key, string letter, int x, int y) {
-		if (GameManagerScript.LOGGING) {
-			Debug.Log ("Attempts to log data");
-			LogEntry.LetterPayload payload = new LogEntry.LetterPayload ();
-			payload.setValues (letter, x, y);
-			LetterLogEntry entry = new LetterLogEntry ();
-			entry.setValues (key, "WF_Action", payload);
-			string json = JsonUtility.ToJson (entry);
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
-			DatabaseReference child = reference.Push ();
-			child.SetRawJsonValueAsync (json);
+    // BNW_LetterSelected or BNW_LetterDeselected logging
+    public static void LogAction(string key, string letter, int x, int y)
+    {
+        if (GameManagerScript.LOGGING)
+        {
+            Debug.Log("Attempts to log data");
+            LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
+            payload.setValues(letter, x, y);
+            LetterLogEntry entry = new LetterLogEntry();
+            entry.setValues(key, "BNW_Action", payload);
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
+            DatabaseReference child = reference.Push();
+            child.SetRawJsonValueAsync(json);
 
-			++totalInteractions;
-		}
-	}
+            ++totalInteractions;
+        }
+    }
 
-	// WF_DeselectAll logging
-	public static void LogAction(string key) {
-		if (GameManagerScript.LOGGING) {
-			Debug.Log ("Attempts to log data");
-			LogEntry.LetterPayload[] letters = GetLetterPayloadsFromCurrentWord ();
-			DeselectWordLogEntry.DeselectWordPayload wordPayload = new DeselectWordLogEntry.DeselectWordPayload ();
-			wordPayload.word = currentWord;
-			wordPayload.letters = letters;
-			DeselectWordLogEntry entry = new DeselectWordLogEntry ();
-			entry.setValues (key, "WF_Action", wordPayload);
-			string json = JsonUtility.ToJson (entry);
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
-			DatabaseReference child = reference.Push ();
-			child.SetRawJsonValueAsync (json);
+    // BNW_DeselectAll logging
+    public static void LogAction(string key)
+    {
+        if (GameManagerScript.LOGGING)
+        {
+            Debug.Log("Attempts to log data");
+            LogEntry.LetterPayload[] letters = GetLetterPayloadsFromCurrentWord();
+            DeselectWordLogEntry.DeselectWordPayload wordPayload = new DeselectWordLogEntry.DeselectWordPayload();
+            wordPayload.word = currentWord;
+            wordPayload.letters = letters;
+            DeselectWordLogEntry entry = new DeselectWordLogEntry();
+            entry.setValues(key, "BNW_Action", wordPayload);
+            string json = JsonUtility.ToJson(entry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
+            DatabaseReference child = reference.Push();
+            child.SetRawJsonValueAsync(json);
 
-			++totalInteractions;
-		}
-	}
+            ++totalInteractions;
+        }
+    }
 
-	static LogEntry.LetterPayload[] GetLetterPayloadsFromCurrentWord() {
-		LogEntry.LetterPayload[] toRet = new LogEntry.LetterPayload[currentSelection.Count];
-		for (int i = 0; i < currentSelection.Count; ++i) {
-			toRet [i] = new LogEntry.LetterPayload (currentWord [i]+"", (int)currentSelection [i].x, (int)currentSelection [i].y);
-		}
+    static LogEntry.LetterPayload[] GetLetterPayloadsFromCurrentWord()
+    {
+        LogEntry.LetterPayload[] toRet = new LogEntry.LetterPayload[currentSelection.Count];
+        for (int i = 0; i < currentSelection.Count; ++i)
+        {
+            toRet[i] = new LogEntry.LetterPayload(currentWord[i] + "", (int)currentSelection[i].x, (int)currentSelection[i].y);
+        }
 
-		return toRet;
-	}
+        return toRet;
+    }
 
-	public static void PlayWord() {
-		SubmitWordLogEntry dbEntry = new SubmitWordLogEntry ();
-		dbEntry.parentKey = "WF_Action";
-		dbEntry.key = "WF_Submit";
-		bool valid = UpdateScore (dbEntry);
+    public static void PlayWord()
+    {
+        SubmitWordLogEntry dbEntry = new SubmitWordLogEntry();
+        dbEntry.parentKey = "BNW_Action";
+        dbEntry.key = "BNW_Submit";
+        bool valid = UpdateScore(dbEntry);
 
-		// Firebase logging
-		if (GameManagerScript.LOGGING) {
-			Debug.Log ("Attempts to log data");
-			GameManagerScript.LogKeyFrame ("pre");
+        // Firebase logging
+        if (GameManagerScript.LOGGING)
+        {
+            Debug.Log("Attempts to log data");
+            GameManagerScript.LogKeyFrame("pre");
 
-			string json = JsonUtility.ToJson (dbEntry);
-			DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference (GameManagerScript.LOGGING_VERSION);
-			DatabaseReference child = reference.Push ();
-			child.SetRawJsonValueAsync (json);
-			++totalInteractions;
-		}
+            string json = JsonUtility.ToJson(dbEntry);
+            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
+            DatabaseReference child = reference.Push();
+            child.SetRawJsonValueAsync(json);
+            ++totalInteractions;
+        }
 
         //=========Screen animations based on if word was valid or not==========
 
-        // shake the camera and explosions if Juicyness is on
-        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
-        {
-            CameraShaker.Instance.ShakeOnce(5f, 5f, .1f, .6f);
-        }
+        // shake the camera
+        CameraShaker.Instance.ShakeOnce(5f, 5f, .1f, .6f);
+        
 
-		if (valid) {
-			// keep track of how many words have been successfully played
-			++wordsPlayed;
+        if (valid)
+        {
+            // temporarily turn off input until all boxes fall!
+            TouchInputHandler.inputEnabled = false;
+
+            // keep track of how many words have been successfully played
+            ++wordsPlayed;
 
             // ANIMATE JUICY SUCCESS AND SOUNDS!!
-            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE) {
+            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            {
                 ParticleSystem _particleSystem = celebrationParticleSystem.GetComponent<ParticleSystem>();
                 _particleSystem.Play();
 
@@ -269,7 +339,9 @@ public class BoxScript : MonoBehaviour
                 // default sound effect
                 AudioManager.instance.Play("WaterSwirl");
             }
-        } else {
+        }
+        else
+        {
             // Error sound
             AudioManager.instance.Play("Error");
 
@@ -279,9 +351,10 @@ public class BoxScript : MonoBehaviour
                 AudioManager.instance.Play("Explosion");
             }
         }
-	}
+    }
 
-    public static void UpdateTurnsLeft(string word) {
+    public static void UpdateTurnsLeft(string word)
+    {
         // TODO: commenting out for now as I implement a timer instead
         /*
         float freq = GetWordFreq(word);
@@ -308,31 +381,34 @@ public class BoxScript : MonoBehaviour
         }
         */
     }
-		
-	public static bool UpdateScore(SubmitWordLogEntry dbEntry) {
-		// firebase logging
-		SubmitWordLogEntry.SubmitWordPayload payload = new SubmitWordLogEntry.SubmitWordPayload();
-		payload.word = currentWord;
-		payload.letters = GetLetterPayloadsFromCurrentWord ();
-		dbEntry.payload = payload;
 
-		if (IsValidWord (currentWord)) {
+    public static bool UpdateScore(SubmitWordLogEntry dbEntry)
+    {
+        // firebase logging
+        SubmitWordLogEntry.SubmitWordPayload payload = new SubmitWordLogEntry.SubmitWordPayload();
+        payload.word = currentWord;
+        payload.letters = GetLetterPayloadsFromCurrentWord();
+        dbEntry.payload = payload;
+
+        if (IsValidWord(currentWord))
+        {
             // Update the score based on the word
-			long submittedScore = GetScore (currentWord, payload);
-			score += submittedScore;
+            long submittedScore = GetScore(currentWord, payload);
+            score += submittedScore;
             if (scoreText != null) { scoreText.text = "Points: " + score; }
 
             // Update the turns remaining based on the frequency of the word
             UpdateTurnsLeft(currentWord);
 
-			payload.success = true;
-			payload.scoreTotal = submittedScore;
+            payload.success = true;
+            payload.scoreTotal = submittedScore;
 
             // update the remaining turns progress bar
             //UpdateScoreProgressBar();
 
             // update the highest scoring word if necessary
-            if (submittedScore > GameManagerScript.myHighestScoringWordScore) {
+            if (submittedScore > GameManagerScript.myHighestScoringWordScore)
+            {
                 GameManagerScript.myHighestScoringWord = currentWord;
                 GameManagerScript.myHighestScoringWordScore = (int)submittedScore;
             }
@@ -342,23 +418,27 @@ public class BoxScript : MonoBehaviour
             instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord), submittedScore));
 
             // Update the high score, if applicable
-            DBManager.instance.LogScore(score);
+            // TODO: debug this
+            //DBManager.instance.LogScore(score);
 
-			return true;
-		} else {
-			// firebase logging
-			payload.success = false;
-			payload.frequency = -1;
-			payload.scoreBase = -1;
-			payload.scoreTotal = -1;
+            return true;
+        }
+        else
+        {
+            // firebase logging
+            payload.success = false;
+            payload.rarity = -1;
+            payload.scoreBase = -1;
+            payload.scoreTotal = -1;
 
-			ClearAllSelectedTiles ();
+            ClearAllSelectedTiles();
 
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 
-	public static long GetScore(string word, SubmitWordLogEntry.SubmitWordPayload payload) {
+    public static long GetScore(string word, SubmitWordLogEntry.SubmitWordPayload payload)
+    {
         // base score is based on length of word (if word is 3 letters long, base is 1 + 2 + 3 points, etc)
         long baseScore = CalculateBaseScore(word.Length);
 
@@ -372,7 +452,8 @@ public class BoxScript : MonoBehaviour
         }
 
         // update the rarest word if necessary
-        if (wordRank > GameManagerScript.myRarestWordRarity) {
+        if (wordRank > GameManagerScript.myRarestWordRarity)
+        {
             GameManagerScript.myRarestWord = currentWord;
             GameManagerScript.myRarestWordRarity = wordRank;
         }
@@ -380,7 +461,7 @@ public class BoxScript : MonoBehaviour
         // record scores and freq into log if necessary
         if (payload != null)
         {
-            payload.frequency = wordRank;
+            payload.rarity = wordRank;
             payload.scoreBase = baseScore;
         }
 
@@ -391,17 +472,19 @@ public class BoxScript : MonoBehaviour
         int bonus = GetBonus(wordRank) / 2;
 
         return (long)(baseScore * (1 + wordRank * 4)) + bonus;
-	}
+    }
 
     /**
      * Adds each letter's frequency score in a word and returns the sum
      */
-    static int GetLetterFrequencyScore(string word) {
+    static int GetLetterFrequencyScore(string word)
+    {
         int sum = 0; // store the total score
         word = word.Trim().ToLower(); // make the word lowercase
 
         // loop through each letter in the word
-        foreach (char letter in word) {
+        foreach (char letter in word)
+        {
             // add up the frequency score for each letter
             sum += letterScores[letter - 'a'];
         }
@@ -409,32 +492,46 @@ public class BoxScript : MonoBehaviour
         return sum;
     }
 
-	static int GetBonus(float freq) {
-		if (freq >= freqCutoffs[0]) {
-			// PREMIUM ULTRA RARE
-			return 75; // over 9000
-        } else if (freq >= freqCutoffs[1]) {
-			// PREMIUM ULTRA RARE
-			return 60;
-        } else if (freq >= freqCutoffs[2]) { 
-			// ULTRA RARE+
-			return 50;
-        } else if (freq >= freqCutoffs[3]) {
-			// ULTRA RARE
-			return 40;
-        } else if (freq >= freqCutoffs[4]) { 
-			// SUPER RARE
-			return 30;
-        } else if (freq >= freqCutoffs[5]) {
-			// RARE
-			return 20;
-        } else if (freq >= freqCutoffs[6]) {
-			// AVERAGE
-			return 10;
-		}
+    static int GetBonus(float freq)
+    {
+        if (freq >= freqCutoffs[0])
+        {
+            // PREMIUM ULTRA RARE
+            return 75; // over 9000
+        }
+        else if (freq >= freqCutoffs[1])
+        {
+            // PREMIUM ULTRA RARE
+            return 60;
+        }
+        else if (freq >= freqCutoffs[2])
+        {
+            // ULTRA RARE+
+            return 50;
+        }
+        else if (freq >= freqCutoffs[3])
+        {
+            // ULTRA RARE
+            return 40;
+        }
+        else if (freq >= freqCutoffs[4])
+        {
+            // SUPER RARE
+            return 30;
+        }
+        else if (freq >= freqCutoffs[5])
+        {
+            // RARE
+            return 20;
+        }
+        else if (freq >= freqCutoffs[6])
+        {
+            // AVERAGE
+            return 10;
+        }
 
-		return 0;
-	}
+        return 0;
+    }
 
     public IEnumerator AnimateSelectedTiles(float freq, long score)
     {
@@ -491,23 +588,28 @@ public class BoxScript : MonoBehaviour
         DeleteAllSelectedTiles();
     }
 
-	static long CalculateBaseScore(int length) {
-		if (length == 0) {
-			return 0;
-		}
+    static long CalculateBaseScore(int length)
+    {
+        if (length == 0)
+        {
+            return 0;
+        }
 
-		return LengthScoreFunction (length) + CalculateBaseScore (length - 1);
-	}
+        return LengthScoreFunction(length) + CalculateBaseScore(length - 1);
+    }
 
-	static long LengthScoreFunction(int length) {
-		if (length == 1) {
-			return 1;
-		}
+    static long LengthScoreFunction(int length)
+    {
+        if (length == 1)
+        {
+            return 1;
+        }
 
-		return 1 + LengthScoreFunction (length - 1);
-	}
+        return 1 + LengthScoreFunction(length - 1);
+    }
 
-    public void ResetTileColors() {
+    public void ResetTileColors()
+    {
         gameObject.transform.Find("Block_bg").GetComponent<SpriteRenderer>().color = originalBlockColor;
         gameObject.transform.Find("Border").GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0f);
     }
@@ -516,11 +618,13 @@ public class BoxScript : MonoBehaviour
     {
         // get the last selected letter tile and remove it from the list (and unhighlight it)
         Vector2 v = currentSelection[currentSelection.Count - 1];
-        grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().ResetTileColors();
+        BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
+        box.ResetTileColors();
+        box.isSelected = false;
         currentSelection.Remove(v);
 
         // log the last removed letter
-        LogAction("WF_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
+        LogAction("BNW_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
         // Remove the last letter
         currentWord = currentWord.Substring(0, currentWord.Length - 1);
@@ -535,6 +639,14 @@ public class BoxScript : MonoBehaviour
          ******************************************************************/
         DisplaySelectedScore();
 
+        /******************************************************************
+         * FEATURE: Obstructions- enable/disable play button based on word
+         ******************************************************************/
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        {
+            GameManagerScript.gameManager.UpdatePlayButton();
+        }
+
         // Play sound effect
         AudioManager.instance.Play("Select");
 
@@ -548,49 +660,60 @@ public class BoxScript : MonoBehaviour
         }
     }
 
-	public bool IsInsideTile(Vector2 pos) {
-		Vector2 realPos = Camera.main.ScreenToWorldPoint (pos);
+    public bool IsInsideTile(Vector2 pos)
+    {
+        Vector2 realPos = Camera.main.ScreenToWorldPoint(pos);
         Vector2 myRealPos = new Vector2(myX - gridWidthRadius, myY - gridHeightRadius);
-		float radius = 0.4f;
+        float radius = 0.45f;
 
         // calculate distance between the two points and see if it's within the radius
         return Vector2.Distance(realPos, myRealPos) <= radius;
-	}
+    }
 
-	bool IsNoBoxAboveMe() {
-		for (int y = myY+1; y < gridHeight; ++y) {
-			if (grid [myX, y] != null) {
-				return false;
-			}
-		}
+    bool IsNoBoxAboveMe()
+    {
+        for (int y = myY + 1; y < gridHeight; ++y)
+        {
+            if (grid[myX, y] != null)
+            {
+                return false;
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	// Checks to see if there is another box in my column that is falling with me in a 'column fall'
-	bool IsOtherBoxInColumnFalling() {
-		for (int y = myY-1; y >= 0; --y) {
-			if (grid [myX, y] != null && grid [myX, y].gameObject.GetComponent<BoxScript> ().columnFalling) {
-				return true;
-			}
-		}
+    // Checks to see if there is another box in my column that is falling with me in a 'column fall'
+    bool IsOtherBoxInColumnFalling()
+    {
+        for (int y = myY - 1; y >= 0; --y)
+        {
+            if (grid[myX, y] != null && grid[myX, y].gameObject.GetComponent<BoxScript>().columnFalling)
+            {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	// Checks to see if there are any boxes in column x that is currently falling (or column falling)
-	public static bool IsBoxInColumnFalling(int x) {
-		for (int y = 0; y < gridHeight; ++y) {
-			if (grid [x, y] != null && (grid [x, y].gameObject.GetComponent<BoxScript> ().falling ||
-										grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling)) {
-				return true;
-			}
-		}
+    // Checks to see if there are any boxes in column x that is currently falling (or column falling)
+    public static bool IsBoxInColumnFalling(int x)
+    {
+        for (int y = 0; y < gridHeight; ++y)
+        {
+            if (grid[x, y] != null && (grid[x, y].gameObject.GetComponent<BoxScript>().falling ||
+                                        grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling))
+            {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public static void UpdateScoreProgressBar() {
+    public static void UpdateScoreProgressBar()
+    {
         /*
         float scale = turnsLeft*1.0f / MAX_TURNS;
 
@@ -600,35 +723,48 @@ public class BoxScript : MonoBehaviour
 
 		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
 		*/
-	}
+    }
 
-	public static void DeleteAllSelectedTiles() {
+    public static void DeleteAllSelectedTiles()
+    {
         //Debug.Log("deleting all tiles");
-		// delete all tiles in list
-		foreach (Vector2 v in currentSelection) {
-			GameObject gameObject = grid [(int)v.x, (int)v.y].gameObject;
-			Destroy (gameObject);
-			grid [(int)v.x, (int)v.y] = null;
-		}
-		currentWord = "";
-		currentSelection.Clear ();
+        // delete all tiles in list
+        foreach (Vector2 v in currentSelection)
+        {
+            GameObject gameObject = grid[(int)v.x, (int)v.y].gameObject;
+            Destroy(gameObject);
+            grid[(int)v.x, (int)v.y] = null;
+        }
+        currentWord = "";
+        currentSelection.Clear();
 
         /******************************************************************
          * FEATURE: Display currently selected score
          ******************************************************************/
         selectedScore.text = "";
-	}
 
-	public void AnimateSuccess() {
+        /******************************************************************
+         * FEATURE: Obstructions- enable/disable play button based on word
+         ******************************************************************/
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        {
+            GameManagerScript.gameManager.UpdatePlayButton();
+        }
+    }
+
+    public void AnimateSuccess()
+    {
         Debug.Log("Animating success...");
 
         // Play the particle system
         PlaySuccessParticleSystem();
 
         // hide ALL the sprites
-        foreach (Transform child in gameObject.transform) {
+        foreach (Transform child in gameObject.transform)
+        {
             SpriteRenderer sp = child.GetComponent<SpriteRenderer>();
-            if (sp != null) {
+            if (sp != null)
+            {
                 sp.enabled = false;
             }
         }
@@ -637,9 +773,10 @@ public class BoxScript : MonoBehaviour
 
         // hide the textmesh pro
         gameObject.GetComponentInChildren<TextMeshPro>().enabled = false;
-	}
+    }
 
-    public void PlayParticleSystem(GameObject particleSystemPrefab) {
+    public void PlayParticleSystem(GameObject particleSystemPrefab)
+    {
         //Instantiate _particleSystemPrefab as new GameObject.
         GameObject _particleSystemObj = Instantiate(particleSystemPrefab);
 
@@ -654,29 +791,35 @@ public class BoxScript : MonoBehaviour
         _particleSystem.Play();
     }
 
-    public void PlaySuccessParticleSystem() {
+    public void PlaySuccessParticleSystem()
+    {
         PlayParticleSystem(_explodeParticleSystemPrefab);
     }
 
-	public static bool IsValidWord(string word) {
-		if (word.Length < 3) {
-			// Error message
-			TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
-			textFader.FadeErrorText (0.8f, "Word must be at least 3 letters");
-		}
+    public static bool IsValidWord(string word)
+    {
+        if (word.Length < 3)
+        {
+            // Error message
+            TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
+            textFader.FadeErrorText(0.8f, "Word must be at least 3 letters");
+        }
 
-		return word.Length >= 3 && freqDictionary.ContainsKey(word);
-	}
+        return word.Length >= 3 && freqDictionary.ContainsKey(word);
+    }
 
-    public static float GetWordFreq(string word) {
-        if (freqDictionary.ContainsKey(word)) {
+    public static float GetWordFreq(string word)
+    {
+        if (freqDictionary.ContainsKey(word))
+        {
             return freqDictionary[word].x;
         }
 
         return -1;
     }
 
-    public static float GetWordRank(string word) {
+    public static float GetWordRank(string word)
+    {
         if (freqDictionary.ContainsKey(word))
         {
             return freqDictionary[word].y;
@@ -694,10 +837,11 @@ public class BoxScript : MonoBehaviour
         byte G = (byte)((HexVal >> 8) & 0xFF);
         byte B = (byte)((HexVal) & 0xFF);
 
-        return new Color(R/255f, G/255f, B/255f, 1);
+        return new Color(R / 255f, G / 255f, B / 255f, 1);
     }
 
-    public static Color GetColorGradient(float rank) {
+    public static Color GetColorGradient(float rank)
+    {
         // Uses a perceptually uniform color scale using the Hsluv library
         float max = 0.55f;
         float scale = rank / max;
@@ -705,24 +849,28 @@ public class BoxScript : MonoBehaviour
 
         IList<double> rgb = Hsluv.HsluvConverter.HsluvToRgb(new double[] { hue, 100, 70 });
 
-        return new Color((float)rgb[0], 
-                         (float)rgb[1], 
-                         (float)rgb[2], 
+        return new Color((float)rgb[0],
+                         (float)rgb[1],
+                         (float)rgb[2],
                          240f / 255f);
     }
 
     /**
      * Returns a gradient of the highlighted letters color 
      */
-    public static Color GetHighlightColor(string word) {
+    public static Color GetHighlightColor(string word)
+    {
         Color highlightColor;
 
-        if (word.Length >= 3 && freqDictionary.ContainsKey(word)) {
+        if (word.Length >= 3 && freqDictionary.ContainsKey(word))
+        {
             float rank = freqDictionary[word].y;
 
             // increase the color gradient by inverse gaussian as the freq increases linearly
             return GetColorGradient(rank);
-        } else {
+        }
+        else
+        {
             if (ColorUtility.TryParseHtmlString("#c0392b", out highlightColor))
                 return highlightColor;
 
@@ -731,21 +879,24 @@ public class BoxScript : MonoBehaviour
     }
 
 
-    public void DisplayBorder() {
+    public void DisplayBorder()
+    {
         this.gameObject.transform
             .Find("Border")
             .GetComponent<SpriteRenderer>()
             .color = Color.white;
     }
 
-    public void PlayShinySelectParticles() {
+    public void PlayShinySelectParticles()
+    {
         PlayParticleSystem(_shinyParticleSystemPrefab);
     }
 
     /**
      * Method that selects the tile at the given coordinate (pos)
-     */ 
-    public static void SelectTile(Vector2 pos) {
+     */
+    public static void SelectTile(Vector2 pos)
+    {
         currentSelection.Add(pos);
         GameObject gameObject = grid[(int)pos.x, (int)pos.y].gameObject;
         BoxScript boxScript = gameObject.GetComponent<BoxScript>();
@@ -759,21 +910,51 @@ public class BoxScript : MonoBehaviour
         // ALSO: display the border around the tile
         boxScript.DisplayBorder();
 
+        /******************************************************************
+         * FEATURE: Obstructions- disable / enable button depending on
+         *          word's validity
+         ******************************************************************/
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        {
+            GameManagerScript.gameManager.UpdatePlayButton();
+        }
+
         /*****************************************************************
          * FEATURE: Shiny particles whenever you select a tile!
-         * Extra juicy feature?
+         * Productive Juice. Unproductive juice produces particles every touch
          *****************************************************************/
-        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+        if (GameManagerScript.JUICE_PRODUCTIVE)
         {
             boxScript.PlayShinySelectParticles();
+        }
+
+        /******************************************************************
+         * FEATURE: juice: turn on this flag so that the tile
+         *          bounces around/animates when selected
+         ******************************************************************/
+        boxScript.isSelected = true;
+
+        //=====================================================================
+        //  FEATURE: Juice: extra animations/bouncing if tile is selected.
+        //=====================================================================
+        if (GameManagerScript.JUICE_UNPRODUCTIVE || GameManagerScript.JUICE_PRODUCTIVE)
+        {
+            // Animate the tile
+            boxScript.StartCoroutine(boxScript.AnimateBouncingTile());
+        }
+
+        //=====================================================================
+        //  FEATURE: Unproductive Juice: camera shakes and explosions when
+        //           selecting letters.
+        //=====================================================================
+        if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        {
+            CameraShaker.Instance.ShakeOnce(3f, 4f, .1f, .6f);
         }
 
         // Play sound effect
         AudioManager.instance.Play("Select");
 
-        /******************************************************************
-         * FEATURE: Display currently selected score
-         ******************************************************************/
         DisplaySelectedScore();
     }
 
@@ -807,7 +988,8 @@ public class BoxScript : MonoBehaviour
         }
     }
 
-    public static bool IsNextTo(Vector2 someLoc, Vector2 otherLoc) {
+    public static bool IsNextTo(Vector2 someLoc, Vector2 otherLoc)
+    {
         int myX = (int)someLoc.x;
         int myY = (int)someLoc.y;
         int otherX = (int)otherLoc.x;
@@ -859,58 +1041,71 @@ public class BoxScript : MonoBehaviour
         return false;
     }
 
-	// Checks to see if the other tile is adjacent (or diagonal) to the current location
-	public bool IsNextTo(Vector2 otherLoc) {
-		int otherX = (int)otherLoc.x;
-		int otherY = (int)otherLoc.y;
+    // Checks to see if the other tile is adjacent (or diagonal) to the current location
+    public bool IsNextTo(Vector2 otherLoc)
+    {
+        int otherX = (int)otherLoc.x;
+        int otherY = (int)otherLoc.y;
 
         // TODO: refactor and use an array of dx[] dy[] to shorten the code
 
-		// check to the right
-		if (myX + 1 == otherX && myY == otherY) {
-			return true;
-		} 
-		// check to the left
-		else if (myX - 1 == otherX && myY == otherY) {
-			return true;
-		}
-		// check up
-		else if (myX == otherX && myY + 1 == otherY) {
-			return true;
-		}
-		// check down
-		else if (myX == otherX && myY - 1 == otherY) {
-			return true;
-		}
-		// check diagonal top right
-		else if (myX + 1 == otherX && myY + 1 == otherY) {
-			return true;
-		}
-		// check diagonal top left
-		else if (myX - 1 == otherX && myY + 1 == otherY) {
-			return true;
-		}
-		// check diagonal bottom right
-		else if (myX + 1 == otherX && myY - 1 == otherY) {
-			return true;
-		}
-		// check diagonal bottom left
-		else if (myX - 1 == otherX && myY - 1 == otherY) {
-			return true;
-		}
+        // check to the right
+        if (myX + 1 == otherX && myY == otherY)
+        {
+            return true;
+        }
+        // check to the left
+        else if (myX - 1 == otherX && myY == otherY)
+        {
+            return true;
+        }
+        // check up
+        else if (myX == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check down
+        else if (myX == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal top right
+        else if (myX + 1 == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal top left
+        else if (myX - 1 == otherX && myY + 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal bottom right
+        else if (myX + 1 == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
+        // check diagonal bottom left
+        else if (myX - 1 == otherX && myY - 1 == otherY)
+        {
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public static void ClearAllSelectedTiles() {
-		currentWord = "";
+    public static void ClearAllSelectedTiles()
+    {
+        currentWord = "";
 
-		// remove all coloring
-		foreach (Vector2 v in currentSelection) {
-            grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>().ResetTileColors();
-		}
+        // remove all coloring
+        foreach (Vector2 v in currentSelection)
+        {
+            BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
+            box.ResetTileColors();
+            box.isSelected = false;
+        }
 
-		currentSelection.Clear ();
+        currentSelection.Clear();
 
         /******************************************************************
          * FEATURE: Display currently selected score
@@ -918,120 +1113,145 @@ public class BoxScript : MonoBehaviour
         // Calculate currently selected score and change the text on screen
         selectedScore.text = "";
 
-	}
+    }
 
-	public static string GetLetterFromPrefab(string name) {
-		// kind of a hack.. the prefab names' 7th character is the letter of the block
-		return name.Substring(6, 1);
-	}
+    public static string GetLetterFromPrefab(string name)
+    {
+        // kind of a hack.. the prefab names' 7th character is the letter of the block
+        return name.Substring(6, 1);
+    }
 
-	public static bool IsInsideGrid(Vector2 pos) {
-		float x = pos.x;
-		int y = (int)pos.y;
-		return (x >= -gridWidthRadius && x <= gridWidthRadius && y >= -gridHeightRadius && y <= gridHeightRadius);
-	}
+    public static bool IsInsideGrid(Vector2 pos)
+    {
+        float x = pos.x;
+        int y = (int)pos.y;
+        return (x >= -gridWidthRadius && x <= gridWidthRadius && y >= -gridHeightRadius && y <= gridHeightRadius);
+    }
 
-	public static bool IsColumnFull(int x) {
-		for (int y = 0; y < gridHeight; ++y) {
-			if (grid [x, y] == null) {
-				return false;
-			}
-		}
+    public static bool IsColumnFull(int x)
+    {
+        for (int y = 0; y < gridHeight; ++y)
+        {
+            if (grid[x, y] == null)
+            {
+                return false;
+            }
+        }
 
-		return true;
-	}
-		
-	bool IsValidPosition() {        
-		Vector2 v = transform.position;
+        return true;
+    }
 
-		if (!IsInsideGrid (v)) {
-			return false;
-		}
-		if (grid [(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != null &&
-			grid [(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != transform) {
-			return false;
-		}
+    bool IsValidPosition()
+    {
+        Vector2 v = transform.position;
 
-		return true;
-	}
+        if (!IsInsideGrid(v))
+        {
+            return false;
+        }
+        if (grid[(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != null &&
+            grid[(int)(v.x + gridWidthRadius), (int)v.y + gridHeightRadius] != transform)
+        {
+            return false;
+        }
 
-	void ColumnDown() {
-		columnFalling = true;
+        return true;
+    }
 
-		// move every other block on top of this block down 1 as well
-		for (int y = myY; y < gridHeight; ++y) {
-			if (grid [myX, y] != null) {
-				grid [myX, y].position += new Vector3 (0, -1, 0);
-				grid [myX, y].gameObject.GetComponent<BoxScript> ().myY -= 1;
-				grid [myX, y - 1] = grid [myX, y];
-			} else {
-				grid [myX, y - 1] = null;
-			}
-		}
+    void ColumnDown()
+    {
+        columnFalling = true;
 
-		grid [myX, gridHeight - 1] = null;
-	}
+        // move every other block on top of this block down 1 as well
+        for (int y = myY; y < gridHeight; ++y)
+        {
+            if (grid[myX, y] != null)
+            {
+                grid[myX, y].position += new Vector3(0, -1, 0);
+                grid[myX, y].gameObject.GetComponent<BoxScript>().myY -= 1;
+                grid[myX, y - 1] = grid[myX, y];
+            }
+            else
+            {
+                grid[myX, y - 1] = null;
+            }
+        }
 
-	void GridUpdate() {
-		// Remove the previous location of this block from the grid
-		grid [myX, myY] = null;
+        grid[myX, gridHeight - 1] = null;
+    }
 
-		// Add the new location of the block to the grid
-		Vector2 v = transform.position;
-		myX = (int)(v.x + gridWidthRadius);
-		myY = (int)v.y + gridHeightRadius;
-		grid[myX, myY] = transform;
-	}
+    void GridUpdate()
+    {
+        // Remove the previous location of this block from the grid
+        grid[myX, myY] = null;
 
-	public static void Reset() {
+        // Add the new location of the block to the grid
+        Vector2 v = transform.position;
+        myX = (int)(v.x + gridWidthRadius);
+        myY = (int)v.y + gridHeightRadius;
+        grid[myX, myY] = transform;
+    }
+
+    public static void Reset()
+    {
         // make button interactive again
         GameManagerScript.gameManager.playButton.GetComponent<Button>().interactable = true;
 
-		foreach (Transform transform in grid) {
+        foreach (Transform transform in grid)
+        {
             if (transform != null && transform.gameObject != null)
             {
                 Destroy(transform.gameObject);
             }
-		}
+        }
 
-		grid = new Transform[gridWidth, gridHeight];
-		currentSelection.Clear ();
-		score = 0;
-		scoreText.text = "Points: " + score;
+        grid = new Transform[gridWidth, gridHeight];
+        currentSelection.Clear();
+        score = 0;
+        scoreText.text = "Points: " + score;
         selectedScore.text = "";
         GameManagerScript.ResetTimer();
         //turnsLeft = MAX_TURNS;
-	}
+    }
 
-	public static string GetBoardPayload() {
-		string boardString = "";
+    public static string GetBoardPayload()
+    {
+        string boardString = "";
 
-		for (int j = gridHeight-1; j >= 0; --j) {
-			for (int i = 0; i < gridWidth; ++i) {
-				if (grid [i, j] != null) {
-					boardString += grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter;
-				}
-			}
+        for (int j = gridHeight - 1; j >= 0; --j)
+        {
+            for (int i = 0; i < gridWidth; ++i)
+            {
+                if (grid[i, j] != null)
+                {
+                    boardString += grid[i, j].gameObject.GetComponent<BoxScript>().myLetter;
+                }
+            }
 
-			if (j > 0) {
-				boardString += "\n";
-			}
-		}
+            if (j > 0)
+            {
+                boardString += "\n";
+            }
+        }
 
-		return boardString;
-	}
+        return boardString;
+    }
 
-	public static char[,] GetBoardLetters() {
-		char[,] letters = new char[gridWidth, gridHeight];
+    public static char[,] GetBoardLetters()
+    {
+        char[,] letters = new char[gridWidth, gridHeight];
 
-		for (int j = 0; j < gridHeight; ++j) {
-			for (int i = 0; i < gridWidth; ++i) {
-				if (grid [i, j] != null) {
-					letters[i, j] = grid [i, j].gameObject.GetComponent<BoxScript> ().myLetter[0];
-				}
-			}
-		}
+        for (int j = 0; j < gridHeight; ++j)
+        {
+            for (int i = 0; i < gridWidth; ++i)
+            {
+                if (grid[i, j] != null)
+                {
+                    letters[i, j] = grid[i, j].gameObject.GetComponent<BoxScript>().myLetter[0];
+                }
+            }
+        }
 
-		return letters;
-	}
+        return letters;
+    }
 }

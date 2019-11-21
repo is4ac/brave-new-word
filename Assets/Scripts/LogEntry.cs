@@ -1,15 +1,12 @@
 ﻿using System;
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
-[System.Serializable]
+[Serializable]
 public class LogEntry {
-	[System.Serializable]
+	[Serializable]
 	public class Payload {
 	}
 
-	[System.Serializable]
+	[Serializable]
 	public class LetterPayload : Payload {
 		public string letter;
 		public int x;
@@ -38,6 +35,7 @@ public class LogEntry {
 	public string username; // e.g. Tranquil Red Panda
 	public string timestamp; // the date and time that it was played
 	public double timestampEpoch; // epoch time in milliseconds
+    public float remainingTime; // remaining time in game seconds
 	public string gameID;
     public bool obstructionProductive;
     public bool obstructionUnproductive;
@@ -61,8 +59,9 @@ public class LogEntry {
         juiceProductive = GameManagerScript.JUICE_PRODUCTIVE;
         juiceUnproductive = GameManagerScript.JUICE_UNPRODUCTIVE;
 		deviceModel = GameManagerScript.deviceModel;
-		timestamp = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-		timestampEpoch = ((System.DateTime.UtcNow - GameManagerScript.epochStart).TotalMilliseconds); // epoch time in milliseconds
+		timestamp = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+		timestampEpoch = ((DateTime.UtcNow - GameManagerScript.epochStart).TotalMilliseconds); // epoch time in milliseconds
+        remainingTime = GameManagerScript.remainingTime;
 	}
 
 	public void setValues(string key, string parentKey) {
@@ -80,9 +79,9 @@ public class LetterLogEntry : LogEntry {
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class MetaLogEntry : LogEntry {
-	[System.Serializable]
+	[Serializable]
 	public class MetaPayload : Payload {
 		public string value;
 
@@ -99,9 +98,9 @@ public class MetaLogEntry : LogEntry {
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class DeselectWordLogEntry : LogEntry {
-	[System.Serializable]
+	[Serializable]
 	public class DeselectWordPayload : Payload {
 		public string word;
 		public LetterPayload[] letters;
@@ -115,17 +114,23 @@ public class DeselectWordLogEntry : LogEntry {
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class SubmitWordLogEntry : LogEntry {
-	[System.Serializable]
+	[Serializable]
 	public class SubmitWordPayload : Payload {
 		public string word;
 		public long scoreTotal;
 		public long scoreBase;
 		public bool success;
-		public float frequency;
+		public float rarity;
 		public LetterPayload[] letters;
-	}
+        public float submitPromptTimer;
+
+        public SubmitWordPayload()
+        {
+            submitPromptTimer = GameManagerScript.submitPromptTimer;
+        }
+    }
 
 	public SubmitWordPayload payload;
     public double timeTakenInMilliseconds;
@@ -142,9 +147,65 @@ public class SubmitWordLogEntry : LogEntry {
 	}
 }
 
-[System.Serializable]
+[Serializable]
+public class ClickPlayWordButtonLogEntry : LogEntry
+{
+    [Serializable]
+    public class ClickPlayWordButtonPayload : Payload
+    {
+        public string word;
+        public float rarity;
+        public long score;
+
+        public ClickPlayWordButtonPayload(string word, float rarity, long score)
+        {
+            this.word = word;
+            this.rarity = rarity;
+            this.score = score;
+        }
+    }
+
+    public ClickPlayWordButtonPayload payload;
+
+    public void setValues(string key, string parentKey, ClickPlayWordButtonPayload payload)
+    {
+        base.setValues(key, parentKey);
+        this.payload = payload;
+    }
+}
+
+[Serializable]
+public class CancelPlayWordLogEntry : LogEntry
+{
+    [Serializable]
+    public class CancelPlayWordPayload : Payload
+    {
+        public string word;
+        public float rarity;
+        public long score;
+        public float submitPromptTimer;
+
+        public CancelPlayWordPayload(string word, float rarity, long score)
+        {
+            this.word = word;
+            this.rarity = rarity;
+            this.score = score;
+            submitPromptTimer = GameManagerScript.submitPromptTimer;
+        }
+    }
+
+    public CancelPlayWordPayload payload;
+
+    public void setValues(string key, string parentKey, CancelPlayWordPayload payload)
+    {
+        base.setValues(key, parentKey);
+        this.payload = payload;
+    }
+}
+
+[Serializable]
 public class KeyFrameLogEntry : LogEntry {
-	[System.Serializable]
+	[Serializable]
 	public class KeyFramePayload : Payload {
 		public string board;
 		public float timeElapsed;
@@ -162,9 +223,9 @@ public class KeyFrameLogEntry : LogEntry {
 	}
 }
 
-[System.Serializable]
+[Serializable]
 public class ClickLogEntry : LogEntry {
-    [System.Serializable]
+    [Serializable]
     public class ClickPayload : Payload {
         public float screenX;
         public float screenY;
