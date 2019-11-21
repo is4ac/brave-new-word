@@ -15,7 +15,7 @@ public class TutorialButtonScript : MonoBehaviour {
 
         // Log the start of the Tutorial
         MetaLogEntry entry = new MetaLogEntry();
-        entry.setValues("WF_TutorialOpened", "WF_Meta", new MetaLogEntry.MetaPayload("tutorial"));
+        entry.setValues("BNW_TutorialOpened", "BNW_Meta", new MetaLogEntry.MetaPayload("tutorial"));
         string json = JsonUtility.ToJson(entry);
         DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
         reference.Push().SetRawJsonValueAsync(json);

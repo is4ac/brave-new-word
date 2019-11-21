@@ -9,12 +9,16 @@ public class ButtonEvents : MonoBehaviour {
 
         // Reset the game and start over
         GameManagerScript.gameManager.Reset();
+
+        AudioManager.instance.Play("Sparkle1");
     }
 
     public void mainMenuButtonClick()
     {
         // Reset the game and start over
         GameManagerScript.gameManager.Reset();
+
+        AudioManager.instance.Play("Sparkle1");
 
         // Change scenes back to main menu
         menu = gameObject.GetComponent<ConsentMenuScript>();

@@ -1,6 +1,7 @@
 using UnityEngine.Audio;
 using System;
 using UnityEngine;
+using System.Collections;
 
 public class AudioManager : MonoBehaviour
 {
@@ -64,4 +65,23 @@ public class AudioManager : MonoBehaviour
 		s.source.Play();
 	}
 
+    public IEnumerator PlayRandomLoop(string[] sounds)
+    {
+        yield return new WaitForSeconds(UnityEngine.Random.Range(0.5f, 3f));
+
+        while (true)
+        {
+            Play(sounds[UnityEngine.Random.Range(0, sounds.Length)]);
+            yield return new WaitForSeconds(UnityEngine.Random.Range(0.5f, 3f));
+        }
+    }
+
+    public IEnumerator PlayMultiple(string sound, int amount, float delay=0.2f)
+    {
+        for (int i = 0; i < amount; ++i)
+        {
+            Play(sound);
+            yield return new WaitForSeconds(delay);
+        }
+    }
 }

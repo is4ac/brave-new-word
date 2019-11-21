@@ -32,7 +32,12 @@ public class StartOptions : MonoBehaviour {
         StartCoroutine(FadeCanvasGroupAlpha(0f, 1f, fadeOutImageCanvasGroup));
 	}
 
-	public void SelectName() {
+    public void ButtonSound()
+    {
+        AudioManager.instance.Play("Sparkle1");
+    }
+
+    public void SelectName() {
 		
 	}
 

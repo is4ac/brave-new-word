@@ -136,3 +136,30 @@ MonoBehaviour:
     loop: 0
     mixerGroup: 1
     source: {fileID: 0}
+  - name: LaserPew
+    clip: {fileID: 8300000, guid: 07c6b964c60e840d69e3e1aaeeb713aa, type: 3}
+    volume: 0.303
+    volumeVariance: 0
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    mixerGroup: 1
+    source: {fileID: 0}
+  - name: Sparkle1
+    clip: {fileID: 8300000, guid: 08e6f808c4b8f4d1c87c3508f48eab06, type: 3}
+    volume: 0.303
+    volumeVariance: 0
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    mixerGroup: 1
+    source: {fileID: 0}
+  - name: Sparkle2
+    clip: {fileID: 8300000, guid: 73db7964213024362915a4e95cfef40f, type: 3}
+    volume: 0.303
+    volumeVariance: 0
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    mixerGroup: 1
+    source: {fileID: 0}

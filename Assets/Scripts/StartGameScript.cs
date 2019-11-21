@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Firebase;
-using Firebase.Database;
 using Firebase.Unity.Editor;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
@@ -10,7 +7,7 @@ using System.IO;
 
 public class StartGameScript : MonoBehaviour {
 
-    public const string DATA_PATH = "/playerData.dat";
+    public const string DATA_PATH = "/BraveNewWord_playerData.dat";
 
     // use for initialization
     void Awake()
@@ -50,7 +47,7 @@ public class StartGameScript : MonoBehaviour {
             }
         });
 
-        // Randomize the various frictional features of the game
+        // DEBUG MODE: Randomize the various frictional features of the game
         //RandomizeFeatures();
 
         // Load from file
@@ -70,27 +67,28 @@ public class StartGameScript : MonoBehaviour {
 
             //// set the local variables to the data from the file
             // TODO: uncomment this before deploy
-            /*
+            
             GameManagerScript.OBSTRUCTION_PRODUCTIVE = data.obstructionProductive;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = data.obstructionUnproductive;
             GameManagerScript.JUICE_PRODUCTIVE = data.juiceProductive;
             GameManagerScript.JUICE_UNPRODUCTIVE = data.juiceUnproductive;
-            */
             GameManagerScript.DISPLAY_TUTORIAL = false;
             GameManagerScript.INSTRUCTIONS_PANEL = data.instructions;
             GameManagerScript.userID = data.userID;
             GameManagerScript.myHighScore = data.myHighScore;
+            GameManagerScript.gameNumber = data.gameNumber;
 
-
-            // TODO: DEBUG ONLY change back before release
+            // TODO: DEBUG ONLY: COMMENT OUT before release
+            /*
             GameManagerScript.myHighScore = 0;
             GameManagerScript.userID = Guid.NewGuid().ToString();
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+            GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
             GameManagerScript.JUICE_PRODUCTIVE = false;
             GameManagerScript.JUICE_UNPRODUCTIVE = false;
+            */
 
-            // TODO: Remove this line. DEBUG testing only!!
+            // TODO: COMMENT this line before release. DEBUG testing only!!
             //RandomizeFeatures();
         }
         else

@@ -58,48 +58,52 @@ public class DBManager : MonoBehaviour
 
     private void GetTopScore() 
     {
-        dbScores.GetValueAsync().ContinueWith(task => {
-            if (task.IsFaulted) 
+        if (GameManagerScript.LOGGING)
+        {
+            dbScores.GetValueAsync().ContinueWith(task =>
             {
-                // ERROR HANDLER
-                Debug.Log("Error in GetTopScore() of DBManager");
-            }
-            else if (task.IsCompleted) 
-            {
-                Dictionary<string, object> results = (Dictionary<string, object>) task.Result.Value;
-
-                // initialize topScore if it doesn't exist yet
-				if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser")) 
+                if (task.IsFaulted)
                 {
-                    dbScores.Child("topUser").SetValueAsync("");
-                    dbScores.Child("topScore").SetValueAsync(0);
-                    LogScore(curScore);
-				}
-                else 
-                {
-                    topScore = (long)results["topScore"];
-                    topUser = (string)results["topUser"];
+                    // ERROR HANDLER
+                    Debug.Log("Error in GetTopScore() of DBManager");
                 }
+                else if (task.IsCompleted)
+                {
+                    Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
 
-                // get user's personal high score, or initialize it if necessary
-                if (results == null || !results.ContainsKey(GameManagerScript.userID))
-                {
-                    dbScores.Child(GameManagerScript.userID).SetValueAsync(0);
-                }
-                else
-                {
-                    long dbScore = (long)results[GameManagerScript.userID];
-                    if (GameManagerScript.myHighScore < dbScore)
+                    // initialize topScore if it doesn't exist yet
+                    if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser"))
                     {
-                        GameManagerScript.myHighScore = dbScore;
+                        dbScores.Child("topUser").SetValueAsync("");
+                        dbScores.Child("topScore").SetValueAsync(0);
+                        LogScore(curScore);
                     }
                     else
                     {
-                        dbScores.Child(GameManagerScript.userID).SetValueAsync(GameManagerScript.myHighScore);
+                        topScore = (long)results["topScore"];
+                        topUser = (string)results["topUser"];
+                    }
+
+                    // get user's personal high score, or initialize it if necessary
+                    if (results == null || !results.ContainsKey(GameManagerScript.userID))
+                    {
+                        dbScores.Child(GameManagerScript.userID).SetValueAsync(0);
+                    }
+                    else
+                    {
+                        long dbScore = (long)results[GameManagerScript.userID];
+                        if (GameManagerScript.myHighScore < dbScore)
+                        {
+                            GameManagerScript.myHighScore = dbScore;
+                        }
+                        else
+                        {
+                            dbScores.Child(GameManagerScript.userID).SetValueAsync(GameManagerScript.myHighScore);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
 	public void LogScore(long s) 
@@ -126,8 +130,11 @@ public class DBManager : MonoBehaviour
 
     void UpdateLocalHighScore()
     {
-        GameManagerScript.myHighScore = curScore;
-        dbScores.Child(GameManagerScript.userID).SetValueAsync(curScore);
+        if (GameManagerScript.LOGGING)
+        {
+            GameManagerScript.myHighScore = curScore;
+            dbScores.Child(GameManagerScript.userID).SetValueAsync(curScore);
+        }
     }
 
     private TransactionResult UpdateTopScore(MutableData md) 
@@ -165,66 +172,69 @@ public class DBManager : MonoBehaviour
 
     public void RetrieveTopScores()
     {
-        dbScores.GetValueAsync().ContinueWith(task => 
+        if (GameManagerScript.LOGGING)
         {
-            if (task.IsFaulted)
+            dbScores.GetValueAsync().ContinueWith(task =>
             {
+                if (task.IsFaulted)
+                {
                 // ERROR HANDLER
                 Debug.Log("Error in RetrieveTopScores() of DBManager");
-            }
-            else if (task.IsCompleted)
-            {
-                Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
+                }
+                else if (task.IsCompleted)
+                {
+                    Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
 
                 // retrieve the top scores and userIDs
                 if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser"))
-                {
-                    dbScores.Child("topUser").SetValueAsync("");
-                    LogScore(curScore);
-                }
-                else
-                {
-                    foreach (KeyValuePair<string, object> entry in results)
                     {
-                        if (!entry.Key.Equals("topScore") && !entry.Key.Equals("topUser"))
+                        dbScores.Child("topUser").SetValueAsync("");
+                        LogScore(curScore);
+                    }
+                    else
+                    {
+                        foreach (KeyValuePair<string, object> entry in results)
                         {
-                            userToScore[entry.Key] = (long)entry.Value;
+                            if (!entry.Key.Equals("topScore") && !entry.Key.Equals("topUser"))
+                            {
+                                userToScore[entry.Key] = (long)entry.Value;
+                            }
                         }
                     }
-                }
 
                 // retrieve the userIDs and usernames
                 DatabaseReference usersDb = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.usersDbName);
-                usersDb.GetValueAsync().ContinueWith(task2 =>
-                {
-                    if (task2.IsFaulted)
+                    usersDb.GetValueAsync().ContinueWith(task2 =>
                     {
+                        if (task2.IsFaulted)
+                        {
                         // ERROR HANDLER
                         Debug.Log("Error in RetrieveTopScores() of DBManager");
-                    }
-                    else if (task2.IsCompleted)
-                    {
-                        Dictionary<string, object> results2 = (Dictionary<string, object>)task2.Result.Value;
+                        }
+                        else if (task2.IsCompleted)
+                        {
+                            Dictionary<string, object> results2 = (Dictionary<string, object>)task2.Result.Value;
 
                         // retrieve the top scores and userIDs
                         if (results2 == null)
-                        {
+                            {
                             // skip
                         }
-                        else
-                        {
-                            foreach (KeyValuePair<string, object> entry in results2)
+                            else
                             {
-                                userIDToUsernames[entry.Key] = (string)entry.Value;
+                                foreach (KeyValuePair<string, object> entry in results2)
+                                {
+                                    userIDToUsernames[entry.Key] = (string)entry.Value;
+                                }
                             }
-                        }
 
                         // update and display the high scores 
                         HighScoreDisplay.instance.UpdateHighScores();
-                        HighScoreDisplay.instance.DisplayHighScores();
-                    }
-                });
-            }
-        });
+                            HighScoreDisplay.instance.DisplayHighScores();
+                        }
+                    });
+                }
+            });
+        }
     }
 }

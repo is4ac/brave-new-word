@@ -1,7 +1,7 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using TMPro;
 
 public class TextFaderScript : MonoBehaviour {
     
@@ -20,7 +20,7 @@ public class TextFaderScript : MonoBehaviour {
 	}
 
 	public void FadeText(float t, string text) {
-		Text myText = GetComponentInChildren<Text> ();
+		TextMeshProUGUI myText = GetComponentInChildren<TextMeshProUGUI> ();
 		Image myPanel = GetComponent<Image> (); 
 		myPanel.color = normalColor; 
 		myText.fontSize = 58;
@@ -28,7 +28,7 @@ public class TextFaderScript : MonoBehaviour {
 	}
 
 	public void FadeErrorText(float t, string text) {
-		Text myText = GetComponentInChildren<Text> ();
+        TextMeshProUGUI myText = GetComponentInChildren<TextMeshProUGUI> ();
 		Image myPanel = GetComponent<Image> (); 
 		myPanel.color = errorColor;
 		myText.fontSize = 30;
@@ -37,7 +37,7 @@ public class TextFaderScript : MonoBehaviour {
 
 	public IEnumerator FadeTextToFullAlpha(float t, string text)
 	{
-		Text myText = GetComponentInChildren<Text> ();
+        TextMeshProUGUI myText = GetComponentInChildren<TextMeshProUGUI> ();
 		Image myPanel = GetComponent<Image> (); 
 		myText.text = text;
 
@@ -57,7 +57,7 @@ public class TextFaderScript : MonoBehaviour {
 
 	public IEnumerator FadeTextToZeroAlpha(float t, string text)
 	{
-		Text myText = GetComponentInChildren<Text> ();
+        TextMeshProUGUI myText = GetComponentInChildren<TextMeshProUGUI> ();
 		Image myPanel = GetComponent<Image> (); 
 		myText.text = text;
 
