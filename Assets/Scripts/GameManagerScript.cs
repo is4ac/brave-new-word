@@ -41,6 +41,7 @@ public class GameManagerScript : MonoBehaviour
     public GameObject rarestWordObject;
     public GameObject progressBarFG; // the progress bar that shows the timer
     public ParticleSystem bgAnimation; // background animation for unproductive juice
+    public ParticleSystem bgAnimation2; // bg animation for unproductive juice 2
     public ParticleSystem streakingParticles; // Unproductive juicy effects
     public static string GAME_ID;
     public static string username;
@@ -124,6 +125,7 @@ public class GameManagerScript : MonoBehaviour
         if (JUICE_UNPRODUCTIVE)
         {
             bgAnimation.Play();
+            bgAnimation2.Play();
             juicyRemainingTime = UnityEngine.Random.Range(10f, 20f);
             StartCoroutine(AudioManager.instance.PlayRandomLoop(new string[] { "Sparkle2" }));
         }
