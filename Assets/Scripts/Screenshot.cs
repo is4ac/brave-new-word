@@ -20,7 +20,7 @@ public class Screenshot : MonoBehaviour {
 		yield return new WaitForEndOfFrame();
 		string path = "Screenshots/"
 				 + "_" + screenshotCount + "_" + Screen.width + "X" + Screen.height + "" + ".jpeg";
-
+        screenshotCount++;
 		Texture2D screenImage = new Texture2D(Screen.width, Screen.height);
 		//Get Image from screen
 		screenImage.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);

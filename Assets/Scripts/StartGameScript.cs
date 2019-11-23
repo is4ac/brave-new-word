@@ -29,10 +29,7 @@ public class StartGameScript : MonoBehaviour {
 
         // Firebase database logistics for editor
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
-        FirebaseApp.DefaultInstance.SetEditorP12FileName(@"Assets/WordFlood-66029aead4c6.p12");
-        FirebaseApp.DefaultInstance.SetEditorServiceAccountEmail("wordflood-unity-android@wordflood-bf7c4.iam.gserviceaccount.com");
-        FirebaseApp.DefaultInstance.SetEditorP12Password("notasecret");
-
+        
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
             Firebase.DependencyStatus dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
@@ -85,7 +82,7 @@ public class StartGameScript : MonoBehaviour {
             GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
             GameManagerScript.JUICE_PRODUCTIVE = false;
-            GameManagerScript.JUICE_UNPRODUCTIVE = false;
+            GameManagerScript.JUICE_UNPRODUCTIVE = true;
             */
 
             // TODO: COMMENT this line before release. DEBUG testing only!!
