@@ -8,10 +8,22 @@ using System.IO;
 public class StartGameScript : MonoBehaviour {
 
     public const string DATA_PATH = "/BraveNewWord_playerData.dat";
+    public GameObject settingsButton;
+    public GameObject instructionsPanel;
+    public GameObject settingsPanel;
 
     // use for initialization
     void Awake()
     {
+        if (!GameManagerScript.DEBUG)
+        {
+            settingsButton.SetActive(false);
+        }
+        else
+        {
+            settingsButton.SetActive(true);
+        }
+
         // Set screen orientation mode to portrait only
         Screen.orientation = ScreenOrientation.Portrait;
 
@@ -51,6 +63,31 @@ public class StartGameScript : MonoBehaviour {
         LoadFile();
     }
 
+    void Update()
+    {
+        // Android back button should exit the game if on main screen
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            if (Input.GetKey(KeyCode.Escape))
+            {
+                // If on Instructions menu, then it should close that panel
+                if (instructionsPanel.activeInHierarchy)
+                {
+                    instructionsPanel.SetActive(false);
+                }
+                else if (settingsPanel.activeInHierarchy)
+                {
+                    settingsPanel.SetActive(false);
+                }
+                else
+                {
+                    // Exit game app
+                    Application.Quit();
+                }
+            }
+        }
+    }
+
     public void LoadFile()
     {
         if (File.Exists(Application.persistentDataPath + DATA_PATH))
@@ -79,7 +116,7 @@ public class StartGameScript : MonoBehaviour {
             /*
             GameManagerScript.myHighScore = 0;
             GameManagerScript.userID = Guid.NewGuid().ToString();
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
+            GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
             GameManagerScript.JUICE_PRODUCTIVE = false;
             GameManagerScript.JUICE_UNPRODUCTIVE = true;

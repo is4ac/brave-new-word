@@ -20,7 +20,7 @@ public class BoxScript : MonoBehaviour
     public static Text scoreText;
     public static Text selectedScore;
     public static long score;
-    private const float FALL_SPEED_CONST = 0.15f;
+    private const float FALL_SPEED_CONST = 0.025f;
     public static string currentWord = "";
     public static Dictionary<string, Vector2> freqDictionary;
     public static int totalInteractions;
@@ -413,6 +413,12 @@ public class BoxScript : MonoBehaviour
                 GameManagerScript.myHighestScoringWordScore = (int)submittedScore;
             }
 
+            if (score > GameManagerScript.myHighScore)
+            {
+                GameManagerScript.myHighScore = score;
+                GameManagerScript.myHighScoreUpdated = true;
+            }
+
             // Do something celebratory! highlight in green briefly before removing from screen
             // and also display a congratulatory message depending on how rare the word was
             instance.StartCoroutine(instance.AnimateSelectedTiles(GetWordFreq(currentWord), submittedScore));
@@ -614,6 +620,60 @@ public class BoxScript : MonoBehaviour
         gameObject.transform.Find("Border").GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0f);
     }
 
+    public static void RemoveTilesPastIndex(int index)
+    {
+        if (index >= currentSelection.Count)
+        {
+            Debug.Log("Error: tried to remove tiles past index out of bounds.");
+            return;
+        }
+
+        for (int i = currentSelection.Count - 1; i > index; --i)
+        {
+            // get the last selected letter tile and remove it from the list (and unhighlight it)
+            Vector2 v = currentSelection[currentSelection.Count - 1];
+            BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
+            box.ResetTileColors();
+            box.isSelected = false;
+            currentSelection.Remove(v);
+
+            /******************************************************************
+             * FEATURE: If juiciness is on, play particles when deselecting!
+             ******************************************************************/
+            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            {
+                box.PlayShinySelectParticles();
+            }
+        }
+
+        // log the removed letters
+        LogAction("BNW_LetterDeselected", currentWord.Substring(index + 1), -1, -1);
+
+        // Remove the letters
+        currentWord = currentWord.Substring(0, index + 1);
+
+        /*****************************************************************
+         * FEATURE: Highlighting color gradient based on frequency feature
+         *****************************************************************/
+        DisplayHighlightFeedback();
+
+        /******************************************************************
+         * FEATURE: Display currently selected score
+         ******************************************************************/
+        DisplaySelectedScore();
+
+        /******************************************************************
+         * FEATURE: Obstructions- enable/disable play button based on word
+         ******************************************************************/
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        {
+            GameManagerScript.gameManager.UpdatePlayButton();
+        }
+
+        // Play sound effect
+        AudioManager.instance.Play("Select");
+    }
+
     public static void RemoveLastSelection()
     {
         // get the last selected letter tile and remove it from the list (and unhighlight it)
@@ -660,27 +720,14 @@ public class BoxScript : MonoBehaviour
         }
     }
 
-    public bool IsInsideTile(Vector2 pos)
+    public bool IsInsideTile(Vector2 pos, float sensitivity)
     {
         Vector2 realPos = Camera.main.ScreenToWorldPoint(pos);
         Vector2 myRealPos = new Vector2(myX - gridWidthRadius, myY - gridHeightRadius);
-        float radius = 0.45f;
+        float radius = 0.55f * sensitivity;
 
         // calculate distance between the two points and see if it's within the radius
         return Vector2.Distance(realPos, myRealPos) <= radius;
-    }
-
-    bool IsNoBoxAboveMe()
-    {
-        for (int y = myY + 1; y < gridHeight; ++y)
-        {
-            if (grid[myX, y] != null)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     // Checks to see if there is another box in my column that is falling with me in a 'column fall'
@@ -949,7 +996,7 @@ public class BoxScript : MonoBehaviour
         //=====================================================================
         if (GameManagerScript.JUICE_UNPRODUCTIVE)
         {
-            CameraShaker.Instance.ShakeOnce(3f, 4f, .1f, .6f);
+            CameraShaker.Instance.ShakeOnce(3f, 3.5f, .1f, .3f);
         }
 
         // Play sound effect
@@ -1113,6 +1160,13 @@ public class BoxScript : MonoBehaviour
         // Calculate currently selected score and change the text on screen
         selectedScore.text = "";
 
+        /******************************************************************
+         * FEATURE: Disable the play word button if it exists
+         ******************************************************************/
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        {
+            GameManagerScript.gameManager.UpdatePlayButton();
+        }
     }
 
     public static string GetLetterFromPrefab(string name)
@@ -1194,9 +1248,6 @@ public class BoxScript : MonoBehaviour
 
     public static void Reset()
     {
-        // make button interactive again
-        GameManagerScript.gameManager.playButton.GetComponent<Button>().interactable = true;
-
         foreach (Transform transform in grid)
         {
             if (transform != null && transform.gameObject != null)
@@ -1206,12 +1257,11 @@ public class BoxScript : MonoBehaviour
         }
 
         grid = new Transform[gridWidth, gridHeight];
+        currentWord = "";
         currentSelection.Clear();
         score = 0;
         scoreText.text = "Points: " + score;
         selectedScore.text = "";
-        GameManagerScript.ResetTimer();
-        //turnsLeft = MAX_TURNS;
     }
 
     public static string GetBoardPayload()

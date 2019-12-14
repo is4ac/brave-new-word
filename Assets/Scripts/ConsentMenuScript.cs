@@ -1,12 +1,12 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class ConsentMenuScript : MonoBehaviour {
 
     public int sceneToStart;                // the scene index to transition to after this scene
     public GameObject loadingPanel;
-    public GameObject loadingBar;
 
 	// Use this for initialization
 	void Start () {
@@ -50,9 +50,18 @@ public class ConsentMenuScript : MonoBehaviour {
         // Wait until the asynchronous scene fully loads
         while(!asyncLoad.isDone)
         {
-            // Update the loading bar with the current progress
-            loadingBar.transform.localScale = new Vector3(asyncLoad.progress, 1.0f, 1.0f);
-            yield return null;
+            // Update the loading text periods
+            TMP_Text text = loadingPanel.GetComponentInChildren<TMP_Text>();
+            if (text.text.LastIndexOf('.') < 9)
+            {
+                text.text += ".";
+            }
+            else
+            {
+                text.text = "Loading";
+            }
+
+            yield return new WaitForSeconds(.5f);
         }
     }
 }

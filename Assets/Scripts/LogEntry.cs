@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 [Serializable]
 public class LogEntry {
@@ -42,13 +43,14 @@ public class LogEntry {
     public bool juiceProductive;
     public bool juiceUnproductive;
 	public string deviceModel;
+    public string deviceID; // unique device ID identifier
 	//public string location;
 
 	// attributes that must be assigned
-	public string key; // "WD_LetterSelected", "WD_LetterDeselected", "WD_DeselectAll", "WD_Submit"
-	public string parentKey; // "WD_Action", "WD_KeyFrame", "WD_Meta"
+	public string key; // "BNW_LetterSelected", "BNW_LetterDeselected", "BNW_DeselectAll", etc
+    public string parentKey; // "BNW_Action", "BNW_KeyFrame", "BNW_Meta"
 
-	public LogEntry() {
+    public LogEntry() {
 		logVersion = GameManagerScript.LOGGING_VERSION;
 		appVersion = GameManagerScript.APP_VERSION;
 		userID = GameManagerScript.userID;
@@ -62,6 +64,7 @@ public class LogEntry {
 		timestamp = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
 		timestampEpoch = ((DateTime.UtcNow - GameManagerScript.epochStart).TotalMilliseconds); // epoch time in milliseconds
         remainingTime = GameManagerScript.remainingTime;
+        deviceID = SystemInfo.deviceUniqueIdentifier;
 	}
 
 	public void setValues(string key, string parentKey) {

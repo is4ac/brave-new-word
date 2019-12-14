@@ -135,10 +135,6 @@ public class SpawnBoxScript : MonoBehaviour {
 
         BoxScript script = box.GetComponent<BoxScript>();
         script.SetLetter(letter);
-
-		if (init) {
-			script.fallSpeed = 0.05f;
-		}
 	}
 
 	public void Reset() {

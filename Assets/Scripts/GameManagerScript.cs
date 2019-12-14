@@ -14,10 +14,12 @@ public class GameManagerScript : MonoBehaviour
     public static GameManagerScript gameManager;
 
     // Set to true to log to Firebase database, false to turn off
+    // TODO: set DEBUG to false before full deploy!
+    public static bool DEBUG = true;
     // TODO: set LOGGING to true before deploy!
     public static bool LOGGING = true;
-    public const string LOGGING_VERSION = "BNWLogs_V1_0_0_BETA";
-    public const string APP_VERSION = "BNW_1_0_0_BETA";
+    public const string LOGGING_VERSION = "BNWLogs_V0_0_6";
+    public const string APP_VERSION = "BNW_0_0_6";
     public static string usersDbName = "users" + DBManager.versionNumber;
 
     public DatabaseReference dbUsers;
@@ -39,6 +41,8 @@ public class GameManagerScript : MonoBehaviour
     public GameObject highScoreTextObject;
     public GameObject highestScoringWordObject;
     public GameObject rarestWordObject;
+    public ConsentMenuScript menuScript;
+    public GameObject settingsButton;
     public GameObject progressBarFG; // the progress bar that shows the timer
     public ParticleSystem bgAnimation; // background animation for unproductive juice
     public ParticleSystem bgAnimation2; // bg animation for unproductive juice 2
@@ -66,7 +70,9 @@ public class GameManagerScript : MonoBehaviour
 
     private static float timer;
     private static float waitTime = 0.2f;
-    private static float maxTime = 150.0f; // 2:30 minutes? for now.
+
+    // TODO: set maxTime to 150.0f before deploy
+    private static float maxTime = 150.0f; // 150 seconds = 2:30 minutes? for now.
     public static float remainingTime = maxTime;
     private static bool isBombAudioPlaying;
     private static int counter = 5;
@@ -77,6 +83,7 @@ public class GameManagerScript : MonoBehaviour
 
     public static float submitPromptTimer;
     public static bool submitPromptOn;
+    private Coroutine audioCoroutine;
 
     void Awake()
     {
@@ -86,6 +93,15 @@ public class GameManagerScript : MonoBehaviour
             gameManager = this;
             gameOverPanel.SetActive(false);
             instructionsPanel.SetActive(false);
+
+            if (DEBUG)
+            {
+                settingsButton.SetActive(true);
+            }
+            else
+            {
+                settingsButton.SetActive(false);
+            }
         }
         else
         {
@@ -96,6 +112,9 @@ public class GameManagerScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        // Disable screen dimming
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
         deviceModel = SystemInfo.deviceModel;
 
         if (LOGGING) dbUsers = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
@@ -114,7 +133,7 @@ public class GameManagerScript : MonoBehaviour
         if (OBSTRUCTION_PRODUCTIVE || OBSTRUCTION_UNPRODUCTIVE)
         {
             playButton.SetActive(true);
-            UpdatePlayButton();
+            playButton.GetComponent<Button>().interactable = false;
         }
         else
         {
@@ -124,10 +143,7 @@ public class GameManagerScript : MonoBehaviour
         // ========FEATURE: Unproductive Juice BG Animation Particles==========
         if (JUICE_UNPRODUCTIVE)
         {
-            bgAnimation.Play();
-            bgAnimation2.Play();
-            juicyRemainingTime = UnityEngine.Random.Range(10f, 20f);
-            StartCoroutine(AudioManager.instance.PlayRandomLoop(new string[] { "Sparkle2" }));
+            StartUnproductiveJuice();
         }
 
         // Hide the instructions panel if it shouldn't be displayed
@@ -148,6 +164,17 @@ public class GameManagerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Android back button should go back to main menu
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            if (Input.GetKey(KeyCode.Escape))
+            {
+                // Change scenes back to main menu
+                menuScript.GoToNextScene(0);
+                return;
+            }
+        }
+
         // if submit prompt panel is open, update the timer
         if (submitPromptOn)
         {
@@ -163,6 +190,7 @@ public class GameManagerScript : MonoBehaviour
             remainingTime -= timer;
 
             float scale = remainingTime / maxTime;
+            if (scale < 0) scale = 0;
 
             // update progress bar
             progressBarFG.transform.localScale = new Vector3(scale, 1.0f, 1.0f);
@@ -171,7 +199,7 @@ public class GameManagerScript : MonoBehaviour
             timer -= waitTime;
 
             // Countdown timer displays seconds remaining near the end.
-            if (counter > 0 && remainingTime > counter-1 && remainingTime <= counter)
+            if (counter > 0 && remainingTime > counter - 1 && remainingTime <= counter)
             {
                 TextFaderScript textFader = GameObject.Find("CountdownMessage").GetComponent<TextFaderScript>();
                 textFader.FadeText(0.1f, counter.ToString());
@@ -252,6 +280,23 @@ public class GameManagerScript : MonoBehaviour
         }
     }
 
+    public void StartUnproductiveJuice()
+    {
+        bgAnimation.Play();
+        juicyRemainingTime = UnityEngine.Random.Range(10f, 20f);
+        audioCoroutine = StartCoroutine(AudioManager.instance.PlayRandomLoop(new string[] { "Sparkle2" }));
+    }
+
+    public void StopUnproductiveJuice()
+    {
+        bgAnimation.Stop();
+
+        if (audioCoroutine != null)
+        {
+            StopCoroutine(audioCoroutine);
+        }
+    }
+
     public void PlayJuicyEffects()
     {
         // Set new Particle System GameObject as a child of desired GO.
@@ -268,11 +313,11 @@ public class GameManagerScript : MonoBehaviour
         if (BoxScript.currentWord.Length >= 3 &&
             BoxScript.GetWordRank(BoxScript.currentWord) > -1)
         {
-            playButton.GetComponent<Button>().enabled = true;
+            playButton.GetComponent<Button>().interactable = true;
         }
         else
         {
-            playButton.GetComponent<Button>().enabled = false;
+            playButton.GetComponent<Button>().interactable = false;
         }
     }
 
@@ -280,6 +325,11 @@ public class GameManagerScript : MonoBehaviour
      * Save frictional pattern to device whenever the game quits
      */
     void OnDisable()
+    {
+        SavePlayerData();
+    }
+
+    void SavePlayerData()
     {
         // Open the file to write the data
         BinaryFormatter bf = new BinaryFormatter();
@@ -381,6 +431,7 @@ public class GameManagerScript : MonoBehaviour
     {
         timer = 0.0f;
         remainingTime = maxTime;
+        submitPromptTimer = 0.0f;
     }
 
     static bool CheckIfBoxesAreFalling()
@@ -427,7 +478,7 @@ public class GameManagerScript : MonoBehaviour
         Text highestScoringWordText = highestScoringWordObject.GetComponent<Text>();
         Text rarestWordText = rarestWordObject.GetComponent<Text>();
 
-        highScoreText.text = "Your High Score: " + GameManagerScript.myHighScore;
+        highScoreText.text = "Your High Score: " + myHighScore;
 
         // Check if new local high score was reached
         if (myHighScoreUpdated)
@@ -455,10 +506,16 @@ public class GameManagerScript : MonoBehaviour
             + myHighestScoringWord + "\n"
             + myHighestScoringWordScore + " points";
 
+        string rarityText = (BoxScript.GetWordRank(myRarestWord) * 100).ToString("0.00");
+        if (myRarestWord.Trim() == "")
+        {
+            rarityText = "0";
+        }
+
         // update rarest word text
         rarestWordText.text = "Rarest Word:\n"
             + myRarestWord + "\n"
-            + (BoxScript.GetWordRank(myRarestWord) * 100) + "%";
+            + rarityText + "%";
 
         // disable touch events
         TouchInputHandler.touchEnabled = false;
@@ -478,9 +535,16 @@ public class GameManagerScript : MonoBehaviour
 
     public void Reset()
     {
+        // reset all important variables
         initialLog = true;
         gameHasBegun = false;
         isBombAudioPlaying = false;
+        myHighestScoringWord = "";
+        myHighestScoringWordScore = 0;
+        myRarestWord = "";
+        myRarestWordRarity = 0;
+        myHighScoreUpdated = false;
+        counter = 5;
 
         GameObject boxes = GameObject.Find("SpawnBoxes");
 
@@ -489,7 +553,11 @@ public class GameManagerScript : MonoBehaviour
             child.gameObject.GetComponent<SpawnBoxScript>().Reset();
         }
 
+        // reset all important BoxScript variables
         BoxScript.Reset();
+        ResetTimer();
+
+        UpdatePlayButton();
 
         gameOverPanel.SetActive(false);
 

@@ -9,6 +9,7 @@ public class DBManager : MonoBehaviour
 
     // edit this to a new version whenever the game has changed 
     // so much that it needs a new high score list
+    // TODO: update this to next version number before major release
     public static string versionNumber = "_0_1";
     public static string scoresDbName = "scores" + versionNumber;
 

@@ -65,6 +65,41 @@ public class AudioManager : MonoBehaviour
 		s.source.Play();
 	}
 
+    public void Stop(string sound)
+    {
+        Sound s = Array.Find(sounds, item => item.name == sound);
+        if (s == null)
+        {
+            Debug.LogWarning("Sound: " + name + " not found!");
+            return;
+        }
+
+        s.source.Stop();
+    }
+
+    public void StopBgMusic()
+    {
+        // Stop previous music
+        if (GameManagerScript.JUICE_PRODUCTIVE)
+        {
+            Stop("JuicyTheme");
+        }
+        else if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        {
+            Stop("DubstepTheme");
+        }
+        else
+        {
+            Stop("CalmTheme");
+        }
+    }
+
+    public void StopAndPlay(string music)
+    {
+        StopBgMusic();
+        Play(music);
+    }
+
     public IEnumerator PlayRandomLoop(string[] sounds)
     {
         yield return new WaitForSeconds(UnityEngine.Random.Range(0.5f, 3f));

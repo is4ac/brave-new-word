@@ -7,6 +7,9 @@ public class TouchInputHandler : MonoBehaviour
     public static bool touchSupported = false;
     public GameObject particleSystemPrefab;
     private GameManagerScript gameManager;
+    private float timer;
+    private float waitTime = 0.2f;
+    private Vector2 lastRemoved;
 
     private void Awake()
     {
@@ -28,7 +31,7 @@ public class TouchInputHandler : MonoBehaviour
                 {
                     BoxScript boxObj = BoxScript.grid[i, j].gameObject.GetComponent<BoxScript>();
 
-                    if (boxObj.IsInsideTile(touchPos))
+                    if (boxObj.IsInsideTile(touchPos, .92f))
                     {
                         return new Vector2(i, j);
                     }
@@ -75,7 +78,7 @@ public class TouchInputHandler : MonoBehaviour
         bool touch = touchSupported && touchEnabled && Input.touchCount > 0;
         bool hasTouchHappened = false;
 
-        Vector2 myPos = new Vector2();
+        Vector2 myPos;
         Vector2 myPosPixel = new Vector2();
 
         // touch input
@@ -101,7 +104,16 @@ public class TouchInputHandler : MonoBehaviour
         //=====================================================================
         if (GameManagerScript.JUICE_UNPRODUCTIVE && hasTouchHappened)
         {
-            PlayParticleSystem(Camera.main.ScreenToWorldPoint(myPosPixel));
+            timer -= Time.deltaTime;
+            if (timer <= 0)
+            {
+                PlayParticleSystem(Camera.main.ScreenToWorldPoint(myPosPixel));
+                timer += waitTime;
+            }
+        }
+        else
+        {
+            timer = 0;
         }
 
         // convert pixel position to tile coordinate
@@ -121,13 +133,15 @@ public class TouchInputHandler : MonoBehaviour
                     {
                         BoxScript.SelectTile(myPos);
                         BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        lastRemoved = new Vector2(-1, -1);
                     }
+                    // add on to the current selection 
                     else if (BoxScript.IsNextTo(myPos, BoxScript.currentSelection[BoxScript.currentSelection.Count - 1]) &&
                              !BoxScript.currentSelection.Contains(myPos))
                     {
-                        // add on to the current selection 
                         BoxScript.SelectTile(myPos);
                         BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        lastRemoved = new Vector2(-1, -1);
                     }
                     // deselect previous letters if clicking on already highlighted letters
                     else if (BoxScript.currentSelection.Contains(myPos))
@@ -135,19 +149,18 @@ public class TouchInputHandler : MonoBehaviour
                         // deselect if this is the most recently selected letter
                         if (BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
                         {
+                            lastRemoved = myPos;
                             BoxScript.RemoveLastSelection();
                         }
                         // go through backwards and remove all letters in selection until the letter that was tapped
                         else 
                         {
-                            for (int i = BoxScript.currentSelection.Count - 1; i > 0; --i)
+                            lastRemoved = new Vector2(-1, -1);
+                            for (int i = BoxScript.currentSelection.Count - 1; i >= 0; --i)
                             {
-                                if (BoxScript.currentSelection[i] != myPos)
+                                if (BoxScript.currentSelection[i] == myPos)
                                 {
-                                    BoxScript.RemoveLastSelection();
-                                }
-                                else
-                                {
+                                    BoxScript.RemoveTilesPastIndex(i);
                                     break;
                                 }
                             }
@@ -155,17 +168,20 @@ public class TouchInputHandler : MonoBehaviour
                     }
                     else
                     {
+                        lastRemoved = new Vector2(-1, -1);
                         // de-select what has already been selected
                         BoxScript.ClearAllSelectedTiles();
                         BoxScript.LogAction("BNW_DeselectAll");
                     }
                 }
-                else if (IsInsideGameBoard(myPosPixel))
+                /*
+                else if (!IsInsideGameBoard(myPosPixel))
                 {
-                    // remove all selected letters, unless clicking outside game area
+                    // remove all selected letters, unless clicking inside game area
                     BoxScript.ClearAllSelectedTiles();
+                    lastRemoved = new Vector2(-1, -1);
                 }
-
+                */
             }
             //=====Only for PRODUCTIVE versions of button, not unproductive=====
             else if (GameManagerScript.OBSTRUCTION_PRODUCTIVE &&
@@ -180,8 +196,10 @@ public class TouchInputHandler : MonoBehaviour
                     // selected tile and it isn't already selected)
                     if (BoxScript.currentSelection.Count > 0 &&
                        BoxScript.IsNextTo(myPos, BoxScript.currentSelection[BoxScript.currentSelection.Count - 1]) &&
-                        !BoxScript.currentSelection.Contains(myPos))
+                        !BoxScript.currentSelection.Contains(myPos) &&
+                        myPos != lastRemoved)
                     {
+                        lastRemoved = new Vector2(-1, -1);
                         BoxScript.SelectTile(myPos);
                         BoxScript.LogAction("BNW_LetterSelected", myPos);
                     }
@@ -193,15 +211,13 @@ public class TouchInputHandler : MonoBehaviour
                     }
                     else if (BoxScript.currentSelection.Contains(myPos))
                     {
+                        lastRemoved = new Vector2(-1, -1);
                         // de-select the most recent tile(s) if you move back to an old one
-                        for (int i = BoxScript.currentSelection.Count - 1; i > 0; --i)
+                        for (int i = BoxScript.currentSelection.Count - 1; i >= 0; --i)
                         {
-                            if (BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] != myPos)
+                            if (BoxScript.currentSelection[i] == myPos)
                             {
-                                BoxScript.RemoveLastSelection();
-                            }
-                            else
-                            {
+                                BoxScript.RemoveTilesPastIndex(i);
                                 break;
                             }
                         }
@@ -268,14 +284,11 @@ public class TouchInputHandler : MonoBehaviour
                     else if (BoxScript.currentSelection.Contains(myPos))
                     {
                         // de-select the most recent tile(s) if you move back to an old one
-                        for (int i = BoxScript.currentSelection.Count - 1; i > 0; --i)
+                        for (int i = BoxScript.currentSelection.Count - 1; i >= 0; --i)
                         {
-                            if (BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] != myPos)
+                            if (BoxScript.currentSelection[i] == myPos)
                             {
-                                BoxScript.RemoveLastSelection();
-                            }
-                            else
-                            {
+                                BoxScript.RemoveTilesPastIndex(i);
                                 break;
                             }
                         }
