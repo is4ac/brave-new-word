@@ -3,43 +3,45 @@ using System.Collections.Generic;
 using UnityEngine;
 using Firebase.Database;
 
-public class DBManager : MonoBehaviour 
+public class DBManager : MonoBehaviour
 {
-	public static DBManager instance;
+    public static DBManager instance;
 
     // edit this to a new version whenever the game has changed 
     // so much that it needs a new high score list
     // TODO: update this to next version number before major release
     public static string versionNumber = "_0_1";
     public static string scoresDbName = "scores" + versionNumber;
+    public static string usersDbName = "users" + versionNumber;
 
-    private DatabaseReference dbScores;
+    //private DatabaseReference dbScores;
 
     public delegate void ScoreAction();
-    public static event ScoreAction TopScoreUpdated;
+    //public static event ScoreAction TopScoreUpdated;
 
-	public long topScore = 0;
+    public long topScore;
     public string topUser = "";
-	private long curScore = 0;
+    //private long curScore;
 
     public Dictionary<string, long> userToScore;
     public Dictionary<string, string> userIDToUsernames;
 
     // Awake at the beginning, used for initialization
-	void Awake()
+    void Awake()
     {
-		if (instance == null)
+        if (instance == null)
         {
-			instance = this;
-		}
+            instance = this;
+        }
         else
         {
             Destroy(gameObject);
         }
-	}
+    }
 
     void Start()
     {
+        /*
         if (GameManagerScript.LOGGING)
         {
             // reference database from the appropriate scores entry
@@ -55,9 +57,11 @@ public class DBManager : MonoBehaviour
             // Load high scores
             RetrieveTopScores();
         }
+        */
     }
 
-    private void GetTopScore() 
+    /*
+    private void GetTopScore()
     {
         if (GameManagerScript.LOGGING)
         {
@@ -107,7 +111,7 @@ public class DBManager : MonoBehaviour
         }
     }
 
-	public void LogScore(long s) 
+    public void LogScore(long s)
     {
         if (GameManagerScript.LOGGING)
         {
@@ -138,37 +142,37 @@ public class DBManager : MonoBehaviour
         }
     }
 
-    private TransactionResult UpdateTopScore(MutableData md) 
+    private TransactionResult UpdateTopScore(MutableData md)
     {
-        if (md.Value != null) 
+        if (md.Value != null)
         {
-            Dictionary<string,object> updatedScore = md.Value as Dictionary<string,object>;
-            topScore = (long) updatedScore ["topScore"];
+            Dictionary<string, object> updatedScore = md.Value as Dictionary<string, object>;
+            topScore = (long)updatedScore["topScore"];
             topUser = (string)updatedScore["topUser"];
         }
 
         // Compare the cur score to the top score.
-        if (curScore > topScore) 
+        if (curScore > topScore)
         { // Update topScore, triggers other UpdateTopScores to retry
             topScore = curScore;
-            md.Value = new Dictionary<string,object>(){
+            md.Value = new Dictionary<string, object>(){
                 {"topScore", curScore},
                 {"topUser", GameManagerScript.userID}
             };
             return TransactionResult.Success(md);
         }
 
-        return TransactionResult.Abort (); // Aborts the transaction
+        return TransactionResult.Abort(); // Aborts the transaction
     }
 
-    void HandleTopScoreChange(object sender, ValueChangedEventArgs args) 
+    void HandleTopScoreChange(object sender, ValueChangedEventArgs args)
     {
-        Dictionary<string,object> update = (Dictionary<string,object>)args.Snapshot.Value;
-        topScore = (long) update["topScore"];
+        Dictionary<string, object> update = (Dictionary<string, object>)args.Snapshot.Value;
+        topScore = (long)update["topScore"];
         topUser = (string)update["topUser"];
-        Debug.Log ("New Top Score: " + topScore);
+        Debug.Log("New Top Score: " + topScore);
         Debug.Log("New Top UserID: " + topUser);
-        if (TopScoreUpdated != null) TopScoreUpdated ();
+        if (TopScoreUpdated != null) TopScoreUpdated();
     }
 
     public void RetrieveTopScores()
@@ -179,15 +183,15 @@ public class DBManager : MonoBehaviour
             {
                 if (task.IsFaulted)
                 {
-                // ERROR HANDLER
-                Debug.Log("Error in RetrieveTopScores() of DBManager");
+                    // ERROR HANDLER
+                    Debug.Log("Error in RetrieveTopScores() of DBManager");
                 }
                 else if (task.IsCompleted)
                 {
                     Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
 
-                // retrieve the top scores and userIDs
-                if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser"))
+                    // retrieve the top scores and userIDs
+                    if (results == null || !results.ContainsKey("topScore") || !results.ContainsKey("topUser"))
                     {
                         dbScores.Child("topUser").SetValueAsync("");
                         LogScore(curScore);
@@ -203,24 +207,24 @@ public class DBManager : MonoBehaviour
                         }
                     }
 
-                // retrieve the userIDs and usernames
-                DatabaseReference usersDb = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.usersDbName);
+                    // retrieve the userIDs and usernames
+                    DatabaseReference usersDb = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
                     usersDb.GetValueAsync().ContinueWith(task2 =>
                     {
                         if (task2.IsFaulted)
                         {
-                        // ERROR HANDLER
-                        Debug.Log("Error in RetrieveTopScores() of DBManager");
+                            // ERROR HANDLER
+                            Debug.Log("Error in RetrieveTopScores() of DBManager");
                         }
                         else if (task2.IsCompleted)
                         {
                             Dictionary<string, object> results2 = (Dictionary<string, object>)task2.Result.Value;
 
-                        // retrieve the top scores and userIDs
-                        if (results2 == null)
+                            // retrieve the top scores and userIDs
+                            if (results2 == null)
                             {
-                            // skip
-                        }
+                                // skip
+                            }
                             else
                             {
                                 foreach (KeyValuePair<string, object> entry in results2)
@@ -229,8 +233,8 @@ public class DBManager : MonoBehaviour
                                 }
                             }
 
-                        // update and display the high scores 
-                        HighScoreDisplay.instance.UpdateHighScores();
+                            // update and display the high scores 
+                            HighScoreDisplay.instance.UpdateHighScores();
                             HighScoreDisplay.instance.DisplayHighScores();
                         }
                     });
@@ -238,4 +242,5 @@ public class DBManager : MonoBehaviour
             });
         }
     }
+    */
 }

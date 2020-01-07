@@ -120,7 +120,7 @@ public class TouchInputHandler : MonoBehaviour
         myPos = GetTilePositionFromTouchInput(myPosPixel);
 
         //=================Productive/Unproductive Obstruction touch=================
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || 
+        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE ||
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
         {
             if ((touch && Input.GetTouch(0).phase == TouchPhase.Began) ||
@@ -132,7 +132,7 @@ public class TouchInputHandler : MonoBehaviour
                     if (BoxScript.currentSelection.Count == 0)
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        Logger.LogAction("BNW_LetterSelected", myPos);
                         lastRemoved = new Vector2(-1, -1);
                     }
                     // add on to the current selection 
@@ -140,7 +140,7 @@ public class TouchInputHandler : MonoBehaviour
                              !BoxScript.currentSelection.Contains(myPos))
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        Logger.LogAction("BNW_LetterSelected", myPos);
                         lastRemoved = new Vector2(-1, -1);
                     }
                     // deselect previous letters if clicking on already highlighted letters
@@ -153,7 +153,7 @@ public class TouchInputHandler : MonoBehaviour
                             BoxScript.RemoveLastSelection();
                         }
                         // go through backwards and remove all letters in selection until the letter that was tapped
-                        else 
+                        else
                         {
                             lastRemoved = new Vector2(-1, -1);
                             for (int i = BoxScript.currentSelection.Count - 1; i >= 0; --i)
@@ -171,7 +171,7 @@ public class TouchInputHandler : MonoBehaviour
                         lastRemoved = new Vector2(-1, -1);
                         // de-select what has already been selected
                         BoxScript.ClearAllSelectedTiles();
-                        BoxScript.LogAction("BNW_DeselectAll");
+                        Logger.LogAction("BNW_DeselectAll");
                     }
                 }
                 /*
@@ -186,9 +186,9 @@ public class TouchInputHandler : MonoBehaviour
             //=====Only for PRODUCTIVE versions of button, not unproductive=====
             else if (GameManagerScript.OBSTRUCTION_PRODUCTIVE &&
                      ((touch && Input.GetTouch(0).phase == TouchPhase.Moved) ||
-                      (!touchSupported && 
-                       !Input.GetMouseButtonDown(0) && 
-                       !Input.GetMouseButtonUp(0) && 
+                      (!touchSupported &&
+                       !Input.GetMouseButtonDown(0) &&
+                       !Input.GetMouseButtonUp(0) &&
                        Input.GetMouseButton(0))))
             {
                 if (myPos.x >= 0)
@@ -201,10 +201,10 @@ public class TouchInputHandler : MonoBehaviour
                     {
                         lastRemoved = new Vector2(-1, -1);
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        Logger.LogAction("BNW_LetterSelected", myPos);
                     }
                     // do nothing if you moved within the most recently selected tile
-                    else if (BoxScript.currentSelection.Count > 0 
+                    else if (BoxScript.currentSelection.Count > 0
                              && BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
                     {
                         // do nothing
@@ -230,19 +230,19 @@ public class TouchInputHandler : MonoBehaviour
         else
         {
             // If Control, automatically play word when lifting the finger, and cancel if canceled for all UI's
-            if (((touch && Input.GetTouch(0).phase == TouchPhase.Ended) || 
+            if (((touch && Input.GetTouch(0).phase == TouchPhase.Ended) ||
                  !touchSupported && Input.GetMouseButtonUp(0))
                 && BoxScript.currentSelection.Count > 2)
             {
                 gameManager.PlayWord();
             }
             else if ((touch && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Canceled)
-                     || ((touch && Input.GetTouch(0).phase == TouchPhase.Ended) || 
+                     || ((touch && Input.GetTouch(0).phase == TouchPhase.Ended) ||
                          (!touchSupported && Input.GetMouseButtonUp(0))
                     && BoxScript.currentSelection.Count < 3))
             {
                 BoxScript.ClearAllSelectedTiles();
-                BoxScript.LogAction("BNW_DeselectAll");
+                Logger.LogAction("BNW_DeselectAll");
             }
 
             if (myPos.x >= 0)
@@ -254,28 +254,28 @@ public class TouchInputHandler : MonoBehaviour
                     if (BoxScript.currentSelection.Count == 0)
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        Logger.LogAction("BNW_LetterSelected", myPos);
                     }
                     else
                     {
                         // de-select what has already been selected
                         BoxScript.ClearAllSelectedTiles();
-                        BoxScript.LogAction("BNW_DeselectAll");
+                        Logger.LogAction("BNW_DeselectAll");
                     }
                 }
                 else if ((touch && Input.GetTouch(0).phase == TouchPhase.Moved) ||
                          (!touchSupported && Input.GetMouseButton(0)))
                 {
                     // new tile and it isn't already selected)
-                    if (BoxScript.currentSelection.Count > 0 && 
+                    if (BoxScript.currentSelection.Count > 0 &&
                         BoxScript.IsNextTo(myPos, BoxScript.currentSelection[BoxScript.currentSelection.Count - 1]) &&
                         !BoxScript.currentSelection.Contains(myPos))
                     {
                         BoxScript.SelectTile(myPos);
-                        BoxScript.LogAction("BNW_LetterSelected", myPos);
+                        Logger.LogAction("BNW_LetterSelected", myPos);
                     }
                     // most recently selected tile (then do nothing, since you just selected it)
-                    else if (BoxScript.currentSelection.Count > 0 && 
+                    else if (BoxScript.currentSelection.Count > 0 &&
                              BoxScript.currentSelection[BoxScript.currentSelection.Count - 1] == myPos)
                     {
                         // do nothing

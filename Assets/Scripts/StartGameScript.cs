@@ -4,13 +4,17 @@ using Firebase.Unity.Editor;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
 using System.IO;
+using UnityEngine.Audio;
 
-public class StartGameScript : MonoBehaviour {
+public class StartGameScript : MonoBehaviour
+{
 
     public const string DATA_PATH = "/BraveNewWord_playerData.dat";
     public GameObject settingsButton;
     public GameObject instructionsPanel;
     public GameObject settingsPanel;
+    public AudioMixer mixer;
+    public AudioSettings audioSettings;
 
     // use for initialization
     void Awake()
@@ -28,21 +32,22 @@ public class StartGameScript : MonoBehaviour {
         Screen.orientation = ScreenOrientation.Portrait;
 
         // set input method based on if touch input is supported or not
-        if (Input.touchSupported) 
+        if (Input.touchSupported)
         {
-            Debug.Log("Touch supported!");
+            //Debug.Log("Touch supported!");
             TouchInputHandler.touchSupported = true;
         }
-        else 
+        else
         {
-            Debug.Log("Touch not supported!");
+            //Debug.Log("Touch not supported!");
             TouchInputHandler.touchSupported = false;
         }
 
         // Firebase database logistics for editor
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
-        
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
+
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+        {
             Firebase.DependencyStatus dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
@@ -55,12 +60,17 @@ public class StartGameScript : MonoBehaviour {
                 GameManagerScript.LOGGING = false;
             }
         });
+    }
 
+    void Start()
+    {
         // DEBUG MODE: Randomize the various frictional features of the game
         //RandomizeFeatures();
 
         // Load from file
         LoadFile();
+
+        PlayBgMusic();
     }
 
     void Update()
@@ -88,10 +98,35 @@ public class StartGameScript : MonoBehaviour {
         }
     }
 
+    void PlayBgMusic()
+    {
+        // TODO: MOVE THIS code to the GameManager Audio component class?
+        if (GameManagerScript.JUICE_PRODUCTIVE)
+        {
+            AudioManager.instance.Play("JuicyTheme");
+        }
+        else if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        {
+            AudioManager.instance.Play("DubstepTheme");
+        }
+        else
+        {
+            AudioManager.instance.Play("CalmTheme");
+        }
+    }
+
+    void OnDisable()
+    {
+        // save player data
+        GameManagerScript.SavePlayerData(mixer);
+    }
+
     public void LoadFile()
     {
         if (File.Exists(Application.persistentDataPath + DATA_PATH))
         {
+            //Debug.Log("Loading from file...");
+
             // Read the file to load the frictional pattern data
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + DATA_PATH, FileMode.Open);
@@ -101,16 +136,28 @@ public class StartGameScript : MonoBehaviour {
 
             //// set the local variables to the data from the file
             // TODO: uncomment this before deploy
-            
+
             GameManagerScript.OBSTRUCTION_PRODUCTIVE = data.obstructionProductive;
             GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = data.obstructionUnproductive;
             GameManagerScript.JUICE_PRODUCTIVE = data.juiceProductive;
             GameManagerScript.JUICE_UNPRODUCTIVE = data.juiceUnproductive;
-            GameManagerScript.DISPLAY_TUTORIAL = false;
             GameManagerScript.INSTRUCTIONS_PANEL = data.instructions;
             GameManagerScript.userID = data.userID;
+            GameManagerScript.username = data.username;
             GameManagerScript.myHighScore = data.myHighScore;
             GameManagerScript.gameNumber = data.gameNumber;
+
+            // check to see if some values are blank
+            if (GameManagerScript.userID == "")
+            {
+                GameManagerScript.userID = Guid.NewGuid().ToString();
+            }
+
+            // set audio levels
+            audioSettings.UpdateSliders(data.masterVolume, data.sfxVolume, data.musicVolume);
+            mixer.SetFloat("masterVolume", data.masterVolume);
+            mixer.SetFloat("sfxVolume", data.sfxVolume);
+            mixer.SetFloat("musicVolume", data.musicVolume);
 
             // TODO: DEBUG ONLY: COMMENT OUT before release
             /*
@@ -137,7 +184,7 @@ public class StartGameScript : MonoBehaviour {
         Debug.Log("Juice Unprod.: " + GameManagerScript.JUICE_UNPRODUCTIVE);
     }
 
-    public void RandomizeFeatures() 
+    public void RandomizeFeatures()
     {
         // If file doesn't exist yet, randomize and initialize variables
         // default to false
@@ -177,7 +224,7 @@ public class StartGameScript : MonoBehaviour {
         GameManagerScript.userID = Guid.NewGuid().ToString();
     }
 
-    public void OpenTermsOfService() 
+    public void OpenTermsOfService()
     {
         Application.OpenURL("http://is4ac.github.io/brave-new-word-site/terms");
     }
@@ -193,7 +240,8 @@ public class StartGameScript : MonoBehaviour {
         // sign in anomymously
         Firebase.Auth.FirebaseAuth auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
-        auth.SignInAnonymouslyAsync().ContinueWith(task => {
+        auth.SignInAnonymouslyAsync().ContinueWith(task =>
+        {
             if (task.IsCanceled)
             {
                 Debug.LogError("SignInAnonymouslyAsync was canceled.");

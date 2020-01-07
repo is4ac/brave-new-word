@@ -1,28 +1,39 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using Firebase.Database;
+using UnityEngine.Audio;
+
+/**
+ * Design TODOs:
+ *
+ * 1. Break up this class into components?
+ *      a. Gameplay component (timer, spawn boxes, instructions/settings panels, play button, etc.)
+ *      b. Global Game component (global static variables, etc)
+ *      c. Audio component (background music start -- currently in AudioManager class, move)
+ *      d. Logging component (could be the same class as BoxScript's logging component)
+ * 2. Make static / global variables more static and lean so it doesn't depend on the scene
+ *      (and limit it to the really global variables like LOGGING, VERSION, and feature booleans)
+ * 3. 
+ */
+
 
 public class GameManagerScript : MonoBehaviour
 {
-
     // singleton instance
     public static GameManagerScript gameManager;
 
     // Set to true to log to Firebase database, false to turn off
     // TODO: set DEBUG to false before full deploy!
-    public static bool DEBUG = true;
+    public static bool DEBUG = false;
     // TODO: set LOGGING to true before deploy!
     public static bool LOGGING = true;
-    public const string LOGGING_VERSION = "BNWLogs_V0_0_6";
-    public const string APP_VERSION = "BNW_0_0_6";
-    public static string usersDbName = "users" + DBManager.versionNumber;
-
-    public DatabaseReference dbUsers;
+    // TODO: Change version number after each update
+    public const string VERSION = "0_1_2_DEV";
+    public const string LOGGING_VERSION = "BNWLogs_V" + VERSION;
+    public const string APP_VERSION = "BNW_" + VERSION;
 
     /*************************************
      * Feature booleans - these keep track of what features are on/off for this current game
@@ -31,7 +42,6 @@ public class GameManagerScript : MonoBehaviour
     public static bool OBSTRUCTION_UNPRODUCTIVE;    // users must tap to select each letter individually
     public static bool JUICE_PRODUCTIVE;            // juiciness is distracting but matches game state
     public static bool JUICE_UNPRODUCTIVE;          // juiciness is distracting and doesn't match game state
-    public static bool DISPLAY_TUTORIAL;            // OUTDATED // show the tutorial screen with instructions at beginning of game
                                                     /*********************************************/
 
     public GameObject playButton;
@@ -41,12 +51,15 @@ public class GameManagerScript : MonoBehaviour
     public GameObject highScoreTextObject;
     public GameObject highestScoringWordObject;
     public GameObject rarestWordObject;
+    public GameObject audioSettingsPanel;
+    public AudioSettings audioSettings;
     public ConsentMenuScript menuScript;
     public GameObject settingsButton;
     public GameObject progressBarFG; // the progress bar that shows the timer
     public ParticleSystem bgAnimation; // background animation for unproductive juice
     public ParticleSystem bgAnimation2; // bg animation for unproductive juice 2
     public ParticleSystem streakingParticles; // Unproductive juicy effects
+    public AudioMixer mixer;    // Audio mixer for volume settings
     public static string GAME_ID;
     public static string username;
     public static string userID;
@@ -66,7 +79,7 @@ public class GameManagerScript : MonoBehaviour
     public static string myRarestWord = "";
     public static float myRarestWordRarity;
     public static int gameNumber;
-    public static DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+    public static DateTime epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     private static float timer;
     private static float waitTime = 0.2f;
@@ -93,15 +106,6 @@ public class GameManagerScript : MonoBehaviour
             gameManager = this;
             gameOverPanel.SetActive(false);
             instructionsPanel.SetActive(false);
-
-            if (DEBUG)
-            {
-                settingsButton.SetActive(true);
-            }
-            else
-            {
-                settingsButton.SetActive(false);
-            }
         }
         else
         {
@@ -117,14 +121,8 @@ public class GameManagerScript : MonoBehaviour
 
         deviceModel = SystemInfo.deviceModel;
 
-        if (LOGGING) dbUsers = FirebaseDatabase.DefaultInstance.GetReference(usersDbName);
-
         // Generate a new GAME_ID using the Guid class
         GAME_ID = Guid.NewGuid().ToString();
-        Debug.Log("Game id: " + GAME_ID);
-
-        // retrieve the player's username
-        username = PlayerPrefs.GetString("username");
 
         // set the initial submission epoch time
         previousSubmissionTime = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds);
@@ -157,8 +155,14 @@ public class GameManagerScript : MonoBehaviour
             //BeginGame();
         }
 
+        // Set the audio setting sliders to the right levels
+        mixer.GetFloat("masterVolume", out float masterVol);
+        mixer.GetFloat("sfxVolume", out float sfxVol);
+        mixer.GetFloat("musicVolume", out float musicVol);
+        audioSettings.UpdateSliders(masterVol, sfxVol, musicVol);
+
         // do various logging for the start of the game
-        LogStartOfGame();
+        Logger.LogStartOfGame();
     }
 
     // Update is called once per frame
@@ -169,9 +173,17 @@ public class GameManagerScript : MonoBehaviour
         {
             if (Input.GetKey(KeyCode.Escape))
             {
-                // Change scenes back to main menu
-                menuScript.GoToNextScene(0);
-                return;
+                if (audioSettingsPanel.activeInHierarchy)
+                {
+                    Logger.LogAudioSettings();
+                    audioSettingsPanel.SetActive(false);
+                }
+                else
+                {
+                    // Change scenes back to main menu
+                    menuScript.GoToNextScene(0);
+                    return;
+                }
             }
         }
 
@@ -261,11 +273,11 @@ public class GameManagerScript : MonoBehaviour
                     // enable input again after all boxes have fallen
                     TouchInputHandler.inputEnabled = true;
 
-                    LogKeyFrame("post");
+                    Logger.LogKeyFrame("post");
                 }
                 else
                 {
-                    LogKeyFrame("gameStart");
+                    Logger.LogKeyFrame("gameStart");
 
                     // display the instructions/start game panel
                     instructionsPanel.SetActive(true);
@@ -326,11 +338,16 @@ public class GameManagerScript : MonoBehaviour
      */
     void OnDisable()
     {
-        SavePlayerData();
+        SavePlayerData(mixer);
     }
 
-    void SavePlayerData()
+    public static void SavePlayerData(AudioMixer mixer)
     {
+        // grab audio volume levels
+        mixer.GetFloat("masterVolume", out float masterVol);
+        mixer.GetFloat("sfxVolume", out float sfxVol);
+        mixer.GetFloat("musicVolume", out float musicVol);
+
         // Open the file to write the data
         BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Create(Application.persistentDataPath + StartGameScript.DATA_PATH);
@@ -343,83 +360,14 @@ public class GameManagerScript : MonoBehaviour
                                          false,
                                          userID,
                                          myHighScore,
-                                         gameNumber);
+                                         gameNumber,
+                                         masterVol,
+                                         sfxVol,
+                                         musicVol);
 
         // serialize and write to file
         bf.Serialize(file, data);
         file.Close();
-    }
-
-    public static void LogInstructionsClick(Vector2 pos)
-    {
-        if (LOGGING)
-        {
-            // log the location of the click
-            ClickLogEntry entry = new ClickLogEntry();
-            ClickLogEntry.ClickPayload payload = new ClickLogEntry.ClickPayload
-            {
-                screenX = pos.x,
-                screenY = pos.y
-            };
-
-            entry.setValues("BNW_InstructionsClosed", "BNW_Action", payload);
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            reference.Push().SetRawJsonValueAsync(json);
-        }
-    }
-
-    public void LogStartOfGame()
-    {
-        if (LOGGING)
-        {
-            Debug.Log("Logging beginning of game");
-
-            // Log beginning of game
-            MetaLogEntry entry = new MetaLogEntry();
-            entry.setValues("BNW_GameStart", "BNW_Meta", new MetaLogEntry.MetaPayload("start"));
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            reference.Push().SetRawJsonValueAsync(json);
-
-            Debug.Log("logging game info");
-
-            // insert new game entry into database
-            reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION + "_games");
-            DatabaseReference child = reference.Child(GAME_ID);
-
-            // Log the game details and type of game
-            child.Child("obstructionProductive").SetValueAsync(OBSTRUCTION_PRODUCTIVE);
-            child.Child("obstructionUnproductive").SetValueAsync(OBSTRUCTION_UNPRODUCTIVE);
-            child.Child("juiceProductive").SetValueAsync(JUICE_PRODUCTIVE);
-            child.Child("juiceUnproductive").SetValueAsync(JUICE_UNPRODUCTIVE);
-            child.Child("username").SetValueAsync(username);
-            child.Child("gameID").SetValueAsync(GAME_ID);
-            child.Child("userID").SetValueAsync(userID);
-            child.Child("loggingVersion").SetValueAsync(LOGGING_VERSION);
-            child.Child("appVersion").SetValueAsync(APP_VERSION);
-            child.Child("gameNumber").SetValueAsync(gameNumber);
-
-            // Log username into users database if it doesn't already exist or if the username has changed
-            dbUsers.GetValueAsync().ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    // ERROR HANDLER
-                    Debug.Log("Error in logging user into users database of GameManagerScript");
-                }
-                else if (task.IsCompleted)
-                {
-                    Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
-
-                    // set the value of userID's username if it doesn't exist or if it changed
-                    if (results == null || !results.ContainsKey(userID) || !results[userID].Equals(username))
-                    {
-                        dbUsers.Child(userID).SetValueAsync(username);
-                    }
-                }
-            });
-        }
     }
 
     public void SetButtonDisplay(bool value)
@@ -454,10 +402,10 @@ public class GameManagerScript : MonoBehaviour
     public void PlayWord()
     {
         BoxScript.PlayWord();
-        Debug.Log("Play word pressed.");
+        //Debug.Log("Play word pressed.");
 
         // display the high score?
-        Debug.Log("Top score: " + DBManager.instance.topScore);
+        //Debug.Log("Top score: " + DBManager.instance.topScore);
     }
 
     public static void BeginGame()
@@ -525,7 +473,7 @@ public class GameManagerScript : MonoBehaviour
         playButton.GetComponent<Button>().interactable = false;
 
         // Log the final state of the game
-        LogEndOfGame();
+        Logger.LogEndOfGame();
     }
 
     public static bool GameHasStarted()
@@ -566,128 +514,23 @@ public class GameManagerScript : MonoBehaviour
                                        // PlayerPrefs.DeleteKey("currentPath");
     }
 
-    public static void LogKeyFrame(string state)
-    {
-        if (LOGGING)
-        {
-            Debug.Log("Logging full game state");
-
-            // log the current full game state
-            KeyFrameLogEntry entry = new KeyFrameLogEntry();
-            KeyFrameLogEntry.KeyFramePayload payload = new KeyFrameLogEntry.KeyFramePayload();
-
-            payload.board = BoxScript.GetBoardPayload();
-            payload.totalScore = BoxScript.score;
-            payload.timeElapsed = Time.time;
-            payload.totalInteractions = BoxScript.totalInteractions;
-            payload.wordsPlayed = BoxScript.wordsPlayed;
-            payload.state = state;
-
-            entry.setValues("BNW_GameState", "BNW_KeyFrame", payload);
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            reference.Push().SetRawJsonValueAsync(json);
-        }
-    }
-
-    public static void LogEndOfGame()
-    {
-        if (LOGGING)
-        {
-            Debug.Log("Logging end of game");
-
-            // log the end game state when the player finished the round
-            LogKeyFrame("gameEnd");
-
-            // log the end of the game
-            MetaLogEntry metaEntry = new MetaLogEntry();
-            metaEntry.setValues("BNW_GameEnd", "BNW_Meta", new MetaLogEntry.MetaPayload("end"));
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            string json = JsonUtility.ToJson(metaEntry);
-            reference.Push().SetRawJsonValueAsync(json);
-        }
-    }
-
-    /**
-	 * User or the OS force quits the application
-	 */
-    public static void LogGamePause()
-    {
-        if (LOGGING)
-        {
-            Debug.Log("Application pausing after " + Time.time + " seconds");
-
-            // log the game state before game pauses
-            LogKeyFrame("gamePause");
-
-            // log the pause
-            MetaLogEntry metaEntry = new MetaLogEntry();
-            metaEntry.setValues("BNW_GamePaused", "BNW_Meta", new MetaLogEntry.MetaPayload("pause"));
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            string json = JsonUtility.ToJson(metaEntry);
-            reference.Push().SetRawJsonValueAsync(json);
-        }
-    }
-
-    public static void LogGameUnpause()
-    {
-        if (LOGGING)
-        {
-            // log the unpause
-            MetaLogEntry metaEntry = new MetaLogEntry();
-            metaEntry.setValues("BNW_GameUnpaused", "BNW_Meta", new MetaLogEntry.MetaPayload("unpause"));
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(LOGGING_VERSION);
-            string json = JsonUtility.ToJson(metaEntry);
-            reference.Push().SetRawJsonValueAsync(json);
-        }
-    }
-
     void OnApplicationPause(bool pauseStatus)
     {
         if (pauseStatus)
         {
             // on pause, pause the timings for logging word submits
-            LogGamePause();
+            Logger.LogGamePause();
 
             pauseTime = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds);
         }
         else
         {
             // on unpauses, resume the timer for logging word submits
-            LogGameUnpause();
+            Logger.LogGameUnpause();
 
             previousSubmissionTime =
                 ((System.DateTime.UtcNow - epochStart).TotalMilliseconds) - pauseTime
                     + previousSubmissionTime;
         }
-    }
-}
-
-[Serializable]
-class PlayerData
-{
-    public bool obstructionProductive;      // users must click on button to submit word
-    public bool obstructionUnproductive;    // show currently selected word score
-    public bool juiceProductive;            // feedback during highlighting of words
-    public bool juiceUnproductive;          // word score is based on word rarity, not frequency?
-    public string username;                 // the public username to display
-    public bool instructions;               // whether or not to show the instructions
-    public string userID;                   // the unique user ID
-    public long myHighScore;                // the local high score of the player
-    public int gameNumber;                  // the # of game the player is playing
-
-    public PlayerData(bool obP, bool obU, bool juiceP, bool juiceU,
-                      string username, bool instructions, string userID,
-                     long myHighScore, int gameNumber)
-    {
-        obstructionProductive = obP;
-        obstructionUnproductive = obU;
-        juiceProductive = juiceP;
-        juiceUnproductive = juiceU;
-        this.username = username;
-        this.instructions = instructions;
-        this.userID = userID;
-        this.myHighScore = myHighScore;
-        this.gameNumber = gameNumber;
     }
 }

@@ -7,6 +7,19 @@ using Firebase.Database;
 using TMPro;
 using EZCameraShake;
 
+
+/**
+ * Design TODOs:
+ *
+ * Potential components:
+ * 1. "Physics" component (tiles falling)
+ * 2. Individual box/letters component (basic info like grid location, letter, etc)
+ * 3. "Word"/scoring component (current word selections, scoring functions, etc.)
+ * 4. Animation/Visual component (particle systems, highlight colors, score/text displays, etc.)
+ * 5. Audio component
+ * 6. Logging component (maybe need to create a separate class for this that handles all the logging??)
+ */
+
 public class BoxScript : MonoBehaviour
 {
     static BoxScript instance;   // static reference to itself
@@ -25,10 +38,6 @@ public class BoxScript : MonoBehaviour
     public static Dictionary<string, Vector2> freqDictionary;
     public static int totalInteractions;
     public static int wordsPlayed;
-    //public const int MAX_TURNS = 1;
-    //public static int turnsLeft = MAX_TURNS;
-    //public const float FREQUENCY_THRESHOLD_MIN = 0.17f;
-    //private static float frequencyThreshold = FREQUENCY_THRESHOLD_MIN;
     public GameObject _explodeParticleSystemPrefab;
     public GameObject _bubblesLandingParticleSystemPrefab;
     public GameObject _shinyParticleSystemPrefab;
@@ -41,14 +50,7 @@ public class BoxScript : MonoBehaviour
             .2f, .15f,
             .1f
         };
-    static int[] letterScores = {  // scores of each individual letter
-        1,4,4,3,1,      // A B C D E
-        5,3,5,1,10,      // F G H I J
-        6,2,4,2,1,      // K L M N O
-        4,10,2,1,2,     // P Q R S T
-        2,5,5,10,5,10    // U V W X Y Z
-    };
-    string myLetter;
+    public string Letter { get; set; }
     float fall;
     bool falling = true;
     bool columnFalling;
@@ -70,7 +72,7 @@ public class BoxScript : MonoBehaviour
         // initialize objects
         if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
         {
-            myLetter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
+            Letter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
         }
 
         if (scoreText == null)
@@ -217,71 +219,11 @@ public class BoxScript : MonoBehaviour
 
     public void SetLetter(char letter)
     {
-        myLetter = letter + "";
-        this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text = myLetter;
+        Letter = letter + "";
+        this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text = Letter;
     }
 
-    // BNW_LetterSelected or BNW_LetterDeselected logging
-    public static void LogAction(string key, Vector2 pos)
-    {
-        if (GameManagerScript.LOGGING)
-        {
-            Debug.Log("Attempts to log data");
-            string letter = grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<BoxScript>().myLetter;
-            LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
-            payload.setValues(letter, (int)pos.x, (int)pos.y);
-            LetterLogEntry entry = new LetterLogEntry();
-            entry.setValues(key, "BNW_Action", payload);
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
-            DatabaseReference child = reference.Push();
-            child.SetRawJsonValueAsync(json);
-
-            ++totalInteractions;
-        }
-    }
-
-    // BNW_LetterSelected or BNW_LetterDeselected logging
-    public static void LogAction(string key, string letter, int x, int y)
-    {
-        if (GameManagerScript.LOGGING)
-        {
-            Debug.Log("Attempts to log data");
-            LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
-            payload.setValues(letter, x, y);
-            LetterLogEntry entry = new LetterLogEntry();
-            entry.setValues(key, "BNW_Action", payload);
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
-            DatabaseReference child = reference.Push();
-            child.SetRawJsonValueAsync(json);
-
-            ++totalInteractions;
-        }
-    }
-
-    // BNW_DeselectAll logging
-    public static void LogAction(string key)
-    {
-        if (GameManagerScript.LOGGING)
-        {
-            Debug.Log("Attempts to log data");
-            LogEntry.LetterPayload[] letters = GetLetterPayloadsFromCurrentWord();
-            DeselectWordLogEntry.DeselectWordPayload wordPayload = new DeselectWordLogEntry.DeselectWordPayload();
-            wordPayload.word = currentWord;
-            wordPayload.letters = letters;
-            DeselectWordLogEntry entry = new DeselectWordLogEntry();
-            entry.setValues(key, "BNW_Action", wordPayload);
-            string json = JsonUtility.ToJson(entry);
-            DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
-            DatabaseReference child = reference.Push();
-            child.SetRawJsonValueAsync(json);
-
-            ++totalInteractions;
-        }
-    }
-
-    static LogEntry.LetterPayload[] GetLetterPayloadsFromCurrentWord()
+    public static LogEntry.LetterPayload[] GetLetterPayloadsFromCurrentWord()
     {
         LogEntry.LetterPayload[] toRet = new LogEntry.LetterPayload[currentSelection.Count];
         for (int i = 0; i < currentSelection.Count; ++i)
@@ -302,8 +244,8 @@ public class BoxScript : MonoBehaviour
         // Firebase logging
         if (GameManagerScript.LOGGING)
         {
-            Debug.Log("Attempts to log data");
-            GameManagerScript.LogKeyFrame("pre");
+            //Debug.Log("Attempts to log data");
+            Logger.LogKeyFrame("pre");
 
             string json = JsonUtility.ToJson(dbEntry);
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
@@ -316,7 +258,7 @@ public class BoxScript : MonoBehaviour
 
         // shake the camera
         CameraShaker.Instance.ShakeOnce(5f, 5f, .1f, .6f);
-        
+
 
         if (valid)
         {
@@ -353,35 +295,6 @@ public class BoxScript : MonoBehaviour
         }
     }
 
-    public static void UpdateTurnsLeft(string word)
-    {
-        // TODO: commenting out for now as I implement a timer instead
-        /*
-        float freq = GetWordFreq(word);
-        float STEP_SIZE = 0.0025f;
-
-        if (freq >= frequencyThreshold) {
-            // TODO: animate some particles
-
-            if (turnsLeft < MAX_TURNS) turnsLeft++;
-
-            // Increase the threshold slightly to make it harder
-            frequencyThreshold += STEP_SIZE * 2;
-        }
-        else {
-            // TODO: animate some particles?
-
-            turnsLeft--;
-
-            // decrease the threshold slightly (as long as it is still above the min)
-            if (frequencyThreshold > FREQUENCY_THRESHOLD_MIN)
-            {
-                frequencyThreshold -= STEP_SIZE;
-            }
-        }
-        */
-    }
-
     public static bool UpdateScore(SubmitWordLogEntry dbEntry)
     {
         // firebase logging
@@ -397,14 +310,8 @@ public class BoxScript : MonoBehaviour
             score += submittedScore;
             if (scoreText != null) { scoreText.text = "Points: " + score; }
 
-            // Update the turns remaining based on the frequency of the word
-            UpdateTurnsLeft(currentWord);
-
             payload.success = true;
             payload.scoreTotal = submittedScore;
-
-            // update the remaining turns progress bar
-            //UpdateScoreProgressBar();
 
             // update the highest scoring word if necessary
             if (submittedScore > GameManagerScript.myHighestScoringWordScore)
@@ -478,24 +385,6 @@ public class BoxScript : MonoBehaviour
         int bonus = GetBonus(wordRank) / 2;
 
         return (long)(baseScore * (1 + wordRank * 4)) + bonus;
-    }
-
-    /**
-     * Adds each letter's frequency score in a word and returns the sum
-     */
-    static int GetLetterFrequencyScore(string word)
-    {
-        int sum = 0; // store the total score
-        word = word.Trim().ToLower(); // make the word lowercase
-
-        // loop through each letter in the word
-        foreach (char letter in word)
-        {
-            // add up the frequency score for each letter
-            sum += letterScores[letter - 'a'];
-        }
-
-        return sum;
     }
 
     static int GetBonus(float freq)
@@ -624,7 +513,7 @@ public class BoxScript : MonoBehaviour
     {
         if (index >= currentSelection.Count)
         {
-            Debug.Log("Error: tried to remove tiles past index out of bounds.");
+            //Debug.Log("Error: tried to remove tiles past index out of bounds.");
             return;
         }
 
@@ -647,7 +536,7 @@ public class BoxScript : MonoBehaviour
         }
 
         // log the removed letters
-        LogAction("BNW_LetterDeselected", currentWord.Substring(index + 1), -1, -1);
+        Logger.LogAction("BNW_LetterDeselected", currentWord.Substring(index + 1), -1, -1);
 
         // Remove the letters
         currentWord = currentWord.Substring(0, index + 1);
@@ -676,6 +565,15 @@ public class BoxScript : MonoBehaviour
 
     public static void RemoveLastSelection()
     {
+        /******************************************************************
+         * FEATURE: If juiciness is on, play particles when deselecting!
+         ******************************************************************/
+        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+        {
+            Vector2 last = currentSelection[currentSelection.Count - 1];
+            grid[(int)last.x, (int)last.y].gameObject.GetComponent<BoxScript>().PlayShinySelectParticles();
+        }
+
         // get the last selected letter tile and remove it from the list (and unhighlight it)
         Vector2 v = currentSelection[currentSelection.Count - 1];
         BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
@@ -684,7 +582,7 @@ public class BoxScript : MonoBehaviour
         currentSelection.Remove(v);
 
         // log the last removed letter
-        LogAction("BNW_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
+        Logger.LogAction("BNW_LetterDeselected", currentWord.Substring(currentWord.Length - 1, 1), (int)v.x, (int)v.y);
 
         // Remove the last letter
         currentWord = currentWord.Substring(0, currentWord.Length - 1);
@@ -709,15 +607,6 @@ public class BoxScript : MonoBehaviour
 
         // Play sound effect
         AudioManager.instance.Play("Select");
-
-        /******************************************************************
-         * FEATURE: If juiciness is on, play particles when deselecting!
-         ******************************************************************/
-        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
-        {
-            Vector2 last = currentSelection[currentSelection.Count - 1];
-            grid[(int)last.x, (int)last.y].gameObject.GetComponent<BoxScript>().PlayShinySelectParticles();
-        }
     }
 
     public bool IsInsideTile(Vector2 pos, float sensitivity)
@@ -759,19 +648,6 @@ public class BoxScript : MonoBehaviour
         return false;
     }
 
-    public static void UpdateScoreProgressBar()
-    {
-        /*
-        float scale = turnsLeft*1.0f / MAX_TURNS;
-
-		if (scale > 1) {
-			scale = 1.0f;
-		}
-
-		GameObject.Find("ProgressBarFG").transform.localScale = new Vector3(scale, 1.0f, 1.0f);
-		*/
-    }
-
     public static void DeleteAllSelectedTiles()
     {
         //Debug.Log("deleting all tiles");
@@ -801,7 +677,7 @@ public class BoxScript : MonoBehaviour
 
     public void AnimateSuccess()
     {
-        Debug.Log("Animating success...");
+        //Debug.Log("Animating success...");
 
         // Play the particle system
         PlaySuccessParticleSystem();
@@ -928,7 +804,7 @@ public class BoxScript : MonoBehaviour
 
     public void DisplayBorder()
     {
-        this.gameObject.transform
+        gameObject.transform
             .Find("Border")
             .GetComponent<SpriteRenderer>()
             .color = Color.white;
@@ -947,7 +823,7 @@ public class BoxScript : MonoBehaviour
         currentSelection.Add(pos);
         GameObject gameObject = grid[(int)pos.x, (int)pos.y].gameObject;
         BoxScript boxScript = gameObject.GetComponent<BoxScript>();
-        currentWord += boxScript.myLetter;
+        currentWord += boxScript.Letter;
 
         /*****************************************************************
          * FEATURE: Highlighting color gradient based on frequency feature
@@ -1264,6 +1140,8 @@ public class BoxScript : MonoBehaviour
         selectedScore.text = "";
     }
 
+
+    // TODO: move these two functions to a different class
     public static string GetBoardPayload()
     {
         string boardString = "";
@@ -1274,7 +1152,7 @@ public class BoxScript : MonoBehaviour
             {
                 if (grid[i, j] != null)
                 {
-                    boardString += grid[i, j].gameObject.GetComponent<BoxScript>().myLetter;
+                    boardString += grid[i, j].gameObject.GetComponent<BoxScript>().Letter;
                 }
             }
 
@@ -1297,7 +1175,7 @@ public class BoxScript : MonoBehaviour
             {
                 if (grid[i, j] != null)
                 {
-                    letters[i, j] = grid[i, j].gameObject.GetComponent<BoxScript>().myLetter[0];
+                    letters[i, j] = grid[i, j].gameObject.GetComponent<BoxScript>().Letter[0];
                 }
             }
         }

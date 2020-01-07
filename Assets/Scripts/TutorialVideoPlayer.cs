@@ -3,23 +3,26 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
 
-public class TutorialVideoPlayer : MonoBehaviour {
+public class TutorialVideoPlayer : MonoBehaviour
+{
     public VideoPlayer videoPlayer;
     public RawImage rawImage;
     public GameObject loadingText;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         StartCoroutine(PlayVideo());
-	}
+    }
 
-    IEnumerator PlayVideo() {
+    IEnumerator PlayVideo()
+    {
         videoPlayer.Prepare();
 
         //Wait until video is prepared
         while (!videoPlayer.isPrepared)
         {
-            Debug.Log("Preparing Video");
+            //Debug.Log("Preparing Video");
             yield return null;
         }
 
@@ -27,8 +30,9 @@ public class TutorialVideoPlayer : MonoBehaviour {
         videoPlayer.Play();
         rawImage.texture = videoPlayer.texture;
     }
-	
-    public void PlayGameButtonHandler() {
-        
+
+    public void PlayGameButtonHandler()
+    {
+
     }
 }

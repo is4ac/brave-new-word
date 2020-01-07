@@ -3,44 +3,43 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-public class ConsentMenuScript : MonoBehaviour {
+public class ConsentMenuScript : MonoBehaviour
+{
 
     public int sceneToStart;                // the scene index to transition to after this scene
     public GameObject loadingPanel;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         loadingPanel.SetActive(false);
+    }
 
-        if (GameManagerScript.DISPLAY_TUTORIAL) {
-            sceneToStart = 2;
-        } else {
-            sceneToStart = 3;
-        }
-	}
-
-    public void ClickYes() {
+    public void ClickYes()
+    {
         GameManagerScript.LOGGING = true;
         GoToNextScene(sceneToStart);
     }
 
-    public void ClickNo() {
+    public void ClickNo()
+    {
         GameManagerScript.LOGGING = false;
         GoToNextScene(sceneToStart);
     }
 
-    public void GoToNextScene(int scene) {
+    public void GoToNextScene(int scene)
+    {
         //If changeScenes is true, start fading and change scenes halfway through animation when screen is blocked by FadeImage
-        if (scene != 1) 
+        if (scene < 2)
         {
             // Start loading the game scene
             StartCoroutine(LoadDelayed(scene));
-        } 
+        }
     }
 
     public IEnumerator LoadDelayed(int scene)
     {
-        Debug.Log("Loading next scene");
+        //Debug.Log("Loading next scene");
 
         loadingPanel.SetActive(true);
 
@@ -48,7 +47,7 @@ public class ConsentMenuScript : MonoBehaviour {
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(scene);
 
         // Wait until the asynchronous scene fully loads
-        while(!asyncLoad.isDone)
+        while (!asyncLoad.isDone)
         {
             // Update the loading text periods
             TMP_Text text = loadingPanel.GetComponentInChildren<TMP_Text>();

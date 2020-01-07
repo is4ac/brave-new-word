@@ -2,8 +2,9 @@
  * Node object for Trie class.
  * 
  * Code retrieved from https://visualstudiomagazine.com/articles/2015/10/20/text-pattern-search-trie-class-net.aspx
- */ 
+ */
 
+/*
 using System;
 using System.Collections.Generic;
 
@@ -45,3 +46,4 @@ public class Node
 	}
 }
 
+*/

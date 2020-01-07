@@ -7,21 +7,21 @@ using TMPro;
 public class RandomNameScript : MonoBehaviour
 {
 
-	public TextAsset usernamesText;
+    public TextAsset usernamesText;
 
-	public static string username;
-	public TextMeshProUGUI welcomeText;
-	private static List<string> attributes = null;
-	private static List<string> colors = null;
-	private static List<string> animals = null;
-	public static Firebase.Auth.FirebaseAuth auth;
-	private Firebase.Auth.FirebaseUser newUser;
+    public static string username;
+    public TextMeshProUGUI welcomeText;
+    private static List<string> attributes = null;
+    private static List<string> colors = null;
+    private static List<string> animals = null;
+    public static Firebase.Auth.FirebaseAuth auth;
+    private Firebase.Auth.FirebaseUser newUser;
 
-	// Use this for initialization
-	void Start ()
-	{
-		// Generate a random username
-		InitializeUsernameList ();
+    // Use this for initialization
+    void Start()
+    {
+        // Generate a random username
+        InitializeUsernameList();
 
         // Check for saved file
         if (File.Exists(Application.persistentDataPath + StartGameScript.DATA_PATH))
@@ -41,68 +41,79 @@ public class RandomNameScript : MonoBehaviour
             // If file doesn't exist yet, randomize and initialize variables
             RandomizeName();
         }
-	}
+        GameManagerScript.username = username;
+    }
 
-	void InitializeUsernameList ()
-	{
-		// import username list and put it into corresponding lists
-		string[] lines = usernamesText.text.Split ('\n');
+    void InitializeUsernameList()
+    {
+        // import username list and put it into corresponding lists
+        string[] lines = usernamesText.text.Split('\n');
 
-		if (attributes == null) {
-			attributes = new List<string> ();
+        if (attributes == null)
+        {
+            attributes = new List<string>();
 
-			// read first line of the file
-			string line = lines [0];
+            // read first line of the file
+            string line = lines[0];
 
-			if (line != null) {
-				string[] tokens = line.Split (',');
-				for (int i = 0; i < tokens.Length; ++i) {
-					attributes.Add (tokens [i]);
-				}
-			}
-		}
+            if (line != null)
+            {
+                string[] tokens = line.Split(',');
+                for (int i = 0; i < tokens.Length; ++i)
+                {
+                    attributes.Add(tokens[i]);
+                }
+            }
+        }
 
-		if (colors == null) {
-			colors = new List<string> ();
+        if (colors == null)
+        {
+            colors = new List<string>();
 
-			// read second line of the file
-			string line = lines [1];
+            // read second line of the file
+            string line = lines[1];
 
-			if (line != null) {
-				string[] tokens = line.Split (',');
-				for (int i = 0; i < tokens.Length; ++i) {
-					colors.Add (tokens [i]);
-				}
-			}
-		}
+            if (line != null)
+            {
+                string[] tokens = line.Split(',');
+                for (int i = 0; i < tokens.Length; ++i)
+                {
+                    colors.Add(tokens[i]);
+                }
+            }
+        }
 
-		if (animals == null) {
-			animals = new List<string> ();
+        if (animals == null)
+        {
+            animals = new List<string>();
 
-			// read third line of the file
-			string line = lines [2];
+            // read third line of the file
+            string line = lines[2];
 
-			if (line != null) {
-				string[] tokens = line.Split (',');
-				for (int i = 0; i < tokens.Length; ++i) {
-					animals.Add (tokens [i]);
-				}
-			}
-		}
-	}
+            if (line != null)
+            {
+                string[] tokens = line.Split(',');
+                for (int i = 0; i < tokens.Length; ++i)
+                {
+                    animals.Add(tokens[i]);
+                }
+            }
+        }
+    }
 
-	void DisplayUsername ()
-	{
-		welcomeText.text = "Welcome,\n" + username + "!";
-	}
+    void DisplayUsername()
+    {
+        welcomeText.text = "Welcome,\n" + username + "!";
+    }
 
-	public void RandomizeName ()
-	{
-		int i = UnityEngine.Random.Range (0, attributes.Count);
-		int j = UnityEngine.Random.Range (0, colors.Count);
-		int k = UnityEngine.Random.Range (0, animals.Count);
+    public void RandomizeName()
+    {
+        int i = UnityEngine.Random.Range(0, attributes.Count);
+        int j = UnityEngine.Random.Range(0, colors.Count);
+        int k = UnityEngine.Random.Range(0, animals.Count);
 
-		username = attributes [i].Trim() + " " + colors [j].Trim() + " " + animals [k].Trim();
-		DisplayUsername ();
-	}
+        username = attributes[i].Trim() + " " + colors[j].Trim() + " " + animals[k].Trim();
+        DisplayUsername();
+        GameManagerScript.username = username;
+    }
 }

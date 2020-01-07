@@ -1,24 +1,22 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler {
+public class InstructionsPanelScript : MonoBehaviour, IPointerClickHandler
+{
 
-	public GameObject panel;
+    public GameObject panel;
 
-	// Use this for initialization
-	void Start () {
-	}
-
-	// When this panel is clicked
-	public void OnPointerClick (PointerEventData eventData)
-	{
-		if (panel.activeSelf) {
-			GameManagerScript.BeginGame ();
+    // When this panel is clicked
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (panel.activeSelf)
+        {
+            GameManagerScript.BeginGame();
 
             // Log the click
-            GameManagerScript.LogInstructionsClick(eventData.position);
+            Logger.LogInstructionsClick(eventData.position);
 
-			panel.SetActive (false);
-		}
-	}
+            panel.SetActive(false);
+        }
+    }
 }

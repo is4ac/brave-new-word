@@ -3,43 +3,44 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class StartOptions : MonoBehaviour {
-    
-	public int sceneToStart = 2;										//Index number in build settings of scene to load if changeScenes is true
+public class StartOptions : MonoBehaviour
+{
+    public int sceneToStart = 1;										//Index number in build settings of scene to load if changeScenes is true
     public CanvasGroup fadeOutImageCanvasGroup;                         //Canvas group used to fade alpha of image which fades in before changing scenes
     public Image fadeImage;                                             //Reference to image used to fade out before changing scenes
-    public float menuFadeTime = 0.3f;
+    public float menuFadeTime = 0.2f;
 
-	[HideInInspector] public bool inMainMenu = true;					//If true, pause button disabled in main menu (Cancel in input manager, default escape key)
+    [HideInInspector] public bool inMainMenu = true;					//If true, pause button disabled in main menu (Cancel in input manager, default escape key)
 
     void Awake()
-	{
+    {
         fadeImage.color = Color.black;
-	}
+    }
 
 
-	public void StartButtonClicked()
-	{
-		Debug.Log ("Start button clicked");
+    public void StartButtonClicked()
+    {
+        //Debug.Log("Start button clicked");
 
-		// Save the username to PlayerPrefs
-		PlayerPrefs.SetString("username", RandomNameScript.username);
+        // Save the username to PlayerPrefs
+        PlayerPrefs.SetString("username", RandomNameScript.username);
 
-		//If changeScenes is true, start fading and change scenes halfway through animation when screen is blocked by FadeImage
-		//Use invoke to delay calling of LoadDelayed by half the length of fadeColorAnimationClip
-        Invoke ("LoadDelayed", menuFadeTime);
+        //If changeScenes is true, start fading and change scenes halfway through animation when screen is blocked by FadeImage
+        //Use invoke to delay calling of LoadDelayed by half the length of fadeColorAnimationClip
+        Invoke("LoadDelayed", menuFadeTime);
 
         StartCoroutine(FadeCanvasGroupAlpha(0f, 1f, fadeOutImageCanvasGroup));
-	}
+    }
 
     public void ButtonSound()
     {
         AudioManager.instance.Play("Sparkle1");
     }
 
-    public void SelectName() {
-		
-	}
+    public void SelectName()
+    {
+
+    }
 
     void OnEnable()
     {
@@ -55,22 +56,22 @@ public class StartOptions : MonoBehaviour {
     void SceneWasLoaded(Scene scene, LoadSceneMode mode)
     {
 
-	}
-		
-	public void LoadDelayed()
-	{
-		Debug.Log ("Loading next scene");
+    }
 
-		//Pause button now works if escape is pressed since we are no longer in Main menu.
-		inMainMenu = false;
+    public void LoadDelayed()
+    {
+        //Debug.Log("Loading next scene");
 
-		StartCoroutine (FadeCanvasGroupAlpha (1f, 0f, fadeOutImageCanvasGroup));
+        //Pause button now works if escape is pressed since we are no longer in Main menu.
+        inMainMenu = false;
 
-		Debug.Log("Coroutine done. Next scene loaded!");
+        StartCoroutine(FadeCanvasGroupAlpha(1f, 0f, fadeOutImageCanvasGroup));
 
-		//Load the selected scene, by scene index number in build settings
-		SceneManager.LoadScene (sceneToStart);
-	}
+        //Debug.Log("Coroutine done. Next scene loaded!");
+
+        //Load the selected scene, by scene index number in build settings
+        SceneManager.LoadScene(sceneToStart);
+    }
 
     public IEnumerator FadeCanvasGroupAlpha(float startAlpha, float endAlpha, CanvasGroup canvasGroupToFadeAlpha)
     {

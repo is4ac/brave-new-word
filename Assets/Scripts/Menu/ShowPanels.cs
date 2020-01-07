@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 
-public class ShowPanels : MonoBehaviour {
+public class ShowPanels : MonoBehaviour
+{
 
     public GameObject instructionsPanel;        //Store a reference to the Game Object InstructionsPanel 
     public GameObject highScoresPanel;          //Store a reference to the Game Object HighScoresPanel    
     public GameObject settingsPanel;
+    public GameObject audioSettingsPanel;
 
     public void ShowInstructions()
     {
@@ -39,6 +41,20 @@ public class ShowPanels : MonoBehaviour {
         {
             TouchInputHandler.inputEnabled = true;
         }
+    }
+
+    public void ShowAudioSettings()
+    {
+        audioSettingsPanel.SetActive(true);
+        TouchInputHandler.inputEnabled = false;
+    }
+
+    public void HideAudioSettings()
+    {
+        audioSettingsPanel.SetActive(false);
+        TouchInputHandler.inputEnabled |= GameManagerScript.GameHasStarted();
+
+        Logger.LogAudioSettings();
     }
 
     public void ButtonSound()

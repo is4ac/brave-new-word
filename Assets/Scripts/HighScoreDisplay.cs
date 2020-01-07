@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HighScoreDisplay : MonoBehaviour {
+public class HighScoreDisplay : MonoBehaviour
+{
 
     class Triple
     {
@@ -24,7 +25,7 @@ public class HighScoreDisplay : MonoBehaviour {
         // Subtract the two scores to return a correct value for compare
         int IComparer.Compare(object x, object y)
         {
-            return (int) (((Triple)y).score - ((Triple)x).score);
+            return (int)(((Triple)y).score - ((Triple)x).score);
         }
     }
 
@@ -36,18 +37,19 @@ public class HighScoreDisplay : MonoBehaviour {
     public Sprite elementSprite;
     public GameObject scrollBar;
 
-    ArrayList highScores;
+    //ArrayList highScores;
 
-    private float contentWidth;
+    //private float contentWidth;
 
     // Initialization
     void Awake()
     {
+        /*
         if (instance == null)
         {
             instance = this;
         }
-        else 
+        else
         {
             Destroy(gameObject);
         }
@@ -56,16 +58,18 @@ public class HighScoreDisplay : MonoBehaviour {
         contentWidth = contentTransform.rect.width;
 
         highScores = new ArrayList();
+        */
     }
 
     void OnEnable()
     {
         // Update and display the data
-        DBManager.instance.RetrieveTopScores();
+        //DBManager.instance.RetrieveTopScores();
     }
 
     public void UpdateHighScores()
     {
+        /*
         Debug.Log("UpdateHighScores being called");
         highScores.Clear();
 
@@ -74,17 +78,19 @@ public class HighScoreDisplay : MonoBehaviour {
         {
             // add each score from the database, getting the username from the userIDtoUsername dictionary
             // and the userID from the Key
-            highScores.Add(new Triple(entry.Value, 
+            highScores.Add(new Triple(entry.Value,
                                       DBManager.instance.userIDToUsernames[entry.Key],
                                       entry.Key));
         }
 
         CompareTriples comparer = new CompareTriples();
         highScores.Sort(comparer);
+        */
     }
 
     public void DisplayHighScores()
     {
+        /*
         Debug.Log("DisplayHighScores being called");
 
         // reset all children
@@ -95,10 +101,12 @@ public class HighScoreDisplay : MonoBehaviour {
         {
             AddHighScoreElement(rank++, item.username, item.score, item.userID);
         }
+        */
     }
 
     void AddHighScoreElement(int rank, string username, long score, string userID)
     {
+        /*
         // instantiate the prefab
         Transform element = Instantiate(elementPrefab);
         element.SetParent(contentGrid.transform, false);
@@ -126,5 +134,6 @@ public class HighScoreDisplay : MonoBehaviour {
             myScoreElement.GetComponent<LayoutElement>().minWidth = contentWidth;
             myScoreElement.GetComponent<Image>().color = Color.yellow;
         }
+        */
     }
 }

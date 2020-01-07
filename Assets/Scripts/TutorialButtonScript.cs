@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using Firebase.Database;
 
-public class TutorialButtonScript : MonoBehaviour {
+public class TutorialButtonScript : MonoBehaviour
+{
 
     ConsentMenuScript menu;
     public int nextScene;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         // Turn off the instructions panel in the next scene
         GameManagerScript.INSTRUCTIONS_PANEL = false;
 
@@ -20,10 +22,11 @@ public class TutorialButtonScript : MonoBehaviour {
         DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
         reference.Push().SetRawJsonValueAsync(json);
 
-        Debug.Log("logging tutorial");
-	}
-	
-    public void ClickPlayGameButton() {
+        //Debug.Log("logging tutorial");
+    }
+
+    public void ClickPlayGameButton()
+    {
         // enable clicking in the next main game scene since the instructions text box will be skipped
         TouchInputHandler.touchEnabled = true;
         menu.GoToNextScene(nextScene);
