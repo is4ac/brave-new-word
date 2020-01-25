@@ -18,6 +18,7 @@ google-services*.json.meta
 google-services.xml
 google-services.xml.meta
 *.plist
+Packages/
 
 server-dash/npm-debug.log
 
