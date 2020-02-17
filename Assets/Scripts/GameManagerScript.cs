@@ -31,7 +31,7 @@ public class GameManagerScript : MonoBehaviour
     // TODO: set LOGGING to true before deploy!
     public static bool LOGGING = true;
     // TODO: Change version number after each update
-    public const string VERSION = "0_1_2_DEV";
+    public const string VERSION = "0_1_2";
     public const string LOGGING_VERSION = "BNWLogs_V" + VERSION;
     public const string APP_VERSION = "BNW_" + VERSION;
 

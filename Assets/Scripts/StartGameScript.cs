@@ -194,7 +194,7 @@ public class StartGameScript : MonoBehaviour
         GameManagerScript.JUICE_UNPRODUCTIVE = false;
 
         // randomize the version
-        int version = UnityEngine.Random.Range(0, 6);
+        int version = UnityEngine.Random.Range(0, 9);
         switch (version)
         {
             case 0:
@@ -216,6 +216,12 @@ public class StartGameScript : MonoBehaviour
                 GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
                 break;
             case 6:
+                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                break;
+            case 7:
+                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                break;
+            case 8:
                 GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
                 break;
         }

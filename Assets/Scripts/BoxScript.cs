@@ -485,22 +485,8 @@ public class BoxScript : MonoBehaviour
 
     static long CalculateBaseScore(int length)
     {
-        if (length == 0)
-        {
-            return 0;
-        }
-
-        return LengthScoreFunction(length) + CalculateBaseScore(length - 1);
-    }
-
-    static long LengthScoreFunction(int length)
-    {
-        if (length == 1)
-        {
-            return 1;
-        }
-
-        return 1 + LengthScoreFunction(length - 1);
+        // formula for summation of 1 + 2 + ... + length
+        return (length * (length + 1)) / 2;
     }
 
     public void ResetTileColors()
