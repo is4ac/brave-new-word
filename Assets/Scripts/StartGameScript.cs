@@ -74,7 +74,10 @@ public class StartGameScript : MonoBehaviour
         //RandomizeFeatures();
 
         // Load player data file
-        LoadFile();
+        //LoadFile();
+        // Randomize on load for WebGL version because persistentData doesn't work...
+        RandomizeFeatures();
+
 
         PlayBgMusic();
     }

@@ -348,6 +348,7 @@ public class GameManagerScript : MonoBehaviour
         mixer.GetFloat("sfxVolume", out float sfxVol);
         mixer.GetFloat("musicVolume", out float musicVol);
 
+        /*
         // Open the file to write the data
         BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Create(Application.persistentDataPath + StartGameScript.DATA_PATH);
@@ -368,6 +369,7 @@ public class GameManagerScript : MonoBehaviour
         // serialize and write to file
         bf.Serialize(file, data);
         file.Close();
+        */
     }
 
     public void SetButtonDisplay(bool value)
