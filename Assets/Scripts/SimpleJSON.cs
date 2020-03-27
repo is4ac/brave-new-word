@@ -113,7 +113,7 @@ using System.Text;
 
 namespace SimpleJSON
 {
-	public enum JSONNodeType
+	public enum JsonNodeType
 	{
 		Array = 1,
 		Object = 2,
@@ -124,108 +124,108 @@ namespace SimpleJSON
 		None = 7,
 		Custom = 0xFF,
 	}
-	public enum JSONTextMode
+	public enum JsonTextMode
 	{
 		Compact,
 		Indent
 	}
 
-	public abstract partial class JSONNode
+	public abstract partial class JsonNode
 	{
 		#region Enumerators
 		public struct Enumerator
 		{
 			private enum Type { None, Array, Object }
-			private Type type;
-			private Dictionary<string, JSONNode>.Enumerator m_Object;
-			private List<JSONNode>.Enumerator m_Array;
-			public bool IsValid { get { return type != Type.None; } }
-			public Enumerator(List<JSONNode>.Enumerator aArrayEnum)
+			private Type _type;
+			private Dictionary<string, JsonNode>.Enumerator _mObject;
+			private List<JsonNode>.Enumerator _mArray;
+			public bool IsValid { get { return _type != Type.None; } }
+			public Enumerator(List<JsonNode>.Enumerator aArrayEnum)
 			{
-				type = Type.Array;
-				m_Object = default(Dictionary<string, JSONNode>.Enumerator);
-				m_Array = aArrayEnum;
+				_type = Type.Array;
+				_mObject = default(Dictionary<string, JsonNode>.Enumerator);
+				_mArray = aArrayEnum;
 			}
-			public Enumerator(Dictionary<string, JSONNode>.Enumerator aDictEnum)
+			public Enumerator(Dictionary<string, JsonNode>.Enumerator aDictEnum)
 			{
-				type = Type.Object;
-				m_Object = aDictEnum;
-				m_Array = default(List<JSONNode>.Enumerator);
+				_type = Type.Object;
+				_mObject = aDictEnum;
+				_mArray = default(List<JsonNode>.Enumerator);
 			}
-			public KeyValuePair<string, JSONNode> Current
+			public KeyValuePair<string, JsonNode> Current
 			{
 				get {
-					if (type == Type.Array)
-						return new KeyValuePair<string, JSONNode>(string.Empty, m_Array.Current);
-					else if (type == Type.Object)
-						return m_Object.Current;
-					return new KeyValuePair<string, JSONNode>(string.Empty, null);
+					if (_type == Type.Array)
+						return new KeyValuePair<string, JsonNode>(string.Empty, _mArray.Current);
+					else if (_type == Type.Object)
+						return _mObject.Current;
+					return new KeyValuePair<string, JsonNode>(string.Empty, null);
 				}
 			}
 			public bool MoveNext()
 			{
-				if (type == Type.Array)
-					return m_Array.MoveNext();
-				else if (type == Type.Object)
-					return m_Object.MoveNext();
+				if (_type == Type.Array)
+					return _mArray.MoveNext();
+				else if (_type == Type.Object)
+					return _mObject.MoveNext();
 				return false;
 			}
 		}
 		public struct ValueEnumerator
 		{
-			private Enumerator m_Enumerator;
-			public ValueEnumerator(List<JSONNode>.Enumerator aArrayEnum) : this(new Enumerator(aArrayEnum)) { }
-			public ValueEnumerator(Dictionary<string, JSONNode>.Enumerator aDictEnum) : this(new Enumerator(aDictEnum)) { }
-			public ValueEnumerator(Enumerator aEnumerator) { m_Enumerator = aEnumerator; }
-			public JSONNode Current { get { return m_Enumerator.Current.Value; } }
-			public bool MoveNext() { return m_Enumerator.MoveNext(); }
+			private Enumerator _mEnumerator;
+			public ValueEnumerator(List<JsonNode>.Enumerator aArrayEnum) : this(new Enumerator(aArrayEnum)) { }
+			public ValueEnumerator(Dictionary<string, JsonNode>.Enumerator aDictEnum) : this(new Enumerator(aDictEnum)) { }
+			public ValueEnumerator(Enumerator aEnumerator) { _mEnumerator = aEnumerator; }
+			public JsonNode Current { get { return _mEnumerator.Current.Value; } }
+			public bool MoveNext() { return _mEnumerator.MoveNext(); }
 			public ValueEnumerator GetEnumerator() { return this; }
 		}
 		public struct KeyEnumerator
 		{
-			private Enumerator m_Enumerator;
-			public KeyEnumerator(List<JSONNode>.Enumerator aArrayEnum) : this(new Enumerator(aArrayEnum)) { }
-			public KeyEnumerator(Dictionary<string, JSONNode>.Enumerator aDictEnum) : this(new Enumerator(aDictEnum)) { }
-			public KeyEnumerator(Enumerator aEnumerator) { m_Enumerator = aEnumerator; }
-			public JSONNode Current { get { return m_Enumerator.Current.Key; } }
-			public bool MoveNext() { return m_Enumerator.MoveNext(); }
+			private Enumerator _mEnumerator;
+			public KeyEnumerator(List<JsonNode>.Enumerator aArrayEnum) : this(new Enumerator(aArrayEnum)) { }
+			public KeyEnumerator(Dictionary<string, JsonNode>.Enumerator aDictEnum) : this(new Enumerator(aDictEnum)) { }
+			public KeyEnumerator(Enumerator aEnumerator) { _mEnumerator = aEnumerator; }
+			public JsonNode Current { get { return _mEnumerator.Current.Key; } }
+			public bool MoveNext() { return _mEnumerator.MoveNext(); }
 			public KeyEnumerator GetEnumerator() { return this; }
 		}
 
-		public class LinqEnumerator : IEnumerator<KeyValuePair<string, JSONNode>>, IEnumerable<KeyValuePair<string, JSONNode>>
+		public class LinqEnumerator : IEnumerator<KeyValuePair<string, JsonNode>>, IEnumerable<KeyValuePair<string, JsonNode>>
 		{
-			private JSONNode m_Node;
-			private Enumerator m_Enumerator;
-			internal LinqEnumerator(JSONNode aNode)
+			private JsonNode _mNode;
+			private Enumerator _mEnumerator;
+			internal LinqEnumerator(JsonNode aNode)
 			{
-				m_Node = aNode;
-				if (m_Node != null)
-					m_Enumerator = m_Node.GetEnumerator();
+				_mNode = aNode;
+				if (_mNode != null)
+					_mEnumerator = _mNode.GetEnumerator();
 			}
-			public KeyValuePair<string, JSONNode> Current { get { return m_Enumerator.Current; } }
-			object IEnumerator.Current { get { return m_Enumerator.Current; } }
-			public bool MoveNext() { return m_Enumerator.MoveNext(); }
+			public KeyValuePair<string, JsonNode> Current { get { return _mEnumerator.Current; } }
+			object IEnumerator.Current { get { return _mEnumerator.Current; } }
+			public bool MoveNext() { return _mEnumerator.MoveNext(); }
 
 			public void Dispose()
 			{
-				m_Node = null;
-				m_Enumerator = new Enumerator();
+				_mNode = null;
+				_mEnumerator = new Enumerator();
 			}
 
-			public IEnumerator<KeyValuePair<string, JSONNode>> GetEnumerator()
+			public IEnumerator<KeyValuePair<string, JsonNode>> GetEnumerator()
 			{
-				return new LinqEnumerator(m_Node);
+				return new LinqEnumerator(_mNode);
 			}
 
 			public void Reset()
 			{
-				if (m_Node != null)
-					m_Enumerator = m_Node.GetEnumerator();
+				if (_mNode != null)
+					_mEnumerator = _mNode.GetEnumerator();
 			}
 
 			IEnumerator IEnumerable.GetEnumerator()
 			{
-				return new LinqEnumerator(m_Node);
+				return new LinqEnumerator(_mNode);
 			}
 		}
 
@@ -233,13 +233,13 @@ namespace SimpleJSON
 
 		#region common interface
 
-		public static bool forceASCII = false; // Use Unicode by default
+		public static bool forceAscii = false; // Use Unicode by default
 
-		public abstract JSONNodeType Tag { get; }
+		public abstract JsonNodeType Tag { get; }
 
-		public virtual JSONNode this[int aIndex] { get { return null; } set { } }
+		public virtual JsonNode this[int aIndex] { get { return null; } set { } }
 
-		public virtual JSONNode this[string aKey] { get { return null; } set { } }
+		public virtual JsonNode this[string aKey] { get { return null; } set { } }
 
 		public virtual string Value { get { return ""; } set { } }
 
@@ -254,30 +254,30 @@ namespace SimpleJSON
 
 		public virtual bool Inline { get { return false; } set { } }
 
-		public virtual void Add(string aKey, JSONNode aItem)
+		public virtual void Add(string aKey, JsonNode aItem)
 		{
 		}
-		public virtual void Add(JSONNode aItem)
+		public virtual void Add(JsonNode aItem)
 		{
 			Add("", aItem);
 		}
 
-		public virtual JSONNode Remove(string aKey)
+		public virtual JsonNode Remove(string aKey)
 		{
 			return null;
 		}
 
-		public virtual JSONNode Remove(int aIndex)
+		public virtual JsonNode Remove(int aIndex)
 		{
 			return null;
 		}
 
-		public virtual JSONNode Remove(JSONNode aNode)
+		public virtual JsonNode Remove(JsonNode aNode)
 		{
 			return aNode;
 		}
 
-		public virtual IEnumerable<JSONNode> Children
+		public virtual IEnumerable<JsonNode> Children
 		{
 			get
 			{
@@ -285,7 +285,7 @@ namespace SimpleJSON
 			}
 		}
 
-		public IEnumerable<JSONNode> DeepChildren
+		public IEnumerable<JsonNode> DeepChildren
 		{
 			get
 			{
@@ -298,20 +298,20 @@ namespace SimpleJSON
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-			WriteToStringBuilder(sb, 0, 0, JSONTextMode.Compact);
+			WriteToStringBuilder(sb, 0, 0, JsonTextMode.Compact);
 			return sb.ToString();
 		}
 
 		public virtual string ToString(int aIndent)
 		{
 			StringBuilder sb = new StringBuilder();
-			WriteToStringBuilder(sb, 0, aIndent, JSONTextMode.Indent);
+			WriteToStringBuilder(sb, 0, aIndent, JsonTextMode.Indent);
 			return sb.ToString();
 		}
-		internal abstract void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode);
+		internal abstract void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode);
 
 		public abstract Enumerator GetEnumerator();
-		public IEnumerable<KeyValuePair<string, JSONNode>> Linq { get { return new LinqEnumerator(this); } }
+		public IEnumerable<KeyValuePair<string, JsonNode>> Linq { get { return new LinqEnumerator(this); } }
 		public KeyEnumerator Keys { get { return new KeyEnumerator(GetEnumerator()); } }
 		public ValueEnumerator Values { get { return new ValueEnumerator(GetEnumerator()); } }
 
@@ -362,19 +362,19 @@ namespace SimpleJSON
 			}
 		}
 
-		public virtual JSONArray AsArray
+		public virtual JsonArray AsArray
 		{
 			get
 			{
-				return this as JSONArray;
+				return this as JsonArray;
 			}
 		}
 
-		public virtual JSONObject AsObject
+		public virtual JsonObject AsObject
 		{
 			get
 			{
-				return this as JSONObject;
+				return this as JsonObject;
 			}
 		}
 
@@ -383,68 +383,68 @@ namespace SimpleJSON
 
 		#region operators
 
-		public static implicit operator JSONNode(string s)
+		public static implicit operator JsonNode(string s)
 		{
-			return new JSONString(s);
+			return new JsonString(s);
 		}
-		public static implicit operator string(JSONNode d)
+		public static implicit operator string(JsonNode d)
 		{
 			return (d == null) ? null : d.Value;
 		}
 
-		public static implicit operator JSONNode(double n)
+		public static implicit operator JsonNode(double n)
 		{
-			return new JSONNumber(n);
+			return new JsonNumber(n);
 		}
-		public static implicit operator double(JSONNode d)
+		public static implicit operator double(JsonNode d)
 		{
 			return (d == null) ? 0 : d.AsDouble;
 		}
 
-		public static implicit operator JSONNode(float n)
+		public static implicit operator JsonNode(float n)
 		{
-			return new JSONNumber(n);
+			return new JsonNumber(n);
 		}
-		public static implicit operator float(JSONNode d)
+		public static implicit operator float(JsonNode d)
 		{
 			return (d == null) ? 0 : d.AsFloat;
 		}
 
-		public static implicit operator JSONNode(int n)
+		public static implicit operator JsonNode(int n)
 		{
-			return new JSONNumber(n);
+			return new JsonNumber(n);
 		}
-		public static implicit operator int(JSONNode d)
+		public static implicit operator int(JsonNode d)
 		{
 			return (d == null) ? 0 : d.AsInt;
 		}
 
-		public static implicit operator JSONNode(bool b)
+		public static implicit operator JsonNode(bool b)
 		{
-			return new JSONBool(b);
+			return new JsonBool(b);
 		}
-		public static implicit operator bool(JSONNode d)
+		public static implicit operator bool(JsonNode d)
 		{
 			return (d == null) ? false : d.AsBool;
 		}
 
-		public static implicit operator JSONNode(KeyValuePair<string, JSONNode> aKeyValue)
+		public static implicit operator JsonNode(KeyValuePair<string, JsonNode> aKeyValue)
 		{
 			return aKeyValue.Value;
 		}
 
-		public static bool operator ==(JSONNode a, object b)
+		public static bool operator ==(JsonNode a, object b)
 		{
 			if (ReferenceEquals(a, b))
 				return true;
-			bool aIsNull = a is JSONNull || ReferenceEquals(a, null) || a is JSONLazyCreator;
-			bool bIsNull = b is JSONNull || ReferenceEquals(b, null) || b is JSONLazyCreator;
+			bool aIsNull = a is JsonNull || ReferenceEquals(a, null) || a is JsonLazyCreator;
+			bool bIsNull = b is JsonNull || ReferenceEquals(b, null) || b is JsonLazyCreator;
 			if (aIsNull && bIsNull)
 				return true;
 			return !aIsNull && a.Equals(b);
 		}
 
-		public static bool operator !=(JSONNode a, object b)
+		public static bool operator !=(JsonNode a, object b)
 		{
 			return !(a == b);
 		}
@@ -462,13 +462,13 @@ namespace SimpleJSON
 		#endregion operators
 
 		[ThreadStatic]
-		private static StringBuilder m_EscapeBuilder;
+		private static StringBuilder mEscapeBuilder;
 		internal static StringBuilder EscapeBuilder
 		{
 			get {
-				if (m_EscapeBuilder == null)
-					m_EscapeBuilder = new StringBuilder();
-				return m_EscapeBuilder;
+				if (mEscapeBuilder == null)
+					mEscapeBuilder = new StringBuilder();
+				return mEscapeBuilder;
 			}
 		}
 		internal static string Escape(string aText)
@@ -503,7 +503,7 @@ namespace SimpleJSON
 					sb.Append("\\f");
 					break;
 				default:
-					if (c < ' ' || (forceASCII && c > 127))
+					if (c < ' ' || (forceAscii && c > 127))
 					{
 						ushort val = c;
 						sb.Append("\\u").Append(val.ToString("X4"));
@@ -518,7 +518,7 @@ namespace SimpleJSON
 			return result;
 		}
 
-		static void ParseElement(JSONNode ctx, string token, string tokenName, bool quoted)
+		static void ParseElement(JsonNode ctx, string token, string tokenName, bool quoted)
 		{
 			if (quoted)
 			{
@@ -540,10 +540,10 @@ namespace SimpleJSON
 			}
 		}
 
-		public static JSONNode Parse(string aJSON)
+		public static JsonNode Parse(string aJSON)
 		{
-			Stack<JSONNode> stack = new Stack<JSONNode>();
-			JSONNode ctx = null;
+			Stack<JsonNode> stack = new Stack<JsonNode>();
+			JsonNode ctx = null;
 			int i = 0;
 			StringBuilder Token = new StringBuilder();
 			string TokenName = "";
@@ -559,7 +559,7 @@ namespace SimpleJSON
 						Token.Append(aJSON[i]);
 						break;
 					}
-					stack.Push(new JSONObject());
+					stack.Push(new JsonObject());
 					if (ctx != null)
 					{
 						ctx.Add(TokenName, stack.Peek());
@@ -576,7 +576,7 @@ namespace SimpleJSON
 						break;
 					}
 
-					stack.Push(new JSONArray());
+					stack.Push(new JsonArray());
 					if (ctx != null)
 					{
 						ctx.Add(TokenName, stack.Peek());
@@ -705,212 +705,212 @@ namespace SimpleJSON
 	}
 	// End of JSONNode
 
-	public partial class JSONArray : JSONNode
+	public partial class JsonArray : JsonNode
 	{
-		private List<JSONNode> m_List = new List<JSONNode>();
-		private bool inline = false;
+		private List<JsonNode> _mList = new List<JsonNode>();
+		private bool _inline = false;
 		public override bool Inline
 		{
-			get { return inline; }
-			set { inline = value; }
+			get { return _inline; }
+			set { _inline = value; }
 		}
 
-		public override JSONNodeType Tag { get { return JSONNodeType.Array; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.Array; } }
 		public override bool IsArray { get { return true; } }
-		public override Enumerator GetEnumerator() { return new Enumerator(m_List.GetEnumerator()); }
+		public override Enumerator GetEnumerator() { return new Enumerator(_mList.GetEnumerator()); }
 
-		public override JSONNode this[int aIndex]
+		public override JsonNode this[int aIndex]
 		{
 			get
 			{
-				if (aIndex < 0 || aIndex >= m_List.Count)
-					return new JSONLazyCreator(this);
-				return m_List[aIndex];
+				if (aIndex < 0 || aIndex >= _mList.Count)
+					return new JsonLazyCreator(this);
+				return _mList[aIndex];
 			}
 			set
 			{
 				if (value == null)
-					value = JSONNull.CreateOrGet();
-				if (aIndex < 0 || aIndex >= m_List.Count)
-					m_List.Add(value);
+					value = JsonNull.CreateOrGet();
+				if (aIndex < 0 || aIndex >= _mList.Count)
+					_mList.Add(value);
 				else
-					m_List[aIndex] = value;
+					_mList[aIndex] = value;
 			}
 		}
 
-		public override JSONNode this[string aKey]
+		public override JsonNode this[string aKey]
 		{
-			get { return new JSONLazyCreator(this); }
+			get { return new JsonLazyCreator(this); }
 			set
 			{
 				if (value == null)
-					value = JSONNull.CreateOrGet();
-				m_List.Add(value);
+					value = JsonNull.CreateOrGet();
+				_mList.Add(value);
 			}
 		}
 
 		public override int Count
 		{
-			get { return m_List.Count; }
+			get { return _mList.Count; }
 		}
 
-		public override void Add(string aKey, JSONNode aItem)
+		public override void Add(string aKey, JsonNode aItem)
 		{
 			if (aItem == null)
-				aItem = JSONNull.CreateOrGet();
-			m_List.Add(aItem);
+				aItem = JsonNull.CreateOrGet();
+			_mList.Add(aItem);
 		}
 
-		public override JSONNode Remove(int aIndex)
+		public override JsonNode Remove(int aIndex)
 		{
-			if (aIndex < 0 || aIndex >= m_List.Count)
+			if (aIndex < 0 || aIndex >= _mList.Count)
 				return null;
-			JSONNode tmp = m_List[aIndex];
-			m_List.RemoveAt(aIndex);
+			JsonNode tmp = _mList[aIndex];
+			_mList.RemoveAt(aIndex);
 			return tmp;
 		}
 
-		public override JSONNode Remove(JSONNode aNode)
+		public override JsonNode Remove(JsonNode aNode)
 		{
-			m_List.Remove(aNode);
+			_mList.Remove(aNode);
 			return aNode;
 		}
 
-		public override IEnumerable<JSONNode> Children
+		public override IEnumerable<JsonNode> Children
 		{
 			get
 			{
-				foreach (JSONNode N in m_List)
+				foreach (JsonNode N in _mList)
 					yield return N;
 			}
 		}
 
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
 			aSB.Append('[');
-			int count = m_List.Count;
-			if (inline)
-				aMode = JSONTextMode.Compact;
+			int count = _mList.Count;
+			if (_inline)
+				aMode = JsonTextMode.Compact;
 			for (int i = 0; i < count; i++)
 			{
 				if (i > 0)
 					aSB.Append(',');
-				if (aMode == JSONTextMode.Indent)
+				if (aMode == JsonTextMode.Indent)
 					aSB.AppendLine();
 
-				if (aMode == JSONTextMode.Indent)
+				if (aMode == JsonTextMode.Indent)
 					aSB.Append(' ', aIndent + aIndentInc);
-				m_List[i].WriteToStringBuilder(aSB, aIndent + aIndentInc, aIndentInc, aMode);
+				_mList[i].WriteToStringBuilder(aSB, aIndent + aIndentInc, aIndentInc, aMode);
 			}
-			if (aMode == JSONTextMode.Indent)
+			if (aMode == JsonTextMode.Indent)
 				aSB.AppendLine().Append(' ', aIndent);
 			aSB.Append(']');
 		}
 	}
 	// End of JSONArray
 
-	public partial class JSONObject : JSONNode
+	public partial class JsonObject : JsonNode
 	{
-		private Dictionary<string, JSONNode> m_Dict = new Dictionary<string, JSONNode>();
+		private Dictionary<string, JsonNode> _mDict = new Dictionary<string, JsonNode>();
 
-		private bool inline = false;
+		private bool _inline = false;
 		public override bool Inline
 		{
-			get { return inline; }
-			set { inline = value; }
+			get { return _inline; }
+			set { _inline = value; }
 		}
 
-		public override JSONNodeType Tag { get { return JSONNodeType.Object; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.Object; } }
 		public override bool IsObject { get { return true; } }
 
-		public override Enumerator GetEnumerator() { return new Enumerator(m_Dict.GetEnumerator()); }
+		public override Enumerator GetEnumerator() { return new Enumerator(_mDict.GetEnumerator()); }
 
 
-		public override JSONNode this[string aKey]
+		public override JsonNode this[string aKey]
 		{
 			get
 			{
-				if (m_Dict.ContainsKey(aKey))
-					return m_Dict[aKey];
+				if (_mDict.ContainsKey(aKey))
+					return _mDict[aKey];
 				else
-					return new JSONLazyCreator(this, aKey);
+					return new JsonLazyCreator(this, aKey);
 			}
 			set
 			{
 				if (value == null)
-					value = JSONNull.CreateOrGet();
-				if (m_Dict.ContainsKey(aKey))
-					m_Dict[aKey] = value;
+					value = JsonNull.CreateOrGet();
+				if (_mDict.ContainsKey(aKey))
+					_mDict[aKey] = value;
 				else
-					m_Dict.Add(aKey, value);
+					_mDict.Add(aKey, value);
 			}
 		}
 
-		public override JSONNode this[int aIndex]
+		public override JsonNode this[int aIndex]
 		{
 			get
 			{
-				if (aIndex < 0 || aIndex >= m_Dict.Count)
+				if (aIndex < 0 || aIndex >= _mDict.Count)
 					return null;
-				return m_Dict.ElementAt(aIndex).Value;
+				return _mDict.ElementAt(aIndex).Value;
 			}
 			set
 			{
 				if (value == null)
-					value = JSONNull.CreateOrGet();
-				if (aIndex < 0 || aIndex >= m_Dict.Count)
+					value = JsonNull.CreateOrGet();
+				if (aIndex < 0 || aIndex >= _mDict.Count)
 					return;
-				string key = m_Dict.ElementAt(aIndex).Key;
-				m_Dict[key] = value;
+				string key = _mDict.ElementAt(aIndex).Key;
+				_mDict[key] = value;
 			}
 		}
 
 		public override int Count
 		{
-			get { return m_Dict.Count; }
+			get { return _mDict.Count; }
 		}
 
-		public override void Add(string aKey, JSONNode aItem)
+		public override void Add(string aKey, JsonNode aItem)
 		{
 			if (aItem == null)
-				aItem = JSONNull.CreateOrGet();
+				aItem = JsonNull.CreateOrGet();
 
 			if (!string.IsNullOrEmpty(aKey))
 			{
-				if (m_Dict.ContainsKey(aKey))
-					m_Dict[aKey] = aItem;
+				if (_mDict.ContainsKey(aKey))
+					_mDict[aKey] = aItem;
 				else
-					m_Dict.Add(aKey, aItem);
+					_mDict.Add(aKey, aItem);
 			}
 			else
-				m_Dict.Add(Guid.NewGuid().ToString(), aItem);
+				_mDict.Add(Guid.NewGuid().ToString(), aItem);
 		}
 
-		public override JSONNode Remove(string aKey)
+		public override JsonNode Remove(string aKey)
 		{
-			if (!m_Dict.ContainsKey(aKey))
+			if (!_mDict.ContainsKey(aKey))
 				return null;
-			JSONNode tmp = m_Dict[aKey];
-			m_Dict.Remove(aKey);
+			JsonNode tmp = _mDict[aKey];
+			_mDict.Remove(aKey);
 			return tmp;
 		}
 
-		public override JSONNode Remove(int aIndex)
+		public override JsonNode Remove(int aIndex)
 		{
-			if (aIndex < 0 || aIndex >= m_Dict.Count)
+			if (aIndex < 0 || aIndex >= _mDict.Count)
 				return null;
-			var item = m_Dict.ElementAt(aIndex);
-			m_Dict.Remove(item.Key);
+			var item = _mDict.ElementAt(aIndex);
+			_mDict.Remove(item.Key);
 			return item.Value;
 		}
 
-		public override JSONNode Remove(JSONNode aNode)
+		public override JsonNode Remove(JsonNode aNode)
 		{
 			try
 			{
-				var item = m_Dict.Where(k => k.Value == aNode).First();
-				m_Dict.Remove(item.Key);
+				var item = _mDict.Where(k => k.Value == aNode).First();
+				_mDict.Remove(item.Key);
 				return aNode;
 			}
 			catch
@@ -919,38 +919,38 @@ namespace SimpleJSON
 			}
 		}
 
-		public override IEnumerable<JSONNode> Children
+		public override IEnumerable<JsonNode> Children
 		{
 			get
 			{
-				foreach (KeyValuePair<string, JSONNode> N in m_Dict)
+				foreach (KeyValuePair<string, JsonNode> N in _mDict)
 					yield return N.Value;
 			}
 		}
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
 			aSB.Append('{');
 			bool first = true;
-			if (inline)
-				aMode = JSONTextMode.Compact;
-			foreach (var k in m_Dict)
+			if (_inline)
+				aMode = JsonTextMode.Compact;
+			foreach (var k in _mDict)
 			{
 				if (!first)
 					aSB.Append(',');
 				first = false;
-				if (aMode == JSONTextMode.Indent)
+				if (aMode == JsonTextMode.Indent)
 					aSB.AppendLine();
-				if (aMode == JSONTextMode.Indent)
+				if (aMode == JsonTextMode.Indent)
 					aSB.Append(' ', aIndent + aIndentInc);
 				aSB.Append('\"').Append(Escape(k.Key)).Append('\"');
-				if (aMode == JSONTextMode.Compact)
+				if (aMode == JsonTextMode.Compact)
 					aSB.Append(':');
 				else
 					aSB.Append(" : ");
 				k.Value.WriteToStringBuilder(aSB, aIndent + aIndentInc, aIndentInc, aMode);
 			}
-			if (aMode == JSONTextMode.Indent)
+			if (aMode == JsonTextMode.Indent)
 				aSB.AppendLine().Append(' ', aIndent);
 			aSB.Append('}');
 		}
@@ -958,11 +958,11 @@ namespace SimpleJSON
 	}
 	// End of JSONObject
 
-	public partial class JSONString : JSONNode
+	public partial class JsonString : JsonNode
 	{
-		private string m_Data;
+		private string _mData;
 
-		public override JSONNodeType Tag { get { return JSONNodeType.String; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.String; } }
 		public override bool IsString { get { return true; } }
 
 		public override Enumerator GetEnumerator() { return new Enumerator(); }
@@ -970,21 +970,21 @@ namespace SimpleJSON
 
 		public override string Value
 		{
-			get { return m_Data; }
+			get { return _mData; }
 			set
 			{
-				m_Data = value;
+				_mData = value;
 			}
 		}
 
-		public JSONString(string aData)
+		public JsonString(string aData)
 		{
-			m_Data = aData;
+			_mData = aData;
 		}
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
-			aSB.Append('\"').Append(Escape(m_Data)).Append('\"');
+			aSB.Append('\"').Append(Escape(_mData)).Append('\"');
 		}
 		public override bool Equals(object obj)
 		{
@@ -992,57 +992,57 @@ namespace SimpleJSON
 				return true;
 			string s = obj as string;
 			if (s != null)
-				return m_Data == s;
-			JSONString s2 = obj as JSONString;
+				return _mData == s;
+			JsonString s2 = obj as JsonString;
 			if (s2 != null)
-				return m_Data == s2.m_Data;
+				return _mData == s2._mData;
 			return false;
 		}
 		public override int GetHashCode()
 		{
-			return m_Data.GetHashCode();
+			return _mData.GetHashCode();
 		}
 	}
 	// End of JSONString
 
-	public partial class JSONNumber : JSONNode
+	public partial class JsonNumber : JsonNode
 	{
-		private double m_Data;
+		private double _mData;
 
-		public override JSONNodeType Tag { get { return JSONNodeType.Number; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.Number; } }
 		public override bool IsNumber { get { return true; } }
 		public override Enumerator GetEnumerator() { return new Enumerator(); }
 
 		public override string Value
 		{
-			get { return m_Data.ToString(); }
+			get { return _mData.ToString(); }
 			set
 			{
 				double v;
 				if (double.TryParse(value, out v))
-					m_Data = v;
+					_mData = v;
 			}
 		}
 
 		public override double AsDouble
 		{
-			get { return m_Data; }
-			set { m_Data = value; }
+			get { return _mData; }
+			set { _mData = value; }
 		}
 
-		public JSONNumber(double aData)
+		public JsonNumber(double aData)
 		{
-			m_Data = aData;
+			_mData = aData;
 		}
 
-		public JSONNumber(string aData)
+		public JsonNumber(string aData)
 		{
 			Value = aData;
 		}
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
-			aSB.Append(m_Data);
+			aSB.Append(_mData);
 		}
 		private static bool IsNumeric(object value)
 		{
@@ -1059,86 +1059,86 @@ namespace SimpleJSON
 				return false;
 			if (base.Equals(obj))
 				return true;
-			JSONNumber s2 = obj as JSONNumber;
+			JsonNumber s2 = obj as JsonNumber;
 			if (s2 != null)
-				return m_Data == s2.m_Data;
+				return _mData == s2._mData;
 			if (IsNumeric(obj))
-				return Convert.ToDouble(obj) == m_Data;
+				return Convert.ToDouble(obj) == _mData;
 			return false;
 		}
 		public override int GetHashCode()
 		{
-			return m_Data.GetHashCode();
+			return _mData.GetHashCode();
 		}
 	}
 	// End of JSONNumber
 
-	public partial class JSONBool : JSONNode
+	public partial class JsonBool : JsonNode
 	{
-		private bool m_Data;
+		private bool _mData;
 
-		public override JSONNodeType Tag { get { return JSONNodeType.Boolean; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.Boolean; } }
 		public override bool IsBoolean { get { return true; } }
 		public override Enumerator GetEnumerator() { return new Enumerator(); }
 
 		public override string Value
 		{
-			get { return m_Data.ToString(); }
+			get { return _mData.ToString(); }
 			set
 			{
 				bool v;
 				if (bool.TryParse(value, out v))
-					m_Data = v;
+					_mData = v;
 			}
 		}
 		public override bool AsBool
 		{
-			get { return m_Data; }
-			set { m_Data = value; }
+			get { return _mData; }
+			set { _mData = value; }
 		}
 
-		public JSONBool(bool aData)
+		public JsonBool(bool aData)
 		{
-			m_Data = aData;
+			_mData = aData;
 		}
 
-		public JSONBool(string aData)
+		public JsonBool(string aData)
 		{
 			Value = aData;
 		}
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
-			aSB.Append((m_Data) ? "true" : "false");
+			aSB.Append((_mData) ? "true" : "false");
 		}
 		public override bool Equals(object obj)
 		{
 			if (obj == null)
 				return false;
 			if (obj is bool)
-				return m_Data == (bool)obj;
+				return _mData == (bool)obj;
 			return false;
 		}
 		public override int GetHashCode()
 		{
-			return m_Data.GetHashCode();
+			return _mData.GetHashCode();
 		}
 	}
 	// End of JSONBool
 
-	public partial class JSONNull : JSONNode
+	public partial class JsonNull : JsonNode
 	{
-		static JSONNull m_StaticInstance = new JSONNull();
+		static JsonNull mStaticInstance = new JsonNull();
 		public static bool reuseSameInstance = true;
-		public static JSONNull CreateOrGet()
+		public static JsonNull CreateOrGet()
 		{
 			if (reuseSameInstance)
-				return m_StaticInstance;
-			return new JSONNull();
+				return mStaticInstance;
+			return new JsonNull();
 		}
-		private JSONNull() { }
+		private JsonNull() { }
 
-		public override JSONNodeType Tag { get { return JSONNodeType.NullValue; } }
+		public override JsonNodeType Tag { get { return JsonNodeType.NullValue; } }
 		public override bool IsNull { get { return true; } }
 		public override Enumerator GetEnumerator() { return new Enumerator(); }
 
@@ -1157,102 +1157,102 @@ namespace SimpleJSON
 		{
 			if (object.ReferenceEquals(this, obj))
 				return true;
-			return (obj is JSONNull);
+			return (obj is JsonNull);
 		}
 		public override int GetHashCode()
 		{
 			return 0;
 		}
 
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
 			aSB.Append("null");
 		}
 	}
 	// End of JSONNull
 
-	internal partial class JSONLazyCreator : JSONNode
+	internal partial class JsonLazyCreator : JsonNode
 	{
-		private JSONNode m_Node = null;
-		private string m_Key = null;
-		public override JSONNodeType Tag { get { return JSONNodeType.None; } }
+		private JsonNode _mNode = null;
+		private string _mKey = null;
+		public override JsonNodeType Tag { get { return JsonNodeType.None; } }
 		public override Enumerator GetEnumerator() { return new Enumerator(); }
 
-		public JSONLazyCreator(JSONNode aNode)
+		public JsonLazyCreator(JsonNode aNode)
 		{
-			m_Node = aNode;
-			m_Key = null;
+			_mNode = aNode;
+			_mKey = null;
 		}
 
-		public JSONLazyCreator(JSONNode aNode, string aKey)
+		public JsonLazyCreator(JsonNode aNode, string aKey)
 		{
-			m_Node = aNode;
-			m_Key = aKey;
+			_mNode = aNode;
+			_mKey = aKey;
 		}
 
-		private void Set(JSONNode aVal)
+		private void Set(JsonNode aVal)
 		{
-			if (m_Key == null)
+			if (_mKey == null)
 			{
-				m_Node.Add(aVal);
+				_mNode.Add(aVal);
 			}
 			else
 			{
-				m_Node.Add(m_Key, aVal);
+				_mNode.Add(_mKey, aVal);
 			}
-			m_Node = null; // Be GC friendly.
+			_mNode = null; // Be GC friendly.
 		}
 
-		public override JSONNode this[int aIndex]
+		public override JsonNode this[int aIndex]
 		{
 			get
 			{
-				return new JSONLazyCreator(this);
+				return new JsonLazyCreator(this);
 			}
 			set
 			{
-				var tmp = new JSONArray();
+				var tmp = new JsonArray();
 				tmp.Add(value);
 				Set(tmp);
 			}
 		}
 
-		public override JSONNode this[string aKey]
+		public override JsonNode this[string aKey]
 		{
 			get
 			{
-				return new JSONLazyCreator(this, aKey);
+				return new JsonLazyCreator(this, aKey);
 			}
 			set
 			{
-				var tmp = new JSONObject();
+				var tmp = new JsonObject();
 				tmp.Add(aKey, value);
 				Set(tmp);
 			}
 		}
 
-		public override void Add(JSONNode aItem)
+		public override void Add(JsonNode aItem)
 		{
-			var tmp = new JSONArray();
+			var tmp = new JsonArray();
 			tmp.Add(aItem);
 			Set(tmp);
 		}
 
-		public override void Add(string aKey, JSONNode aItem)
+		public override void Add(string aKey, JsonNode aItem)
 		{
-			var tmp = new JSONObject();
+			var tmp = new JsonObject();
 			tmp.Add(aKey, aItem);
 			Set(tmp);
 		}
 
-		public static bool operator ==(JSONLazyCreator a, object b)
+		public static bool operator ==(JsonLazyCreator a, object b)
 		{
 			if (b == null)
 				return true;
 			return System.Object.ReferenceEquals(a, b);
 		}
 
-		public static bool operator !=(JSONLazyCreator a, object b)
+		public static bool operator !=(JsonLazyCreator a, object b)
 		{
 			return !(a == b);
 		}
@@ -1273,13 +1273,13 @@ namespace SimpleJSON
 		{
 			get
 			{
-				JSONNumber tmp = new JSONNumber(0);
+				JsonNumber tmp = new JsonNumber(0);
 				Set(tmp);
 				return 0;
 			}
 			set
 			{
-				JSONNumber tmp = new JSONNumber(value);
+				JsonNumber tmp = new JsonNumber(value);
 				Set(tmp);
 			}
 		}
@@ -1288,13 +1288,13 @@ namespace SimpleJSON
 		{
 			get
 			{
-				JSONNumber tmp = new JSONNumber(0.0f);
+				JsonNumber tmp = new JsonNumber(0.0f);
 				Set(tmp);
 				return 0.0f;
 			}
 			set
 			{
-				JSONNumber tmp = new JSONNumber(value);
+				JsonNumber tmp = new JsonNumber(value);
 				Set(tmp);
 			}
 		}
@@ -1303,13 +1303,13 @@ namespace SimpleJSON
 		{
 			get
 			{
-				JSONNumber tmp = new JSONNumber(0.0);
+				JsonNumber tmp = new JsonNumber(0.0);
 				Set(tmp);
 				return 0.0;
 			}
 			set
 			{
-				JSONNumber tmp = new JSONNumber(value);
+				JsonNumber tmp = new JsonNumber(value);
 				Set(tmp);
 			}
 		}
@@ -1318,48 +1318,48 @@ namespace SimpleJSON
 		{
 			get
 			{
-				JSONBool tmp = new JSONBool(false);
+				JsonBool tmp = new JsonBool(false);
 				Set(tmp);
 				return false;
 			}
 			set
 			{
-				JSONBool tmp = new JSONBool(value);
+				JsonBool tmp = new JsonBool(value);
 				Set(tmp);
 			}
 		}
 
-		public override JSONArray AsArray
+		public override JsonArray AsArray
 		{
 			get
 			{
-				JSONArray tmp = new JSONArray();
+				JsonArray tmp = new JsonArray();
 				Set(tmp);
 				return tmp;
 			}
 		}
 
-		public override JSONObject AsObject
+		public override JsonObject AsObject
 		{
 			get
 			{
-				JSONObject tmp = new JSONObject();
+				JsonObject tmp = new JsonObject();
 				Set(tmp);
 				return tmp;
 			}
 		}
-		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JSONTextMode aMode)
+		internal override void WriteToStringBuilder(StringBuilder aSB, int aIndent, int aIndentInc, JsonTextMode aMode)
 		{
 			aSB.Append("null");
 		}
 	}
 	// End of JSONLazyCreator
 
-	public static class JSON
+	public static class Json
 	{
-		public static JSONNode Parse(string aJSON)
+		public static JsonNode Parse(string aJSON)
 		{
-			return JSONNode.Parse(aJSON);
+			return JsonNode.Parse(aJSON);
 		}
 	}
 }

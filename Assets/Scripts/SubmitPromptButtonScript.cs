@@ -42,7 +42,7 @@ public class SubmitPromptButtonScript : MonoBehaviour
 
     public void LogCancelButtonClick()
     {
-        if (GameManagerScript.LOGGING)
+        if (GameManagerScript.logging)
         {
             CancelPlayWordLogEntry entry = new CancelPlayWordLogEntry();
             CancelPlayWordLogEntry.CancelPlayWordPayload payload =
@@ -52,7 +52,7 @@ public class SubmitPromptButtonScript : MonoBehaviour
                     BoxScript.GetScore(BoxScript.currentWord, null)
                 );
 
-            entry.setValues("BNW_CancelButton", "BNW_Action", payload);
+            entry.SetValues("BNW_CancelButton", "BNW_Action", payload);
             string json = JsonUtility.ToJson(entry);
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
             DatabaseReference child = reference.Push();

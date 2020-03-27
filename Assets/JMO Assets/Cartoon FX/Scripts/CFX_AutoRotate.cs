@@ -5,7 +5,7 @@ using System.Collections;
 
 // Indefinitely rotates an object at a constant speed
 
-public class CFX_AutoRotate : MonoBehaviour
+public class CfxAutoRotate : MonoBehaviour
 {
 	// Rotation speed & axis
 	public Vector3 rotation;

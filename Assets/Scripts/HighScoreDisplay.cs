@@ -10,13 +10,13 @@ public class HighScoreDisplay : MonoBehaviour
     {
         public long score;
         public string username;
-        public string userID;
+        public string userId;
 
-        public Triple(long score, string username, string userID)
+        public Triple(long score, string username, string userId)
         {
             this.score = score;
             this.username = username;
-            this.userID = userID;
+            this.userId = userId;
         }
     }
 
@@ -104,7 +104,7 @@ public class HighScoreDisplay : MonoBehaviour
         */
     }
 
-    void AddHighScoreElement(int rank, string username, long score, string userID)
+    void AddHighScoreElement(int rank, string username, long score, string userId)
     {
         /*
         // instantiate the prefab

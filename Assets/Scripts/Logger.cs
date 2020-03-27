@@ -14,7 +14,7 @@ public class Logger : MonoBehaviour
 
     public static void LogAudioSettings()
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         AudioMixer mixer = Resources.Load("MainAudioMixer") as AudioMixer;
         if (mixer != null)
@@ -34,7 +34,7 @@ public class Logger : MonoBehaviour
             };
 
             // push to database
-            entry.setValues("BNW_AudioSettings", "BNW_Action", payload);
+            entry.SetValues("BNW_AudioSettings", "BNW_Action", payload);
             Log(entry);
         }
         else
@@ -45,7 +45,7 @@ public class Logger : MonoBehaviour
 
     public static void LogInstructionsClick(Vector2 pos)
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         // log the location of the click
         ClickLogEntry entry = new ClickLogEntry();
@@ -55,66 +55,76 @@ public class Logger : MonoBehaviour
             screenY = pos.y
         };
 
-        entry.setValues("BNW_InstructionsClosed", "BNW_Action", payload);
+        entry.SetValues("BNW_InstructionsClosed", "BNW_Action", payload);
         Log(entry);
+    }
+
+    public static void LogUser()
+    {
+        if (!GameManagerScript.logging) return;
+        
+        // Log username into users database if it doesn't already exist or if the username has changed
+        DatabaseReference dbUsers = FirebaseDatabase.DefaultInstance.GetReference("users_" + GameManagerScript.VERSION);
+
+        dbUsers.GetValueAsync().ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    // ERROR HANDLER
+                    Debug.LogWarning("Error in logging user into users database of GameManagerScript");
+                }
+                else if (task.IsCompleted)
+                {
+                    Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
+
+                    // set the value of userID's username if it doesn't exist or if it changed
+                    if (results == null || !results.ContainsKey(GameManagerScript.userId) || !results[GameManagerScript.userId].Equals(GameManagerScript.username))
+                    {
+                        var usersRef = dbUsers.Child(GameManagerScript.userId);
+                        usersRef.Child("username").SetValueAsync(GameManagerScript.username);
+                        usersRef.Child("juiceProductive").SetValueAsync(GameManagerScript.juiceProductive);
+                        usersRef.Child("juiceUnproductive").SetValueAsync(GameManagerScript.juiceUnproductive);
+                        usersRef.Child("obstructionProductive").SetValueAsync(GameManagerScript.obstructionProductive);
+                        usersRef.Child("obstructionUnproductive").SetValueAsync(GameManagerScript.obstructionUnproductive);
+                    }
+                }
+            }
+        );
     }
 
     public static void LogStartOfGame()
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         //Debug.Log("Logging beginning of game");
 
         // Log beginning of game
         MetaLogEntry entry = new MetaLogEntry();
-        entry.setValues("BNW_GameStart", "BNW_Meta", new MetaLogEntry.MetaPayload("start"));
+        entry.SetValues("BNW_GameStart", "BNW_Meta", new MetaLogEntry.MetaPayload("start"));
         Log(entry);
 
         //Debug.Log("logging game info");
 
         // insert new game entry into database
         var reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION + "_games");
-        DatabaseReference child = reference.Child(GameManagerScript.GAME_ID);
+        DatabaseReference child = reference.Child(GameManagerScript.gameId);
 
         // Log the game details and type of game
-        child.Child("obstructionProductive").SetValueAsync(GameManagerScript.OBSTRUCTION_PRODUCTIVE);
-        child.Child("obstructionUnproductive").SetValueAsync(GameManagerScript.OBSTRUCTION_UNPRODUCTIVE);
-        child.Child("juiceProductive").SetValueAsync(GameManagerScript.JUICE_PRODUCTIVE);
-        child.Child("juiceUnproductive").SetValueAsync(GameManagerScript.JUICE_UNPRODUCTIVE);
+        child.Child("obstructionProductive").SetValueAsync(GameManagerScript.obstructionProductive);
+        child.Child("obstructionUnproductive").SetValueAsync(GameManagerScript.obstructionUnproductive);
+        child.Child("juiceProductive").SetValueAsync(GameManagerScript.juiceProductive);
+        child.Child("juiceUnproductive").SetValueAsync(GameManagerScript.juiceUnproductive);
         child.Child("username").SetValueAsync(GameManagerScript.username);
-        child.Child("gameID").SetValueAsync(GameManagerScript.GAME_ID);
-        child.Child("userID").SetValueAsync(GameManagerScript.userID);
+        child.Child("gameID").SetValueAsync(GameManagerScript.gameId);
+        child.Child("userID").SetValueAsync(GameManagerScript.userId);
         child.Child("loggingVersion").SetValueAsync(GameManagerScript.LOGGING_VERSION);
         child.Child("appVersion").SetValueAsync(GameManagerScript.APP_VERSION);
         child.Child("gameNumber").SetValueAsync(GameManagerScript.gameNumber);
-
-        // Log username into users database if it doesn't already exist or if the username has changed
-        DatabaseReference dbUsers = FirebaseDatabase.DefaultInstance.GetReference("users_" + GameManagerScript.VERSION);
-
-        dbUsers.GetValueAsync().ContinueWith(task =>
-           {
-               if (task.IsFaulted)
-               {
-                   // ERROR HANDLER
-                   Debug.LogWarning("Error in logging user into users database of GameManagerScript");
-               }
-               else if (task.IsCompleted)
-               {
-                   Dictionary<string, object> results = (Dictionary<string, object>)task.Result.Value;
-
-                   // set the value of userID's username if it doesn't exist or if it changed
-                   if (results == null || !results.ContainsKey(GameManagerScript.userID) || !results[GameManagerScript.userID].Equals(GameManagerScript.username))
-                   {
-                       dbUsers.Child(GameManagerScript.userID).SetValueAsync(GameManagerScript.username);
-                   }
-               }
-           }
-        );
     }
 
     public static void LogKeyFrame(string state)
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         //Debug.Log("Logging full game state");
 
@@ -129,13 +139,13 @@ public class Logger : MonoBehaviour
         payload.wordsPlayed = BoxScript.wordsPlayed;
         payload.state = state;
 
-        entry.setValues("BNW_GameState", "BNW_KeyFrame", payload);
+        entry.SetValues("BNW_GameState", "BNW_KeyFrame", payload);
         Log(entry);
     }
 
     public static void LogEndOfGame()
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         //Debug.Log("Logging end of game");
 
@@ -144,7 +154,7 @@ public class Logger : MonoBehaviour
 
         // log the end of the game
         MetaLogEntry metaEntry = new MetaLogEntry();
-        metaEntry.setValues("BNW_GameEnd", "BNW_Meta", new MetaLogEntry.MetaPayload("end"));
+        metaEntry.SetValues("BNW_GameEnd", "BNW_Meta", new MetaLogEntry.MetaPayload("end"));
         Log(metaEntry);
     }
 
@@ -153,7 +163,7 @@ public class Logger : MonoBehaviour
 	 */
     public static void LogGamePause()
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
         //Debug.Log("Application pausing after " + Time.time + " seconds");
 
         // log the game state before game pauses
@@ -161,31 +171,31 @@ public class Logger : MonoBehaviour
 
         // log the pause
         MetaLogEntry metaEntry = new MetaLogEntry();
-        metaEntry.setValues("BNW_GamePaused", "BNW_Meta", new MetaLogEntry.MetaPayload("pause"));
+        metaEntry.SetValues("BNW_GamePaused", "BNW_Meta", new MetaLogEntry.MetaPayload("pause"));
         Log(metaEntry);
     }
 
     public static void LogGameUnpause()
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         // log the unpause
         MetaLogEntry metaEntry = new MetaLogEntry();
-        metaEntry.setValues("BNW_GameUnpaused", "BNW_Meta", new MetaLogEntry.MetaPayload("unpause"));
+        metaEntry.SetValues("BNW_GameUnpaused", "BNW_Meta", new MetaLogEntry.MetaPayload("unpause"));
         Log(metaEntry);
     }
 
     // BNW_LetterSelected or BNW_LetterDeselected logging
     public static void LogAction(string key, Vector2 pos)
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         //Debug.Log("Attempts to log data");
         string letter = BoxScript.grid[(int)pos.x, (int)pos.y].gameObject.GetComponent<BoxScript>().Letter;
         LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
-        payload.setValues(letter, (int)pos.x, (int)pos.y);
+        payload.SetValues(letter, (int)pos.x, (int)pos.y);
         LetterLogEntry entry = new LetterLogEntry();
-        entry.setValues(key, "BNW_Action", payload);
+        entry.SetValues(key, "BNW_Action", payload);
         Log(entry);
 
         // TODO: this needs to happen elsewhere
@@ -195,14 +205,14 @@ public class Logger : MonoBehaviour
     // BNW_LetterSelected or BNW_LetterDeselected logging
     public static void LogAction(string key, string letter, int x, int y)
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         //Debug.Log("Attempts to log data");
         LogEntry.LetterPayload payload = new LogEntry.LetterPayload();
-        payload.setValues(letter, x, y);
+        payload.SetValues(letter, x, y);
 
         LetterLogEntry entry = new LetterLogEntry();
-        entry.setValues(key, "BNW_Action", payload);
+        entry.SetValues(key, "BNW_Action", payload);
         Log(entry);
 
         ++BoxScript.totalInteractions;
@@ -211,7 +221,7 @@ public class Logger : MonoBehaviour
     // BNW_DeselectAll logging
     public static void LogAction(string key)
     {
-        if (!GameManagerScript.LOGGING) return;
+        if (!GameManagerScript.logging) return;
 
         LogEntry.LetterPayload[] letters = BoxScript.GetLetterPayloadsFromCurrentWord();
         DeselectWordLogEntry.DeselectWordPayload wordPayload = new DeselectWordLogEntry.DeselectWordPayload();
@@ -219,7 +229,7 @@ public class Logger : MonoBehaviour
         wordPayload.letters = letters;
 
         DeselectWordLogEntry entry = new DeselectWordLogEntry();
-        entry.setValues(key, "BNW_Action", wordPayload);
+        entry.SetValues(key, "BNW_Action", wordPayload);
         Log(entry);
 
         ++BoxScript.totalInteractions;

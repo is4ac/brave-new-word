@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 //
 // Script handling the Demo scene of the Cartoon FX Packs
 
-public class CFX_Demo_New : MonoBehaviour
+public class CfxDemoNew : MonoBehaviour
 {
 	public Renderer groundRenderer;
 	public Collider groundCollider;
@@ -109,8 +109,8 @@ public class CFX_Demo_New : MonoBehaviour
 	public void OnToggleCamera()
 	{
 		var c = Color.white;
-		CFX_Demo_RotateCamera.rotating = !CFX_Demo_RotateCamera.rotating;
-		c.a = CFX_Demo_RotateCamera.rotating ? 1f : 0.33f;
+		CfxDemoRotateCamera.rotating = !CfxDemoRotateCamera.rotating;
+		c.a = CfxDemoRotateCamera.rotating ? 1f : 0.33f;
 		camRotBtn.color = c;
 		camRotLabel.color = c;
 	}
@@ -177,7 +177,7 @@ public class CFX_Demo_New : MonoBehaviour
 			var main = ps.main;
 			if (main.loop)
 			{
-				ps.gameObject.AddComponent<CFX_AutoStopLoopedEffect>();
+				ps.gameObject.AddComponent<CfxAutoStopLoopedEffect>();
 				ps.gameObject.AddComponent<CFX_AutoDestructShuriken>();
 			}
 		}

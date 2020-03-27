@@ -17,10 +17,10 @@ public class SpawnBoxScript : MonoBehaviour
     //static int height = 9;
 
     static bool isInit = false;
-    bool init = true;
-    int initCount = 0;
-    bool wait = true;
-    List<int> letterFreq;
+    bool _init = true;
+    int _initCount = 0;
+    bool _wait = true;
+    List<int> _letterFreq;
     //static char[,] initialBoard = new char[width, height];
     //static bool[,] flaggedBoard = new bool[width, height];
 
@@ -32,19 +32,19 @@ public class SpawnBoxScript : MonoBehaviour
         28,10,24,10,20,10}; // U V W X Y Z
     public const int MAX_LETTER_FREQ = 90;
 
-    public static bool isInitialized()
+    public static bool IsInitialized()
     {
         return isInit;
     }
 
     void AddToLetterFreqList()
     {
-        for (int letter_index = 0; letter_index < 26; letter_index++)
+        for (int letterIndex = 0; letterIndex < 26; letterIndex++)
         {
-            int letterFreqCount = letterDistributions[letter_index];
+            int letterFreqCount = letterDistributions[letterIndex];
             for (int i = 0; i < letterFreqCount; ++i)
             {
-                letterFreq.Add(letter_index);
+                _letterFreq.Add(letterIndex);
             }
         }
     }
@@ -87,9 +87,9 @@ public class SpawnBoxScript : MonoBehaviour
     void Start()
     {
         // initialize letter frequency array for spawning statistics
-        if (letterFreq == null)
+        if (_letterFreq == null)
         {
-            letterFreq = new List<int>();
+            _letterFreq = new List<int>();
 
             AddToLetterFreqList();
         }
@@ -100,24 +100,24 @@ public class SpawnBoxScript : MonoBehaviour
 
     void Update()
     {
-        if (BoxScript.grid[myX, BoxScript.gridHeight - 1] == null &&
+        if (BoxScript.grid[myX, BoxScript.GridHeight - 1] == null &&
             !BoxScript.IsBoxInColumnFalling(myX))
         {
-            if (init && initCount < 9)
+            if (_init && _initCount < 9)
             {
-                ++initCount;
+                ++_initCount;
                 SpawnNewBox();
 
-                if (initCount == 9)
+                if (_initCount == 9)
                 {
                     isInit = true;
                 }
             }
-            else if (wait)
+            else if (_wait)
             {
                 StartCoroutine(WaitForSpawn());
-                wait = false;
-                init = false;
+                _wait = false;
+                _init = false;
             }
 
         }
@@ -127,7 +127,7 @@ public class SpawnBoxScript : MonoBehaviour
     {
         yield return new WaitForSeconds(0.15f);
         SpawnNewBox();
-        wait = true;
+        _wait = true;
     }
 
     /**
@@ -136,8 +136,8 @@ public class SpawnBoxScript : MonoBehaviour
     public void SpawnNewBox()
     {
         // TODO: fix this!!!
-        int i = UnityEngine.Random.Range(0, letterFreq.Count);
-        SpawnNewBox((char)('A' + letterFreq[i]));
+        int i = UnityEngine.Random.Range(0, _letterFreq.Count);
+        SpawnNewBox((char)('A' + _letterFreq[i]));
 
         // Make a "woosh" sound effect when spawning
         AudioManager.instance.Play("Woosh");
@@ -156,8 +156,8 @@ public class SpawnBoxScript : MonoBehaviour
 
     public void Reset()
     {
-        init = true;
-        initCount = 0;
+        _init = true;
+        _initCount = 0;
         isInit = false;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class LogEntry
@@ -27,7 +28,7 @@ public class LogEntry
             this.y = y;
         }
 
-        public void setValues(string letter, int x, int y)
+        public void SetValues(string letter, int x, int y)
         {
             this.letter = letter;
             this.x = x;
@@ -60,13 +61,13 @@ public class LogEntry
     {
         logVersion = GameManagerScript.LOGGING_VERSION;
         appVersion = GameManagerScript.APP_VERSION;
-        userID = GameManagerScript.userID;
+        userID = GameManagerScript.userId;
         username = GameManagerScript.username;
-        gameID = GameManagerScript.GAME_ID;
-        obstructionProductive = GameManagerScript.OBSTRUCTION_PRODUCTIVE;
-        obstructionUnproductive = GameManagerScript.OBSTRUCTION_UNPRODUCTIVE;
-        juiceProductive = GameManagerScript.JUICE_PRODUCTIVE;
-        juiceUnproductive = GameManagerScript.JUICE_UNPRODUCTIVE;
+        gameID = GameManagerScript.gameId;
+        obstructionProductive = GameManagerScript.obstructionProductive;
+        obstructionUnproductive = GameManagerScript.obstructionUnproductive;
+        juiceProductive = GameManagerScript.juiceProductive;
+        juiceUnproductive = GameManagerScript.juiceUnproductive;
         deviceModel = GameManagerScript.deviceModel;
         timestamp = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
         timestampEpoch = DateTimeOffset.Now.ToUnixTimeMilliseconds(); // UNIX epoch time in milliseconds
@@ -74,7 +75,7 @@ public class LogEntry
         deviceID = SystemInfo.deviceUniqueIdentifier;
     }
 
-    public void setValues(string key, string parentKey)
+    public void SetValues(string key, string parentKey)
     {
         this.key = key;
         this.parentKey = parentKey;
@@ -85,9 +86,9 @@ public class LetterLogEntry : LogEntry
 {
     public LetterPayload payload;
 
-    public void setValues(string key, string parentKey, LetterPayload payload)
+    public void SetValues(string key, string parentKey, LetterPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -108,9 +109,9 @@ public class MetaLogEntry : LogEntry
 
     public MetaPayload payload;
 
-    public void setValues(string key, string parentKey, MetaPayload payload)
+    public void SetValues(string key, string parentKey, MetaPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -127,9 +128,9 @@ public class DeselectWordLogEntry : LogEntry
 
     public DeselectWordPayload payload;
 
-    public void setValues(string key, string parentKey, DeselectWordPayload payload)
+    public void SetValues(string key, string parentKey, DeselectWordPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -164,9 +165,9 @@ public class SubmitWordLogEntry : LogEntry
         GameManagerScript.previousSubmissionTime = base.timestampEpoch;
     }
 
-    public void setValues(string key, string parentKey, SubmitWordPayload payload)
+    public void SetValues(string key, string parentKey, SubmitWordPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -191,9 +192,9 @@ public class ClickPlayWordButtonLogEntry : LogEntry
 
     public ClickPlayWordButtonPayload payload;
 
-    public void setValues(string key, string parentKey, ClickPlayWordButtonPayload payload)
+    public void SetValues(string key, string parentKey, ClickPlayWordButtonPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -220,9 +221,9 @@ public class CancelPlayWordLogEntry : LogEntry
 
     public CancelPlayWordPayload payload;
 
-    public void setValues(string key, string parentKey, CancelPlayWordPayload payload)
+    public void SetValues(string key, string parentKey, CancelPlayWordPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -243,9 +244,9 @@ public class KeyFrameLogEntry : LogEntry
 
     public KeyFramePayload payload;
 
-    public void setValues(string key, string parentKey, KeyFramePayload payload)
+    public void SetValues(string key, string parentKey, KeyFramePayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -262,9 +263,9 @@ public class ClickLogEntry : LogEntry
 
     public ClickPayload payload;
 
-    public void setValues(string key, string parentKey, ClickPayload payload)
+    public void SetValues(string key, string parentKey, ClickPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }
@@ -282,9 +283,9 @@ public class AudioSettingsLogEntry : LogEntry
 
     public AudioSettingsPayload payload;
 
-    public void setValues(string key, string parentKey, AudioSettingsPayload payload)
+    public void SetValues(string key, string parentKey, AudioSettingsPayload payload)
     {
-        setValues(key, parentKey);
+        SetValues(key, parentKey);
         this.payload = payload;
     }
 }

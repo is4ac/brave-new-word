@@ -3,7 +3,7 @@ using System.Collections;
 
 // Cartoon FX  - (c) 2015 Jean Moreno
 
-public class CFX_Demo_RandomDirectionTranslate : MonoBehaviour
+public class CfxDemoRandomDirectionTranslate : MonoBehaviour
 {
 	public float speed = 30.0f;
 	public Vector3 baseDir = Vector3.zero;

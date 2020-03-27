@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Firebase.Database;
 using TMPro;
 using EZCameraShake;
+using UnityEngine.Serialization;
 
 
 /**
@@ -24,40 +25,40 @@ public class BoxScript : MonoBehaviour
 {
     static BoxScript instance;   // static reference to itself
 
-    public static float gridWidthRadius = 2.5f;
-    public static int gridHeightRadius = 4;
-    public static int gridWidth = (int)(gridWidthRadius * 2) + 1; // -2.5 to 2.5 
-    public static int gridHeight = gridHeightRadius * 2 + 1; // -4 to 4
-    public static Transform[,] grid = new Transform[gridWidth, gridHeight];
+    private static float gridWidthRadius = 2.5f;
+    private static int gridHeightRadius = 4;
+    public static readonly int GridWidth = (int)(gridWidthRadius * 2) + 1; // -2.5 to 2.5 
+    public static readonly int GridHeight = gridHeightRadius * 2 + 1; // -4 to 4
+    public static Transform[,] grid = new Transform[GridWidth, GridHeight];
     public static List<Vector2> currentSelection = new List<Vector2>();
-    public static Text scoreText;
-    public static Text selectedScore;
+    private static Text scoreText;
+    private static Text selectedScore;
     public static long score;
     private const float FALL_SPEED_CONST = 0.025f;
     public static string currentWord = "";
     public static Dictionary<string, Vector2> freqDictionary;
     public static int totalInteractions;
     public static int wordsPlayed;
-    public GameObject _explodeParticleSystemPrefab;
-    public GameObject _bubblesLandingParticleSystemPrefab;
-    public GameObject _shinyParticleSystemPrefab;
+    [FormerlySerializedAs("_explodeParticleSystemPrefab")] public GameObject explodeParticleSystemPrefab;
+    [FormerlySerializedAs("_bubblesLandingParticleSystemPrefab")] public GameObject bubblesLandingParticleSystemPrefab;
+    [FormerlySerializedAs("_shinyParticleSystemPrefab")] public GameObject shinyParticleSystemPrefab;
     public static GameObject celebrationParticleSystem;
-    public static Color originalBlockColor;
+    private static Color originalBlockColor;
 
-    static float[] freqCutoffs = {
+    private static readonly float[] FreqCutoffs = {
             .4f, .3f,
             .24f, .22f,
             .2f, .15f,
             .1f
         };
-    public string Letter { get; set; }
-    float fall;
-    bool falling = true;
-    bool columnFalling;
-    int myX;
-    int myY;
-    bool needsToLand = true;
-    bool isSelected;
+    public string Letter { get; private set; }
+    private float _fall;
+    private bool _falling = true;
+    private bool _columnFalling;
+    private int _myX;
+    private int _myY;
+    bool _needsToLand = true;
+    bool _isSelected;
 
     [NonSerialized]
     public float fallSpeed = FALL_SPEED_CONST;
@@ -70,9 +71,9 @@ public class BoxScript : MonoBehaviour
         }
 
         // initialize objects
-        if (this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
+        if (gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text.Length > 0)
         {
-            Letter = this.gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
+            Letter = gameObject.transform.GetChild(0).GetComponent<TextMeshPro>().text;
         }
 
         if (scoreText == null)
@@ -90,20 +91,21 @@ public class BoxScript : MonoBehaviour
             celebrationParticleSystem = GameObject.Find("CelebrationParticles");
         }
 
-        originalBlockColor = new Color(9f / 255f, 132f / 255f, 227f / 255f, 202f / 255f);
+        originalBlockColor = new Color(0.04f, 0.52f, 0.89f, 0.79f);
     }
 
     // Use this for initialization
     void Start()
     {
         // Add the location of the block to the grid
-        Vector2 v = transform.position;
-        myX = (int)(v.x + gridWidthRadius);
-        myY = (int)v.y + gridHeightRadius;
-        grid[myX, myY] = transform;
-        falling = true;
-        columnFalling = false;
-        fall = Time.time;
+        var transform1 = transform;
+        Vector2 v = transform1.position;
+        _myX = (int)(v.x + gridWidthRadius);
+        _myY = (int)v.y + gridHeightRadius;
+        grid[_myX, _myY] = transform1;
+        _falling = true;
+        _columnFalling = false;
+        _fall = Time.time;
 
         // update the progress bar to fill in how many turns are left
         //UpdateScoreProgressBar();
@@ -119,24 +121,24 @@ public class BoxScript : MonoBehaviour
     void Update()
     {
         // check to see if the column needs to go down, or if it needs to be refilled
-        if (!falling && myY > 0 && grid[myX, myY - 1] == null && Time.time - fall >= fallSpeed)
+        if (!_falling && _myY > 0 && grid[_myX, _myY - 1] == null && Time.time - _fall >= fallSpeed)
         {
             if (!IsOtherBoxInColumnFalling())
             {
-                needsToLand = true;
+                _needsToLand = true;
                 ColumnDown();
-                fall = Time.time;
+                _fall = Time.time;
             }
         }
-        else if (columnFalling && ((myY > 0 && grid[myX, myY - 1] != null) || myY == 0))
+        else if (_columnFalling && ((_myY > 0 && grid[_myX, _myY - 1] != null) || _myY == 0))
         {
-            columnFalling = false;
+            _columnFalling = false;
         }
 
         // If a tile is falling down the screen...
-        if (falling && Time.time - fall >= fallSpeed)
+        if (_falling && Time.time - _fall >= fallSpeed)
         {
-            needsToLand = true;
+            _needsToLand = true;
             transform.position += new Vector3(0, -1, 0);
 
             if (IsValidPosition())
@@ -146,17 +148,17 @@ public class BoxScript : MonoBehaviour
             else
             {
                 transform.position += new Vector3(0, 1, 0);
-                falling = false;
+                _falling = false;
                 fallSpeed = FALL_SPEED_CONST;
             }
-            fall = Time.time;
+            _fall = Time.time;
         }
 
         // check to see if landing bubbles need to be activated
-        if (!falling && needsToLand && !columnFalling)
+        if (!_falling && _needsToLand && !_columnFalling)
         {
             OnLand();
-            needsToLand = false;
+            _needsToLand = false;
         }
     }
 
@@ -165,7 +167,7 @@ public class BoxScript : MonoBehaviour
         float z = 0f;
         int direction = 1;
         float maxRotation = 10f;
-        while (isSelected)
+        while (_isSelected)
         {
             z += UnityEngine.Random.Range(1f, 5f) * direction;
 
@@ -191,7 +193,7 @@ public class BoxScript : MonoBehaviour
     public void OnLand()
     {
         // ======FEATURE:  Juice, extra landing animation======
-        if (GameManagerScript.JUICE_UNPRODUCTIVE || GameManagerScript.JUICE_PRODUCTIVE)
+        if (GameManagerScript.juiceUnproductive || GameManagerScript.juiceProductive)
         {
             CreateBubbleParticles();
         }
@@ -202,7 +204,7 @@ public class BoxScript : MonoBehaviour
     public void CreateBubbleParticles()
     {
         //Instantiate _particleSystemPrefab as new GameObject.
-        GameObject _particleSystemObj = Instantiate(_bubblesLandingParticleSystemPrefab);
+        GameObject particleSystemObj = Instantiate(bubblesLandingParticleSystemPrefab);
 
         // Set new Particle System GameObject as a child of desired GO.
         // Right now parent would be the same GO in which this script is attached
@@ -211,10 +213,10 @@ public class BoxScript : MonoBehaviour
         // After setting this, replace the position of that GameObject as where the parent is located.
         Vector3 pos = transform.position;
         pos.y -= .25f;
-        _particleSystemObj.transform.position = pos;
+        particleSystemObj.transform.position = pos;
 
-        ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
-        _particleSystem.Play();
+        ParticleSystem particleSystem = particleSystemObj.GetComponent<ParticleSystem>();
+        particleSystem.Play();
     }
 
     public void SetLetter(char letter)
@@ -242,7 +244,7 @@ public class BoxScript : MonoBehaviour
         bool valid = UpdateScore(dbEntry);
 
         // Firebase logging
-        if (GameManagerScript.LOGGING)
+        if (GameManagerScript.logging)
         {
             //Debug.Log("Attempts to log data");
             Logger.LogKeyFrame("pre");
@@ -257,7 +259,7 @@ public class BoxScript : MonoBehaviour
         //=========Screen animations based on if word was valid or not==========
 
         // shake the camera
-        CameraShaker.Instance.ShakeOnce(5f, 5f, .1f, .6f);
+        CameraShaker.instance.ShakeOnce(5f, 5f, .1f, .6f);
 
 
         if (valid)
@@ -269,10 +271,10 @@ public class BoxScript : MonoBehaviour
             ++wordsPlayed;
 
             // ANIMATE JUICY SUCCESS AND SOUNDS!!
-            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            if (GameManagerScript.juiceProductive || GameManagerScript.juiceUnproductive)
             {
-                ParticleSystem _particleSystem = celebrationParticleSystem.GetComponent<ParticleSystem>();
-                _particleSystem.Play();
+                ParticleSystem particleSystem = celebrationParticleSystem.GetComponent<ParticleSystem>();
+                particleSystem.Play();
 
                 AudioManager.instance.Play("Explosion");
             }
@@ -288,7 +290,7 @@ public class BoxScript : MonoBehaviour
             AudioManager.instance.Play("Error");
 
             // JUICY SOUND FX
-            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            if (GameManagerScript.juiceProductive || GameManagerScript.juiceUnproductive)
             {
                 AudioManager.instance.Play("Explosion");
             }
@@ -389,37 +391,37 @@ public class BoxScript : MonoBehaviour
 
     static int GetBonus(float freq)
     {
-        if (freq >= freqCutoffs[0])
+        if (freq >= FreqCutoffs[0])
         {
             // PREMIUM ULTRA RARE
             return 75; // over 9000
         }
-        else if (freq >= freqCutoffs[1])
+        else if (freq >= FreqCutoffs[1])
         {
             // PREMIUM ULTRA RARE
             return 60;
         }
-        else if (freq >= freqCutoffs[2])
+        else if (freq >= FreqCutoffs[2])
         {
             // ULTRA RARE+
             return 50;
         }
-        else if (freq >= freqCutoffs[3])
+        else if (freq >= FreqCutoffs[3])
         {
             // ULTRA RARE
             return 40;
         }
-        else if (freq >= freqCutoffs[4])
+        else if (freq >= FreqCutoffs[4])
         {
             // SUPER RARE
             return 30;
         }
-        else if (freq >= freqCutoffs[5])
+        else if (freq >= FreqCutoffs[5])
         {
             // RARE
             return 20;
         }
-        else if (freq >= freqCutoffs[6])
+        else if (freq >= FreqCutoffs[6])
         {
             // AVERAGE
             return 10;
@@ -434,33 +436,33 @@ public class BoxScript : MonoBehaviour
         TextFaderScript textFader = GameObject.Find("SuccessMessage").GetComponent<TextFaderScript>();
         TextFaderScript scoreTextFader = GameObject.Find("SuccessScorePanel").GetComponent<TextFaderScript>();
 
-        if (freq >= freqCutoffs[0])
+        if (freq >= FreqCutoffs[0])
         {
             // Unbelievable
             textFader.FadeText(0.7f, "Unbelievable!");
         }
-        else if (freq >= freqCutoffs[1])
+        else if (freq >= FreqCutoffs[1])
         {
             // Ultra rare
             textFader.FadeText(0.7f, "Ultra Rare!");
         }
-        else if (freq >= freqCutoffs[2])
+        else if (freq >= FreqCutoffs[2])
         {
             // Super rare
             textFader.FadeText(0.7f, "Super Rare!");
 
         }
-        else if (freq >= freqCutoffs[3])
+        else if (freq >= FreqCutoffs[3])
         {
             // Rare
             textFader.FadeText(0.7f, "Rare!");
         }
-        else if (freq >= freqCutoffs[4])
+        else if (freq >= FreqCutoffs[4])
         {
             // Great
             textFader.FadeText(0.7f, "Great!");
         }
-        else if (freq >= freqCutoffs[5])
+        else if (freq >= FreqCutoffs[5])
         {
             // Good
             textFader.FadeText(0.7f, "Good!");
@@ -472,8 +474,8 @@ public class BoxScript : MonoBehaviour
         // animate each selected tile
         foreach (Vector2 v in currentSelection)
         {
-            GameObject _gameObject = grid[(int)v.x, (int)v.y].gameObject;
-            _gameObject.GetComponent<BoxScript>().AnimateSuccess();
+            GameObject gameObject = grid[(int)v.x, (int)v.y].gameObject;
+            gameObject.GetComponent<BoxScript>().AnimateSuccess();
         }
 
         // brief pause for the color to change before removing them from screen
@@ -509,13 +511,13 @@ public class BoxScript : MonoBehaviour
             Vector2 v = currentSelection[currentSelection.Count - 1];
             BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
             box.ResetTileColors();
-            box.isSelected = false;
+            box._isSelected = false;
             currentSelection.Remove(v);
 
             /******************************************************************
              * FEATURE: If juiciness is on, play particles when deselecting!
              ******************************************************************/
-            if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+            if (GameManagerScript.juiceProductive || GameManagerScript.juiceUnproductive)
             {
                 box.PlayShinySelectParticles();
             }
@@ -540,7 +542,7 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: Obstructions- enable/disable play button based on word
          ******************************************************************/
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        if (GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive)
         {
             GameManagerScript.gameManager.UpdatePlayButton();
         }
@@ -554,7 +556,7 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: If juiciness is on, play particles when deselecting!
          ******************************************************************/
-        if (GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE)
+        if (GameManagerScript.juiceProductive || GameManagerScript.juiceUnproductive)
         {
             Vector2 last = currentSelection[currentSelection.Count - 1];
             grid[(int)last.x, (int)last.y].gameObject.GetComponent<BoxScript>().PlayShinySelectParticles();
@@ -564,7 +566,7 @@ public class BoxScript : MonoBehaviour
         Vector2 v = currentSelection[currentSelection.Count - 1];
         BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
         box.ResetTileColors();
-        box.isSelected = false;
+        box._isSelected = false;
         currentSelection.Remove(v);
 
         // log the last removed letter
@@ -586,7 +588,7 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: Obstructions- enable/disable play button based on word
          ******************************************************************/
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        if (GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive)
         {
             GameManagerScript.gameManager.UpdatePlayButton();
         }
@@ -598,7 +600,7 @@ public class BoxScript : MonoBehaviour
     public bool IsInsideTile(Vector2 pos, float sensitivity)
     {
         Vector2 realPos = Camera.main.ScreenToWorldPoint(pos);
-        Vector2 myRealPos = new Vector2(myX - gridWidthRadius, myY - gridHeightRadius);
+        Vector2 myRealPos = new Vector2(_myX - gridWidthRadius, _myY - gridHeightRadius);
         float radius = 0.55f * sensitivity;
 
         // calculate distance between the two points and see if it's within the radius
@@ -608,9 +610,9 @@ public class BoxScript : MonoBehaviour
     // Checks to see if there is another box in my column that is falling with me in a 'column fall'
     bool IsOtherBoxInColumnFalling()
     {
-        for (int y = myY - 1; y >= 0; --y)
+        for (int y = _myY - 1; y >= 0; --y)
         {
-            if (grid[myX, y] != null && grid[myX, y].gameObject.GetComponent<BoxScript>().columnFalling)
+            if (grid[_myX, y] != null && grid[_myX, y].gameObject.GetComponent<BoxScript>()._columnFalling)
             {
                 return true;
             }
@@ -622,10 +624,10 @@ public class BoxScript : MonoBehaviour
     // Checks to see if there are any boxes in column x that is currently falling (or column falling)
     public static bool IsBoxInColumnFalling(int x)
     {
-        for (int y = 0; y < gridHeight; ++y)
+        for (int y = 0; y < GridHeight; ++y)
         {
-            if (grid[x, y] != null && (grid[x, y].gameObject.GetComponent<BoxScript>().falling ||
-                                        grid[x, y].gameObject.GetComponent<BoxScript>().columnFalling))
+            if (grid[x, y] != null && (grid[x, y].gameObject.GetComponent<BoxScript>()._falling ||
+                                        grid[x, y].gameObject.GetComponent<BoxScript>()._columnFalling))
             {
                 return true;
             }
@@ -655,7 +657,7 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: Obstructions- enable/disable play button based on word
          ******************************************************************/
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        if (GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive)
         {
             GameManagerScript.gameManager.UpdatePlayButton();
         }
@@ -687,22 +689,22 @@ public class BoxScript : MonoBehaviour
     public void PlayParticleSystem(GameObject particleSystemPrefab)
     {
         //Instantiate _particleSystemPrefab as new GameObject.
-        GameObject _particleSystemObj = Instantiate(particleSystemPrefab);
+        GameObject particleSystemObj = Instantiate(particleSystemPrefab);
 
         // Set new Particle System GameObject as a child of desired GO.
         // Right now parent would be the same GO in which this script is attached
         // You can also make it others child by ps.transform.parent = otherGO.transform.parent;
 
         // After setting this, replace the position of that GameObject as where the parent is located.
-        _particleSystemObj.transform.position = transform.position;
+        particleSystemObj.transform.position = transform.position;
 
-        ParticleSystem _particleSystem = _particleSystemObj.GetComponent<ParticleSystem>();
-        _particleSystem.Play();
+        ParticleSystem particleSystem = particleSystemObj.GetComponent<ParticleSystem>();
+        particleSystem.Play();
     }
 
     public void PlaySuccessParticleSystem()
     {
-        PlayParticleSystem(_explodeParticleSystemPrefab);
+        PlayParticleSystem(explodeParticleSystemPrefab);
     }
 
     public static bool IsValidWord(string word)
@@ -740,13 +742,13 @@ public class BoxScript : MonoBehaviour
     /*****************************************************************
      * FEATURE: Highlighting color gradient based on frequency feature
      *****************************************************************/
-    public static Color IntToColor(int HexVal)
+    public static Color IntToColor(int hexVal)
     {
-        byte R = (byte)((HexVal >> 16) & 0xFF);
-        byte G = (byte)((HexVal >> 8) & 0xFF);
-        byte B = (byte)((HexVal) & 0xFF);
+        byte r = (byte)((hexVal >> 16) & 0xFF);
+        byte g = (byte)((hexVal >> 8) & 0xFF);
+        byte b = (byte)((hexVal) & 0xFF);
 
-        return new Color(R / 255f, G / 255f, B / 255f, 1);
+        return new Color(r / 255f, g / 255f, b / 255f, 1);
     }
 
     public static Color GetColorGradient(float rank)
@@ -798,7 +800,7 @@ public class BoxScript : MonoBehaviour
 
     public void PlayShinySelectParticles()
     {
-        PlayParticleSystem(_shinyParticleSystemPrefab);
+        PlayParticleSystem(shinyParticleSystemPrefab);
     }
 
     /**
@@ -823,7 +825,7 @@ public class BoxScript : MonoBehaviour
          * FEATURE: Obstructions- disable / enable button depending on
          *          word's validity
          ******************************************************************/
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        if (GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive)
         {
             GameManagerScript.gameManager.UpdatePlayButton();
         }
@@ -832,7 +834,7 @@ public class BoxScript : MonoBehaviour
          * FEATURE: Shiny particles whenever you select a tile!
          * Productive Juice. Unproductive juice produces particles every touch
          *****************************************************************/
-        if (GameManagerScript.JUICE_PRODUCTIVE)
+        if (GameManagerScript.juiceProductive)
         {
             boxScript.PlayShinySelectParticles();
         }
@@ -841,12 +843,12 @@ public class BoxScript : MonoBehaviour
          * FEATURE: juice: turn on this flag so that the tile
          *          bounces around/animates when selected
          ******************************************************************/
-        boxScript.isSelected = true;
+        boxScript._isSelected = true;
 
         //=====================================================================
         //  FEATURE: Juice: extra animations/bouncing if tile is selected.
         //=====================================================================
-        if (GameManagerScript.JUICE_UNPRODUCTIVE || GameManagerScript.JUICE_PRODUCTIVE)
+        if (GameManagerScript.juiceUnproductive || GameManagerScript.juiceProductive)
         {
             // Animate the tile
             boxScript.StartCoroutine(boxScript.AnimateBouncingTile());
@@ -856,9 +858,9 @@ public class BoxScript : MonoBehaviour
         //  FEATURE: Unproductive Juice: camera shakes and explosions when
         //           selecting letters.
         //=====================================================================
-        if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        if (GameManagerScript.juiceUnproductive)
         {
-            CameraShaker.Instance.ShakeOnce(3f, 3.5f, .1f, .3f);
+            CameraShaker.instance.ShakeOnce(3f, 3.5f, .1f, .3f);
         }
 
         // Play sound effect
@@ -959,42 +961,42 @@ public class BoxScript : MonoBehaviour
         // TODO: refactor and use an array of dx[] dy[] to shorten the code
 
         // check to the right
-        if (myX + 1 == otherX && myY == otherY)
+        if (_myX + 1 == otherX && _myY == otherY)
         {
             return true;
         }
         // check to the left
-        else if (myX - 1 == otherX && myY == otherY)
+        else if (_myX - 1 == otherX && _myY == otherY)
         {
             return true;
         }
         // check up
-        else if (myX == otherX && myY + 1 == otherY)
+        else if (_myX == otherX && _myY + 1 == otherY)
         {
             return true;
         }
         // check down
-        else if (myX == otherX && myY - 1 == otherY)
+        else if (_myX == otherX && _myY - 1 == otherY)
         {
             return true;
         }
         // check diagonal top right
-        else if (myX + 1 == otherX && myY + 1 == otherY)
+        else if (_myX + 1 == otherX && _myY + 1 == otherY)
         {
             return true;
         }
         // check diagonal top left
-        else if (myX - 1 == otherX && myY + 1 == otherY)
+        else if (_myX - 1 == otherX && _myY + 1 == otherY)
         {
             return true;
         }
         // check diagonal bottom right
-        else if (myX + 1 == otherX && myY - 1 == otherY)
+        else if (_myX + 1 == otherX && _myY - 1 == otherY)
         {
             return true;
         }
         // check diagonal bottom left
-        else if (myX - 1 == otherX && myY - 1 == otherY)
+        else if (_myX - 1 == otherX && _myY - 1 == otherY)
         {
             return true;
         }
@@ -1011,7 +1013,7 @@ public class BoxScript : MonoBehaviour
         {
             BoxScript box = grid[(int)v.x, (int)v.y].gameObject.GetComponent<BoxScript>();
             box.ResetTileColors();
-            box.isSelected = false;
+            box._isSelected = false;
         }
 
         currentSelection.Clear();
@@ -1025,7 +1027,7 @@ public class BoxScript : MonoBehaviour
         /******************************************************************
          * FEATURE: Disable the play word button if it exists
          ******************************************************************/
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE)
+        if (GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive)
         {
             GameManagerScript.gameManager.UpdatePlayButton();
         }
@@ -1046,7 +1048,7 @@ public class BoxScript : MonoBehaviour
 
     public static bool IsColumnFull(int x)
     {
-        for (int y = 0; y < gridHeight; ++y)
+        for (int y = 0; y < GridHeight; ++y)
         {
             if (grid[x, y] == null)
             {
@@ -1076,36 +1078,36 @@ public class BoxScript : MonoBehaviour
 
     void ColumnDown()
     {
-        columnFalling = true;
+        _columnFalling = true;
 
         // move every other block on top of this block down 1 as well
-        for (int y = myY; y < gridHeight; ++y)
+        for (int y = _myY; y < GridHeight; ++y)
         {
-            if (grid[myX, y] != null)
+            if (grid[_myX, y] != null)
             {
-                grid[myX, y].position += new Vector3(0, -1, 0);
-                grid[myX, y].gameObject.GetComponent<BoxScript>().myY -= 1;
-                grid[myX, y - 1] = grid[myX, y];
+                grid[_myX, y].position += new Vector3(0, -1, 0);
+                grid[_myX, y].gameObject.GetComponent<BoxScript>()._myY -= 1;
+                grid[_myX, y - 1] = grid[_myX, y];
             }
             else
             {
-                grid[myX, y - 1] = null;
+                grid[_myX, y - 1] = null;
             }
         }
 
-        grid[myX, gridHeight - 1] = null;
+        grid[_myX, GridHeight - 1] = null;
     }
 
     void GridUpdate()
     {
         // Remove the previous location of this block from the grid
-        grid[myX, myY] = null;
+        grid[_myX, _myY] = null;
 
         // Add the new location of the block to the grid
         Vector2 v = transform.position;
-        myX = (int)(v.x + gridWidthRadius);
-        myY = (int)v.y + gridHeightRadius;
-        grid[myX, myY] = transform;
+        _myX = (int)(v.x + gridWidthRadius);
+        _myY = (int)v.y + gridHeightRadius;
+        grid[_myX, _myY] = transform;
     }
 
     public static void Reset()
@@ -1118,7 +1120,7 @@ public class BoxScript : MonoBehaviour
             }
         }
 
-        grid = new Transform[gridWidth, gridHeight];
+        grid = new Transform[GridWidth, GridHeight];
         currentWord = "";
         currentSelection.Clear();
         score = 0;
@@ -1132,9 +1134,9 @@ public class BoxScript : MonoBehaviour
     {
         string boardString = "";
 
-        for (int j = gridHeight - 1; j >= 0; --j)
+        for (int j = GridHeight - 1; j >= 0; --j)
         {
-            for (int i = 0; i < gridWidth; ++i)
+            for (int i = 0; i < GridWidth; ++i)
             {
                 if (grid[i, j] != null)
                 {
@@ -1153,11 +1155,11 @@ public class BoxScript : MonoBehaviour
 
     public static char[,] GetBoardLetters()
     {
-        char[,] letters = new char[gridWidth, gridHeight];
+        char[,] letters = new char[GridWidth, GridHeight];
 
-        for (int j = 0; j < gridHeight; ++j)
+        for (int j = 0; j < GridHeight; ++j)
         {
-            for (int i = 0; i < gridWidth; ++i)
+            for (int i = 0; i < GridWidth; ++i)
             {
                 if (grid[i, j] != null)
                 {

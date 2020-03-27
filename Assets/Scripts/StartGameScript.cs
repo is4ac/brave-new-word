@@ -8,6 +8,8 @@ using UnityEngine.Audio;
 
 public class StartGameScript : MonoBehaviour
 {
+    public static event Action<string> OnUsernameChange = delegate { };
+    public static event Action OnRandomizeName = delegate { };
 
     public const string DATA_PATH = "/BraveNewWord_playerData.dat";
     public GameObject settingsButton;
@@ -16,10 +18,12 @@ public class StartGameScript : MonoBehaviour
     public AudioMixer mixer;
     public AudioSettings audioSettings;
 
+    private bool _randomizeFeatures = false;
+
     // use for initialization
     void Awake()
     {
-        if (!GameManagerScript.DEBUG)
+        if (!GameManagerScript.debug)
         {
             settingsButton.SetActive(false);
         }
@@ -57,7 +61,7 @@ public class StartGameScript : MonoBehaviour
             {
                 Debug.LogError(
                     "Could not resolve all Firebase dependencies: " + dependencyStatus);
-                GameManagerScript.LOGGING = false;
+                GameManagerScript.logging = false;
             }
         });
     }
@@ -67,7 +71,7 @@ public class StartGameScript : MonoBehaviour
         // DEBUG MODE: Randomize the various frictional features of the game
         //RandomizeFeatures();
 
-        // Load from file
+        // Load player data file
         LoadFile();
 
         PlayBgMusic();
@@ -75,6 +79,14 @@ public class StartGameScript : MonoBehaviour
 
     void Update()
     {
+        // randomize features if the flag is turned on (for threading issues, Unity doesn't allow Library calls
+        // outside of the main thread)
+        if (_randomizeFeatures)
+        {
+            RandomizeFeatures();
+            _randomizeFeatures = false;
+        }
+        
         // Android back button should exit the game if on main screen
         if (Application.platform == RuntimePlatform.Android)
         {
@@ -98,14 +110,19 @@ public class StartGameScript : MonoBehaviour
         }
     }
 
+    public void SetRandomize()
+    {
+        _randomizeFeatures = true;
+    }
+
     void PlayBgMusic()
     {
         // TODO: MOVE THIS code to the GameManager Audio component class?
-        if (GameManagerScript.JUICE_PRODUCTIVE)
+        if (GameManagerScript.juiceProductive)
         {
             AudioManager.instance.Play("JuicyTheme");
         }
-        else if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        else if (GameManagerScript.juiceUnproductive)
         {
             AudioManager.instance.Play("DubstepTheme");
         }
@@ -125,7 +142,7 @@ public class StartGameScript : MonoBehaviour
     {
         if (File.Exists(Application.persistentDataPath + DATA_PATH))
         {
-            //Debug.Log("Loading from file...");
+            Debug.Log("Loading from file... " + Application.persistentDataPath + DATA_PATH);
 
             // Read the file to load the frictional pattern data
             BinaryFormatter bf = new BinaryFormatter();
@@ -137,20 +154,21 @@ public class StartGameScript : MonoBehaviour
             //// set the local variables to the data from the file
             // TODO: uncomment this before deploy
 
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = data.obstructionProductive;
-            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = data.obstructionUnproductive;
-            GameManagerScript.JUICE_PRODUCTIVE = data.juiceProductive;
-            GameManagerScript.JUICE_UNPRODUCTIVE = data.juiceUnproductive;
-            GameManagerScript.INSTRUCTIONS_PANEL = data.instructions;
-            GameManagerScript.userID = data.userID;
-            GameManagerScript.username = data.username;
+            GameManagerScript.obstructionProductive = data.obstructionProductive;
+            GameManagerScript.obstructionUnproductive = data.obstructionUnproductive;
+            GameManagerScript.juiceProductive = data.juiceProductive;
+            GameManagerScript.juiceUnproductive = data.juiceUnproductive;
+            GameManagerScript.displayInstructions = data.instructions;
+            GameManagerScript.userId = data.userId;
             GameManagerScript.myHighScore = data.myHighScore;
             GameManagerScript.gameNumber = data.gameNumber;
 
+            OnUsernameChange(data.username);
+
             // check to see if some values are blank
-            if (GameManagerScript.userID == "")
+            if (GameManagerScript.userId == null || GameManagerScript.userId.Trim() == "")
             {
-                GameManagerScript.userID = Guid.NewGuid().ToString();
+                GameManagerScript.userId = Guid.NewGuid().ToString();
             }
 
             // set audio levels
@@ -158,6 +176,10 @@ public class StartGameScript : MonoBehaviour
             mixer.SetFloat("masterVolume", data.masterVolume);
             mixer.SetFloat("sfxVolume", data.sfxVolume);
             mixer.SetFloat("musicVolume", data.musicVolume);
+            
+            // Check deviceId db. If values are the same, then no change. 
+            // if db values are different from local file, then revert to db values.
+            DbManager.instance.CheckDeviceId();
 
             // TODO: DEBUG ONLY: COMMENT OUT before release
             /*
@@ -174,24 +196,31 @@ public class StartGameScript : MonoBehaviour
         }
         else
         {
-            // If file doesn't exist yet, randomize and initialize variables
+            GameManagerScript.displayInstructions = true;
+
+            // If file doesn't exist yet, check to see if deviceID exists in DB.
+            // If it does, grab the userID and game version from the DB.
+            // If deviceID doesn't exist yet, randomize and initialize variables
+            // and add deviceID to DB
+            // randomize first in case Google Firebase servers are down (which is very possible at this time)
             RandomizeFeatures();
+            DbManager.instance.InitializeDeviceId();
         }
 
-        Debug.Log("Obstruction Prod.: " + GameManagerScript.OBSTRUCTION_PRODUCTIVE);
-        Debug.Log("Obstruction Unprod.: " + GameManagerScript.OBSTRUCTION_UNPRODUCTIVE);
-        Debug.Log("Juice Prod.: " + GameManagerScript.JUICE_PRODUCTIVE);
-        Debug.Log("Juice Unprod.: " + GameManagerScript.JUICE_UNPRODUCTIVE);
+        Debug.Log("Obstruction Prod.: " + GameManagerScript.obstructionProductive);
+        Debug.Log("Obstruction Unprod.: " + GameManagerScript.obstructionUnproductive);
+        Debug.Log("Juice Prod.: " + GameManagerScript.juiceProductive);
+        Debug.Log("Juice Unprod.: " + GameManagerScript.juiceUnproductive);
     }
 
     public void RandomizeFeatures()
     {
         // If file doesn't exist yet, randomize and initialize variables
         // default to false
-        GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
-        GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
-        GameManagerScript.JUICE_PRODUCTIVE = false;
-        GameManagerScript.JUICE_UNPRODUCTIVE = false;
+        GameManagerScript.obstructionProductive = false;
+        GameManagerScript.obstructionUnproductive = false;
+        GameManagerScript.juiceProductive = false;
+        GameManagerScript.juiceUnproductive = false;
 
         // randomize the version
         int version = UnityEngine.Random.Range(0, 9);
@@ -201,33 +230,36 @@ public class StartGameScript : MonoBehaviour
                 // everything remains off
                 break;
             case 1:
-                GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+                GameManagerScript.obstructionProductive = true;
                 goto case 2;
             case 2:
-                GameManagerScript.JUICE_PRODUCTIVE = true;
+                GameManagerScript.juiceProductive = true;
                 break;
             case 3:
-                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                GameManagerScript.obstructionUnproductive = true;
                 goto case 4;
             case 4:
-                GameManagerScript.JUICE_UNPRODUCTIVE = true;
+                GameManagerScript.juiceUnproductive = true;
                 break;
             case 5:
-                GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
+                GameManagerScript.obstructionProductive = true;
                 break;
             case 6:
-                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                GameManagerScript.obstructionUnproductive = true;
                 break;
             case 7:
-                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                GameManagerScript.obstructionUnproductive = true;
                 break;
             case 8:
-                GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+                GameManagerScript.obstructionUnproductive = true;
                 break;
         }
 
         // randomize userID using a GUID (UUID) 
-        GameManagerScript.userID = Guid.NewGuid().ToString();
+        GameManagerScript.userId = Guid.NewGuid().ToString();
+        
+        // randomize username
+        OnRandomizeName();
     }
 
     public void OpenTermsOfService()

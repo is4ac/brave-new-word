@@ -17,13 +17,13 @@ public class ConsentMenuScript : MonoBehaviour
 
     public void ClickYes()
     {
-        GameManagerScript.LOGGING = true;
+        GameManagerScript.logging = true;
         GoToNextScene(sceneToStart);
     }
 
     public void ClickNo()
     {
-        GameManagerScript.LOGGING = false;
+        GameManagerScript.logging = false;
         GoToNextScene(sceneToStart);
     }
 

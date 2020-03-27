@@ -1,30 +1,33 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Firebase.Database;
 
-public class DBManager : MonoBehaviour
+public class DbManager : MonoBehaviour
 {
-    public static DBManager instance;
+    public static event Action<string> OnUsernameChange = delegate { };
+    
+    public static DbManager instance;
+    public StartGameScript startGameScript;
 
-    // edit this to a new version whenever the game has changed 
-    // so much that it needs a new high score list
-    // TODO: update this to next version number before major release
-    public static string versionNumber = "_0_1";
-    public static string scoresDbName = "scores" + versionNumber;
-    public static string usersDbName = "users" + versionNumber;
-
-    //private DatabaseReference dbScores;
-
-    public delegate void ScoreAction();
+    // name of device ID db
+    private static readonly string DevicesDbName = "devices_" + GameManagerScript.VERSION;
+    
+    // name of users db
+    private static readonly string UsersDbName = "users_" + GameManagerScript.VERSION;
+    
+    //public delegate void ScoreAction();
     //public static event ScoreAction TopScoreUpdated;
 
-    public long topScore;
-    public string topUser = "";
+    //public long topScore;
+
+    //public string topUser = "";
     //private long curScore;
 
-    public Dictionary<string, long> userToScore;
-    public Dictionary<string, string> userIDToUsernames;
+    //public Dictionary<string, long> userToScore;
+
+    //[FormerlySerializedAs("userIDToUsernames")]
+    //public Dictionary<string, string> userIdToUsernames;
 
     // Awake at the beginning, used for initialization
     void Awake()
@@ -39,25 +42,147 @@ public class DBManager : MonoBehaviour
         }
     }
 
-    void Start()
+    private void SetGameValuesFromDb(Dictionary<string, object> values, string deviceID)
     {
-        /*
-        if (GameManagerScript.LOGGING)
+        Debug.Log("SetGameValuesFromDb: yeah");
+        if (values.ContainsKey("userID"))
         {
-            // reference database from the appropriate scores entry
-            dbScores = FirebaseDatabase.DefaultInstance.GetReference(scoresDbName);
-
-            userToScore = new Dictionary<string, long>();
-            userIDToUsernames = new Dictionary<string, string>();
-
-            // Get top score, listen for changes.
-            GetTopScore();
-            dbScores.ValueChanged += HandleTopScoreChange;
-
-            // Load high scores
-            RetrieveTopScores();
+            GameManagerScript.userId = (string) values["userID"];
         }
-        */
+        else
+        {
+            GameManagerScript.userId = Guid.NewGuid().ToString();
+            var dbDevices = FirebaseDatabase.DefaultInstance.GetReference(DevicesDbName);
+            dbDevices.Child(deviceID).Child("userID").SetValueAsync(GameManagerScript.userId);
+        }
+        
+        Debug.Log("SetGameValuesFromDb: loaded userID: " + GameManagerScript.userId);
+        
+        GameManagerScript.juiceProductive = (bool) values["juiceProductive"];
+        GameManagerScript.juiceUnproductive = (bool) values["juiceUnproductive"];
+        GameManagerScript.obstructionProductive = (bool) values["obstructionProductive"];
+        GameManagerScript.obstructionUnproductive = (bool) values["obstructionUnproductive"];
+        
+        // set the username if it is available
+        SetUsernameFromDb(GameManagerScript.userId);
+    }
+
+    private void SetUsernameFromDb(string userId)
+    {
+        var dbUsers = FirebaseDatabase.DefaultInstance.GetReference(UsersDbName);
+        dbUsers.OrderByKey().EqualTo(userId).GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                // handle error
+                Debug.Log("SetUsernameFromDb db retrieval failed.");
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (snapshot.Value != null)
+                {
+                    // successfully retrieved userID data snapshot
+                    var values = (Dictionary<string, object>) snapshot.Value;
+                    var user = (Dictionary<string, object>) values[userId];
+                    if (user.ContainsKey("username"))
+                    {
+                        OnUsernameChange((string) user["username"]);
+                    }
+                }
+                else
+                {
+                    // userID does not exist in db
+                    // Don't do anything?
+                    Debug.Log("SetUsernameFromDb: userID does not exist.");
+                }
+                
+                Logger.LogUser();
+            }
+        });
+    }
+
+    private void SetDbValuesFromGame(DatabaseReference reference)
+    {
+        Debug.Log("SetDbValuesFromGame: Setting db devicesID values");
+        reference.Child("userID").SetValueAsync(GameManagerScript.userId);
+        reference.Child("juiceProductive").SetValueAsync(GameManagerScript.juiceProductive);
+        reference.Child("juiceUnproductive").SetValueAsync(GameManagerScript.juiceUnproductive);
+        reference.Child("obstructionProductive").SetValueAsync(GameManagerScript.obstructionProductive);
+        reference.Child("obstructionUnproductive").SetValueAsync(GameManagerScript.obstructionUnproductive);
+        Logger.LogUser();
+    }
+
+    public void InitializeDeviceId()
+    {
+        Debug.Log("InitializeDeviceId: Initializing device id");
+        string deviceID = DeviceIDManager.GetDeviceID();
+        Debug.Log("InitializeDeviceId: deviceID: " + deviceID);
+        DatabaseReference dbDevices = FirebaseDatabase.DefaultInstance.GetReference(DevicesDbName);
+        dbDevices.OrderByKey().EqualTo(deviceID).GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                // Handle error
+                Debug.Log("InitializeDeviceId db retrieval failed.");
+                
+                // randomize features i guess
+                startGameScript.SetRandomize();
+                SetDbValuesFromGame(dbDevices.Child(deviceID));
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (snapshot.Value != null)
+                {
+                    // check to see if deviceID exists in DB.
+                    // If it does, grab the userID and game version from the DB.
+                    var values = (Dictionary<string, object>) snapshot.Value;
+                    SetGameValuesFromDb((Dictionary<string, object>) values[deviceID], deviceID);
+                }
+                else
+                {
+                    // If deviceID doesn't exist yet, randomize and initialize variables
+                    // and add deviceID to DB
+                    //startGameScript.SetRandomize();
+                    SetDbValuesFromGame(dbDevices.Child(deviceID));
+                }
+            }
+        });
+    }
+
+    public void CheckDeviceId()
+    {
+        Debug.Log("CheckDeviceId: Checking device id");
+        string deviceID = DeviceIDManager.GetDeviceID();
+        Debug.Log("CheckDeviceId: deviceID: " + deviceID);
+        DatabaseReference dbDevices = FirebaseDatabase.DefaultInstance.GetReference(DevicesDbName);
+        dbDevices.OrderByKey().EqualTo(deviceID).GetValueAsync().ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                // Handle error
+                Debug.Log("CheckDeviceId db retrieval failed.");
+            }
+            else if (task.IsCompleted)
+            {
+                DataSnapshot snapshot = task.Result;
+
+                if (snapshot.Value != null)
+                {
+                    // Check deviceId db. Update game values to match that of db.
+                    var values = (Dictionary<string, object>) snapshot.Value;
+                    SetGameValuesFromDb((Dictionary<string, object>) values[deviceID], deviceID);
+                }
+                else
+                {
+                    // If deviceID doesn't exist yet, then add deviceID to DB
+                    SetDbValuesFromGame(dbDevices.Child(deviceID));
+                }
+            }
+        });
     }
 
     /*

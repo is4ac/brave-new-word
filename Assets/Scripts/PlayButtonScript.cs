@@ -20,15 +20,15 @@ public class PlayButtonScript : MonoBehaviour {
         //=========FEATURE: Unproductive Juice=================================
         // CAMERA SHAKE when pressing button
         //=====================================================================
-        if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        if (GameManagerScript.juiceUnproductive)
         {
-            CameraShaker.Instance.ShakeOnce(3f, 4f, .1f, .6f);
+            CameraShaker.instance.ShakeOnce(3f, 4f, .1f, .6f);
         }
 
         //=========FEATURE: Productive Obstruction=============================
         // Display prompt if productive
         //=====================================================================
-        if (GameManagerScript.OBSTRUCTION_PRODUCTIVE)
+        if (GameManagerScript.obstructionProductive)
         {
             // get score
             long score = BoxScript.GetScore(BoxScript.currentWord, null);
@@ -62,7 +62,7 @@ public class PlayButtonScript : MonoBehaviour {
 
     public void LogPlayButtonClick(string word, float freq, long score)
     {
-        if (GameManagerScript.LOGGING)
+        if (GameManagerScript.logging)
         {
             ClickPlayWordButtonLogEntry.ClickPlayWordButtonPayload payload =
                 new ClickPlayWordButtonLogEntry.ClickPlayWordButtonPayload(
@@ -71,7 +71,7 @@ public class PlayButtonScript : MonoBehaviour {
                     score
                 );
             ClickPlayWordButtonLogEntry entry = new ClickPlayWordButtonLogEntry();
-            entry.setValues("BNW_ClickPlayWord", "BNW_Action", payload);
+            entry.SetValues("BNW_ClickPlayWord", "BNW_Action", payload);
             string json = JsonUtility.ToJson(entry);
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
             DatabaseReference child = reference.Push();

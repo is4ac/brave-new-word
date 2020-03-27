@@ -3,7 +3,7 @@ using System.Collections;
 
 // Cartoon FX  - (c) 2015 Jean Moreno
 
-public class CFX_Demo_RotateCamera : MonoBehaviour
+public class CfxDemoRotateCamera : MonoBehaviour
 {
 	static public bool rotating = true;
 	

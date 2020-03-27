@@ -3,7 +3,7 @@ using System.Collections;
 
 // Cartoon FX  - (c) 2015 Jean Moreno
 
-public class CFX_Demo_RandomDir : MonoBehaviour
+public class CfxDemoRandomDir : MonoBehaviour
 {
 	public Vector3 min = new Vector3(0,0,0);
 	public Vector3 max = new Vector3(0,360,0);

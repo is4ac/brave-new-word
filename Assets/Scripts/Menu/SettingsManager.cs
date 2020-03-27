@@ -22,20 +22,20 @@ public class SettingsManager : MonoBehaviour
 
     private void SetToggles()
     {
-        ob1Toggle.isOn = !(GameManagerScript.OBSTRUCTION_PRODUCTIVE || GameManagerScript.OBSTRUCTION_UNPRODUCTIVE);
-        ob2Toggle.isOn = GameManagerScript.OBSTRUCTION_PRODUCTIVE;
-        ob3Toggle.isOn = GameManagerScript.OBSTRUCTION_UNPRODUCTIVE;
-        juice1Toggle.isOn = !(GameManagerScript.JUICE_PRODUCTIVE || GameManagerScript.JUICE_UNPRODUCTIVE);
-        juice2Toggle.isOn = GameManagerScript.JUICE_PRODUCTIVE;
-        juice3Toggle.isOn = GameManagerScript.JUICE_UNPRODUCTIVE;
+        ob1Toggle.isOn = !(GameManagerScript.obstructionProductive || GameManagerScript.obstructionUnproductive);
+        ob2Toggle.isOn = GameManagerScript.obstructionProductive;
+        ob3Toggle.isOn = GameManagerScript.obstructionUnproductive;
+        juice1Toggle.isOn = !(GameManagerScript.juiceProductive || GameManagerScript.juiceUnproductive);
+        juice2Toggle.isOn = GameManagerScript.juiceProductive;
+        juice3Toggle.isOn = GameManagerScript.juiceUnproductive;
     }
 
     public void NoButtonChanged(bool value)
     {
         if (value)
         {
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
-            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
+            GameManagerScript.obstructionProductive = false;
+            GameManagerScript.obstructionUnproductive = false;
             if (GameManagerScript.gameManager != null)
             {
                 GameManagerScript.gameManager.playButton.SetActive(false);
@@ -47,8 +47,8 @@ public class SettingsManager : MonoBehaviour
     {
         if (value)
         {
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = true;
-            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = false;
+            GameManagerScript.obstructionProductive = true;
+            GameManagerScript.obstructionUnproductive = false;
             if (GameManagerScript.gameManager != null)
             {
                 GameManagerScript.gameManager.playButton.SetActive(true);
@@ -61,8 +61,8 @@ public class SettingsManager : MonoBehaviour
     {
         if (value)
         {
-            GameManagerScript.OBSTRUCTION_PRODUCTIVE = false;
-            GameManagerScript.OBSTRUCTION_UNPRODUCTIVE = true;
+            GameManagerScript.obstructionProductive = false;
+            GameManagerScript.obstructionUnproductive = true;
             if (GameManagerScript.gameManager != null)
             {
                 GameManagerScript.gameManager.playButton.SetActive(true);
@@ -83,8 +83,8 @@ public class SettingsManager : MonoBehaviour
             // stop previous music and start new one
             AudioManager.instance.StopAndPlay("CalmTheme");
 
-            GameManagerScript.JUICE_PRODUCTIVE = false;
-            GameManagerScript.JUICE_UNPRODUCTIVE = false;
+            GameManagerScript.juiceProductive = false;
+            GameManagerScript.juiceUnproductive = false;
         }
     }
 
@@ -100,8 +100,8 @@ public class SettingsManager : MonoBehaviour
             // stop previous music and start new one
             AudioManager.instance.StopAndPlay("JuicyTheme");
 
-            GameManagerScript.JUICE_PRODUCTIVE = true;
-            GameManagerScript.JUICE_UNPRODUCTIVE = false;
+            GameManagerScript.juiceProductive = true;
+            GameManagerScript.juiceUnproductive = false;
         }
     }
 
@@ -117,8 +117,8 @@ public class SettingsManager : MonoBehaviour
             // stop previous music and start new one
             AudioManager.instance.StopAndPlay("DubstepTheme");
 
-            GameManagerScript.JUICE_PRODUCTIVE = false;
-            GameManagerScript.JUICE_UNPRODUCTIVE = true;
+            GameManagerScript.juiceProductive = false;
+            GameManagerScript.juiceUnproductive = true;
             
         }
     }

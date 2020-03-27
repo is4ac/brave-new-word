@@ -64,11 +64,11 @@ public class AudioManager : MonoBehaviour
     public void StopBgMusic()
     {
         // Stop previous music
-        if (GameManagerScript.JUICE_PRODUCTIVE)
+        if (GameManagerScript.juiceProductive)
         {
             Stop("JuicyTheme");
         }
-        else if (GameManagerScript.JUICE_UNPRODUCTIVE)
+        else if (GameManagerScript.juiceUnproductive)
         {
             Stop("DubstepTheme");
         }

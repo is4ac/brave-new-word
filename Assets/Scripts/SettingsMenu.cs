@@ -12,9 +12,9 @@ public class SettingsMenu : MonoBehaviour {
     public GameObject buttonToggleObj;
 
     //private TMP_Dropdown uiDropdown;
-    private Toggle highlightToggle;
-    private Toggle currentSelectedScoreToggle;
-    private Toggle buttonToggle;
+    private Toggle _highlightToggle;
+    private Toggle _currentSelectedScoreToggle;
+    private Toggle _buttonToggle;
 
     // Use this for initialization
     void Start () {

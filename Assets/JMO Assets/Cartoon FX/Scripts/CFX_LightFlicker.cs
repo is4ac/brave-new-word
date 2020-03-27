@@ -6,7 +6,7 @@ using System.Collections;
 // Randomly changes a light's intensity over time.
 
 [RequireComponent(typeof(Light))]
-public class CFX_LightFlicker : MonoBehaviour
+public class CfxLightFlicker : MonoBehaviour
 {
 	// Loop flicker effect
 	public bool loop;

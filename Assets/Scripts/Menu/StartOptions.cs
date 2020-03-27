@@ -22,9 +22,6 @@ public class StartOptions : MonoBehaviour
     {
         //Debug.Log("Start button clicked");
 
-        // Save the username to PlayerPrefs
-        PlayerPrefs.SetString("username", RandomNameScript.username);
-
         //If changeScenes is true, start fading and change scenes halfway through animation when screen is blocked by FadeImage
         //Use invoke to delay calling of LoadDelayed by half the length of fadeColorAnimationClip
         Invoke("LoadDelayed", menuFadeTime);

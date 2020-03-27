@@ -6,7 +6,7 @@ using System.Collections;
 // Decreases a light's intensity over time.
 
 [RequireComponent(typeof(Light))]
-public class CFX_LightIntensityFade : MonoBehaviour
+public class CfxLightIntensityFade : MonoBehaviour
 {
 	// Duration of the effect.
 	public float duration = 1.0f;

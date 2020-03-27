@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
+using UnityEngine.Serialization;
 
 /**
  * Design TODOs:
@@ -19,7 +20,6 @@ using UnityEngine.Audio;
  * 3. 
  */
 
-
 public class GameManagerScript : MonoBehaviour
 {
     // singleton instance
@@ -27,21 +27,21 @@ public class GameManagerScript : MonoBehaviour
 
     // Set to true to log to Firebase database, false to turn off
     // TODO: set DEBUG to false before full deploy!
-    public static bool DEBUG = false;
+    public static bool debug = false;
     // TODO: set LOGGING to true before deploy!
-    public static bool LOGGING = true;
+    public static bool logging = true;
     // TODO: Change version number after each update
-    public const string VERSION = "0_1_2";
+    public const string VERSION = "0_1_4";
     public const string LOGGING_VERSION = "BNWLogs_V" + VERSION;
     public const string APP_VERSION = "BNW_" + VERSION;
 
     /*************************************
      * Feature booleans - these keep track of what features are on/off for this current game
      *************************************/
-    public static bool OBSTRUCTION_PRODUCTIVE;      // users must click on button and see stats before submitting word
-    public static bool OBSTRUCTION_UNPRODUCTIVE;    // users must tap to select each letter individually
-    public static bool JUICE_PRODUCTIVE;            // juiciness is distracting but matches game state
-    public static bool JUICE_UNPRODUCTIVE;          // juiciness is distracting and doesn't match game state
+    public static bool obstructionProductive;      // users must click on button and see stats before submitting word
+    public static bool obstructionUnproductive;    // users must tap to select each letter individually
+    public static bool juiceProductive;            // juiciness is distracting but matches game state
+    public static bool juiceUnproductive;          // juiciness is overwhelmingly distracting and doesn't match game state
                                                     /*********************************************/
 
     public GameObject playButton;
@@ -54,24 +54,24 @@ public class GameManagerScript : MonoBehaviour
     public GameObject audioSettingsPanel;
     public AudioSettings audioSettings;
     public ConsentMenuScript menuScript;
-    public GameObject settingsButton;
-    public GameObject progressBarFG; // the progress bar that shows the timer
+    //public GameObject settingsButton;
+    [FormerlySerializedAs("progressBarFG")] public GameObject progressBarFg; // the progress bar that shows the timer
     public ParticleSystem bgAnimation; // background animation for unproductive juice
-    public ParticleSystem bgAnimation2; // bg animation for unproductive juice 2
+    //public ParticleSystem bgAnimation2; // bg animation for unproductive juice 2
     public ParticleSystem streakingParticles; // Unproductive juicy effects
     public AudioMixer mixer;    // Audio mixer for volume settings
-    public static string GAME_ID;
+    public static string gameId;
     public static string username;
-    public static string userID;
+    public static string userId;
     public static string deviceModel;
     static bool areBoxesFalling = true;
     public GameObject gameOverPanel;
     static bool gameHasBegun;
     static bool initialLog = true; // keeps track of whether or not the initial logging should be done
-    public static bool INSTRUCTIONS_PANEL = true;
-    public static long myHighScore;
+    public static bool displayInstructions;
+    public static long myHighScore = 0;
     public static bool myHighScoreUpdated;
-    public static bool globalHighScoreUpdated;
+    //public static bool globalHighScoreUpdated;
     public static double previousSubmissionTime;
     public static double pauseTime;
     public static string myHighestScoringWord = "";
@@ -96,7 +96,7 @@ public class GameManagerScript : MonoBehaviour
 
     public static float submitPromptTimer;
     public static bool submitPromptOn;
-    private Coroutine audioCoroutine;
+    private Coroutine _audioCoroutine;
 
     void Awake()
     {
@@ -122,13 +122,13 @@ public class GameManagerScript : MonoBehaviour
         deviceModel = SystemInfo.deviceModel;
 
         // Generate a new GAME_ID using the Guid class
-        GAME_ID = Guid.NewGuid().ToString();
+        gameId = Guid.NewGuid().ToString();
 
         // set the initial submission epoch time
         previousSubmissionTime = ((System.DateTime.UtcNow - epochStart).TotalMilliseconds);
 
         // check version and hide/show Play Word button depending on version
-        if (OBSTRUCTION_PRODUCTIVE || OBSTRUCTION_UNPRODUCTIVE)
+        if (obstructionProductive || obstructionUnproductive)
         {
             playButton.SetActive(true);
             playButton.GetComponent<Button>().interactable = false;
@@ -139,13 +139,13 @@ public class GameManagerScript : MonoBehaviour
         }
 
         // ========FEATURE: Unproductive Juice BG Animation Particles==========
-        if (JUICE_UNPRODUCTIVE)
+        if (juiceUnproductive)
         {
             StartUnproductiveJuice();
         }
 
         // Hide the instructions panel if it shouldn't be displayed
-        if (!INSTRUCTIONS_PANEL)
+        if (!displayInstructions)
         {
             // change the text of the instructions panel
             Transform textPanel = instructionsPanel.transform.Find("InstructionsTextPanel");
@@ -205,7 +205,7 @@ public class GameManagerScript : MonoBehaviour
             if (scale < 0) scale = 0;
 
             // update progress bar
-            progressBarFG.transform.localScale = new Vector3(scale, 1.0f, 1.0f);
+            progressBarFg.transform.localScale = new Vector3(scale, 1.0f, 1.0f);
 
             // reset timer
             timer -= waitTime;
@@ -220,7 +220,7 @@ public class GameManagerScript : MonoBehaviour
 
             // check to see if it's time to start playing the timer bomb audio
             // FEATURE: ONLY IF JUICINESS IS ON
-            if ((JUICE_PRODUCTIVE || JUICE_UNPRODUCTIVE)
+            if ((juiceProductive || juiceUnproductive)
                 && remainingTime <= 5.275f
                 && !isBombAudioPlaying)
             {
@@ -239,7 +239,7 @@ public class GameManagerScript : MonoBehaviour
         // Unproductive Juice: every once in a while, do a random particle
         //                     animation along with pew pew sfx.
         //=====================================================================
-        if (JUICE_UNPRODUCTIVE)
+        if (juiceUnproductive)
         {
             if (gameHasBegun) juicyTimer += Time.deltaTime;
 
@@ -296,16 +296,16 @@ public class GameManagerScript : MonoBehaviour
     {
         bgAnimation.Play();
         juicyRemainingTime = UnityEngine.Random.Range(10f, 20f);
-        audioCoroutine = StartCoroutine(AudioManager.instance.PlayRandomLoop(new string[] { "Sparkle2" }));
+        _audioCoroutine = StartCoroutine(AudioManager.instance.PlayRandomLoop(new string[] { "Sparkle2" }));
     }
 
     public void StopUnproductiveJuice()
     {
         bgAnimation.Stop();
 
-        if (audioCoroutine != null)
+        if (_audioCoroutine != null)
         {
-            StopCoroutine(audioCoroutine);
+            StopCoroutine(_audioCoroutine);
         }
     }
 
@@ -352,13 +352,13 @@ public class GameManagerScript : MonoBehaviour
         BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Create(Application.persistentDataPath + StartGameScript.DATA_PATH);
 
-        PlayerData data = new PlayerData(OBSTRUCTION_PRODUCTIVE,
-                                         OBSTRUCTION_UNPRODUCTIVE,
-                                         JUICE_PRODUCTIVE,
-                                         JUICE_UNPRODUCTIVE,
+        PlayerData data = new PlayerData(obstructionProductive,
+                                         obstructionUnproductive,
+                                         juiceProductive,
+                                         juiceUnproductive,
                                          username,
                                          false,
-                                         userID,
+                                         userId,
                                          myHighScore,
                                          gameNumber,
                                          masterVol,
@@ -386,7 +386,7 @@ public class GameManagerScript : MonoBehaviour
     {
         bool falling = false;
 
-        for (int i = 0; i < BoxScript.gridWidth; ++i)
+        for (int i = 0; i < BoxScript.GridWidth; ++i)
         {
             if (BoxScript.IsBoxInColumnFalling(i) || !BoxScript.IsColumnFull(i))
             {
@@ -438,6 +438,7 @@ public class GameManagerScript : MonoBehaviour
         }
 
         // Check if new global high score was reached
+        /*
         if (globalHighScoreUpdated)
         {
             // update game over text
@@ -446,6 +447,7 @@ public class GameManagerScript : MonoBehaviour
 
             // TODO: animate particles
         }
+        */
 
         gameOverScoreText.text = "Score: " + BoxScript.score;
 

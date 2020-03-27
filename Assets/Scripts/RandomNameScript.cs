@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using TMPro;
 
@@ -9,39 +7,36 @@ public class RandomNameScript : MonoBehaviour
 
     public TextAsset usernamesText;
 
-    public static string username;
     public TextMeshProUGUI welcomeText;
     private static List<string> attributes = null;
     private static List<string> colors = null;
     private static List<string> animals = null;
     public static Firebase.Auth.FirebaseAuth auth;
-    private Firebase.Auth.FirebaseUser newUser;
+    private Firebase.Auth.FirebaseUser _newUser;
+    private bool _updateText = false;
 
-    // Use this for initialization
-    void Start()
+    public void Awake()
     {
         // Generate a random username
         InitializeUsernameList();
+        DbManager.OnUsernameChange += OnUsernameChange;
+        StartGameScript.OnUsernameChange += OnUsernameChange;
+        StartGameScript.OnRandomizeName += RandomizeName;
+    }
 
-        // Check for saved file
-        if (File.Exists(Application.persistentDataPath + StartGameScript.DATA_PATH))
+    private void Update()
+    {
+        if (_updateText)
         {
-            // Read the file to load the frictional pattern data
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(Application.persistentDataPath + StartGameScript.DATA_PATH, FileMode.Open);
-
-            PlayerData data = (PlayerData)bf.Deserialize(file);
-            file.Close();
-
-            username = data.username;
-            DisplayUsername();
+            welcomeText.text = "Welcome,<br>" + GameManagerScript.username + "!";
+            _updateText = false;
         }
-        else
-        {
-            // If file doesn't exist yet, randomize and initialize variables
-            RandomizeName();
-        }
+    }
+
+    private void OnUsernameChange(string username)
+    {
         GameManagerScript.username = username;
+        _updateText = true;
     }
 
     void InitializeUsernameList()
@@ -101,19 +96,13 @@ public class RandomNameScript : MonoBehaviour
         }
     }
 
-    void DisplayUsername()
-    {
-        welcomeText.text = "Welcome,\n" + username + "!";
-    }
-
     public void RandomizeName()
     {
         int i = UnityEngine.Random.Range(0, attributes.Count);
         int j = UnityEngine.Random.Range(0, colors.Count);
         int k = UnityEngine.Random.Range(0, animals.Count);
 
-        username = attributes[i].Trim() + " " + colors[j].Trim() + " " + animals[k].Trim();
-        DisplayUsername();
-        GameManagerScript.username = username;
+        GameManagerScript.username = attributes[i].Trim() + " " + colors[j].Trim() + " " + animals[k].Trim();
+        _updateText = true;
     }
 }
