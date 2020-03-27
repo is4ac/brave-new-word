@@ -277,6 +277,7 @@ public class StartGameScript : MonoBehaviour
     // Initialize the Firebase database:
     protected virtual void InitializeFirebase()
     {
+        /*
         // sign in anomymously
         Firebase.Auth.FirebaseAuth auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
 
@@ -297,5 +298,6 @@ public class StartGameScript : MonoBehaviour
             Debug.LogFormat("User signed in successfully: {0} ({1})",
                 newUser.DisplayName, newUser.UserId);
         });
+        */
     }
 }
