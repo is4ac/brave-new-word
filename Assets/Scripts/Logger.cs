@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Firebase.Database;
+//using Firebase.Database;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -7,9 +7,11 @@ public class Logger : MonoBehaviour
 {
     public static void Log(LogEntry entry)
     {
+        /*
         string json = JsonUtility.ToJson(entry);
         DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
         reference.Push().SetRawJsonValueAsync(json);
+        */
     }
 
     public static void LogAudioSettings()
@@ -61,6 +63,7 @@ public class Logger : MonoBehaviour
 
     public static void LogUser()
     {
+        /*
         if (!GameManagerScript.logging) return;
         
         // Log username into users database if it doesn't already exist or if the username has changed
@@ -90,10 +93,12 @@ public class Logger : MonoBehaviour
                 }
             }
         );
+        */
     }
 
     public static void LogStartOfGame()
     {
+        /*
         if (!GameManagerScript.logging) return;
 
         //Debug.Log("Logging beginning of game");
@@ -120,6 +125,7 @@ public class Logger : MonoBehaviour
         child.Child("loggingVersion").SetValueAsync(GameManagerScript.LOGGING_VERSION);
         child.Child("appVersion").SetValueAsync(GameManagerScript.APP_VERSION);
         child.Child("gameNumber").SetValueAsync(GameManagerScript.gameNumber);
+        */
     }
 
     public static void LogKeyFrame(string state)

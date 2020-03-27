@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using Firebase;
-using Firebase.Unity.Editor;
+//using Firebase;
+//using Firebase.Unity.Editor;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
 using System.IO;
@@ -47,6 +47,7 @@ public class StartGameScript : MonoBehaviour
             TouchInputHandler.touchSupported = false;
         }
 
+        /*
         // Firebase database logistics for editor
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://wordflood-bf7c4.firebaseio.com/");
 
@@ -64,6 +65,7 @@ public class StartGameScript : MonoBehaviour
                 GameManagerScript.logging = false;
             }
         });
+        */
     }
 
     void Start()

@@ -1,4 +1,4 @@
-﻿using Firebase.Database;
+﻿//using Firebase.Database;
 using UnityEngine;
 
 public class ButtonEvents : MonoBehaviour
@@ -34,12 +34,14 @@ public class ButtonEvents : MonoBehaviour
         // Log the play again button click
         if (GameManagerScript.logging)
         {
+            /*
             LogEntry log = new LogEntry();
             log.SetValues("BNW_PlayAgainButtonClick", "BNW_Action");
             string json = JsonUtility.ToJson(log);
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
             DatabaseReference child = reference.Push();
             child.SetRawJsonValueAsync(json);
+            */
         }
     }
 }

@@ -11,8 +11,8 @@ public class RandomNameScript : MonoBehaviour
     private static List<string> attributes = null;
     private static List<string> colors = null;
     private static List<string> animals = null;
-    public static Firebase.Auth.FirebaseAuth auth;
-    private Firebase.Auth.FirebaseUser _newUser;
+    //public static Firebase.Auth.FirebaseAuth auth;
+    //private Firebase.Auth.FirebaseUser _newUser;
     private bool _updateText = false;
 
     public void Awake()

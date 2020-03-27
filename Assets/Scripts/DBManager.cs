@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Firebase.Database;
+//using Firebase.Database;
 
 public class DbManager : MonoBehaviour
 {
@@ -44,6 +44,7 @@ public class DbManager : MonoBehaviour
 
     private void SetGameValuesFromDb(Dictionary<string, object> values, string deviceID)
     {
+        /*
         Debug.Log("SetGameValuesFromDb: yeah");
         if (values.ContainsKey("userID"))
         {
@@ -65,10 +66,12 @@ public class DbManager : MonoBehaviour
         
         // set the username if it is available
         SetUsernameFromDb(GameManagerScript.userId);
+        */
     }
 
     private void SetUsernameFromDb(string userId)
     {
+        /*
         var dbUsers = FirebaseDatabase.DefaultInstance.GetReference(UsersDbName);
         dbUsers.OrderByKey().EqualTo(userId).GetValueAsync().ContinueWith(task =>
         {
@@ -101,10 +104,12 @@ public class DbManager : MonoBehaviour
                 Logger.LogUser();
             }
         });
+        */
     }
 
-    private void SetDbValuesFromGame(DatabaseReference reference)
+    private void SetDbValuesFromGame(System.Object blank) //DatabaseReference reference)
     {
+        /*
         Debug.Log("SetDbValuesFromGame: Setting db devicesID values");
         reference.Child("userID").SetValueAsync(GameManagerScript.userId);
         reference.Child("juiceProductive").SetValueAsync(GameManagerScript.juiceProductive);
@@ -112,10 +117,12 @@ public class DbManager : MonoBehaviour
         reference.Child("obstructionProductive").SetValueAsync(GameManagerScript.obstructionProductive);
         reference.Child("obstructionUnproductive").SetValueAsync(GameManagerScript.obstructionUnproductive);
         Logger.LogUser();
+        */
     }
 
     public void InitializeDeviceId()
     {
+        /*
         Debug.Log("InitializeDeviceId: Initializing device id");
         string deviceID = DeviceIDManager.GetDeviceID();
         Debug.Log("InitializeDeviceId: deviceID: " + deviceID);
@@ -151,10 +158,12 @@ public class DbManager : MonoBehaviour
                 }
             }
         });
+        */
     }
 
     public void CheckDeviceId()
     {
+        /*
         Debug.Log("CheckDeviceId: Checking device id");
         string deviceID = DeviceIDManager.GetDeviceID();
         Debug.Log("CheckDeviceId: deviceID: " + deviceID);
@@ -183,6 +192,7 @@ public class DbManager : MonoBehaviour
                 }
             }
         });
+        */
     }
 
     /*

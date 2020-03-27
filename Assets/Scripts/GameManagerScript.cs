@@ -27,11 +27,11 @@ public class GameManagerScript : MonoBehaviour
 
     // Set to true to log to Firebase database, false to turn off
     // TODO: set DEBUG to false before full deploy!
-    public static bool debug = false;
+    public static bool debug = true;
     // TODO: set LOGGING to true before deploy!
-    public static bool logging = true;
+    public static bool logging = false;
     // TODO: Change version number after each update
-    public const string VERSION = "0_1_4";
+    public const string VERSION = "0_1_4_WEB";
     public const string LOGGING_VERSION = "BNWLogs_V" + VERSION;
     public const string APP_VERSION = "BNW_" + VERSION;
 

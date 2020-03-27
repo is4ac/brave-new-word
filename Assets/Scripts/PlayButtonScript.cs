@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using EZCameraShake;
-using Firebase.Database;
+//using Firebase.Database;
 
 public class PlayButtonScript : MonoBehaviour {
 
@@ -64,6 +64,7 @@ public class PlayButtonScript : MonoBehaviour {
     {
         if (GameManagerScript.logging)
         {
+            /*
             ClickPlayWordButtonLogEntry.ClickPlayWordButtonPayload payload =
                 new ClickPlayWordButtonLogEntry.ClickPlayWordButtonPayload(
                     word,
@@ -76,6 +77,7 @@ public class PlayButtonScript : MonoBehaviour {
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.GetReference(GameManagerScript.LOGGING_VERSION);
             DatabaseReference child = reference.Push();
             child.SetRawJsonValueAsync(json);
+            */
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Firebase.Database;
+//using Firebase.Database;
 
 public class TutorialButtonScript : MonoBehaviour
 {
@@ -15,6 +15,7 @@ public class TutorialButtonScript : MonoBehaviour
 
         _menu = gameObject.GetComponent<ConsentMenuScript>();
 
+        /*
         // Log the start of the Tutorial
         MetaLogEntry entry = new MetaLogEntry();
         entry.SetValues("BNW_TutorialOpened", "BNW_Meta", new MetaLogEntry.MetaPayload("tutorial"));
@@ -23,6 +24,7 @@ public class TutorialButtonScript : MonoBehaviour
         reference.Push().SetRawJsonValueAsync(json);
 
         //Debug.Log("logging tutorial");
+        */
     }
 
     public void ClickPlayGameButton()

@@ -1,4 +1,4 @@
-﻿using Firebase.Database;
+﻿//using Firebase.Database;
 using UnityEngine;
 
 public class SubmitPromptButtonScript : MonoBehaviour
@@ -44,6 +44,7 @@ public class SubmitPromptButtonScript : MonoBehaviour
     {
         if (GameManagerScript.logging)
         {
+            /*
             CancelPlayWordLogEntry entry = new CancelPlayWordLogEntry();
             CancelPlayWordLogEntry.CancelPlayWordPayload payload =
                 new CancelPlayWordLogEntry.CancelPlayWordPayload(
@@ -59,6 +60,7 @@ public class SubmitPromptButtonScript : MonoBehaviour
             child.SetRawJsonValueAsync(json);
 
             BoxScript.totalInteractions++;
+            */
         }
     }
 }

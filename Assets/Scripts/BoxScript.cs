@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Firebase.Database;
+//using Firebase.Database;
 using TMPro;
 using EZCameraShake;
 using UnityEngine.Serialization;
@@ -246,6 +246,7 @@ public class BoxScript : MonoBehaviour
         // Firebase logging
         if (GameManagerScript.logging)
         {
+            /*
             //Debug.Log("Attempts to log data");
             Logger.LogKeyFrame("pre");
 
@@ -254,6 +255,7 @@ public class BoxScript : MonoBehaviour
             DatabaseReference child = reference.Push();
             child.SetRawJsonValueAsync(json);
             ++totalInteractions;
+            */
         }
 
         //=========Screen animations based on if word was valid or not==========
