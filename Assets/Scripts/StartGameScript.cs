@@ -36,6 +36,8 @@ public class StartGameScript : MonoBehaviour
         Screen.orientation = ScreenOrientation.Portrait;
 
         // set input method based on if touch input is supported or not
+        // Turn off for WebGL.. it messes it up
+        /*
         if (Input.touchSupported)
         {
             //Debug.Log("Touch supported!");
@@ -46,6 +48,7 @@ public class StartGameScript : MonoBehaviour
             //Debug.Log("Touch not supported!");
             TouchInputHandler.touchSupported = false;
         }
+        */
 
         /*
         // Firebase database logistics for editor
